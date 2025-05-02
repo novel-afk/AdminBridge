@@ -159,6 +159,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'password': request.data.get('user.password')
             }
             
+            # Debug print statements
+            print("User data:", user_data)
+            print("Employee data:", employee_data)
+            
             # Create a new serializer context with all the data needed
             serializer_data = {
                 'user': user_data,
@@ -167,7 +171,9 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'contact_number': employee_data.get('contact_number'),
                 'address': employee_data.get('address'),
                 'emergency_contact': employee_data.get('emergency_contact', ''),
-                'nationality': employee_data.get('nationality', '')
+                'nationality': employee_data.get('nationality', ''),
+                'gender': employee_data.get('gender', 'Other'),  # Default to Other if not provided
+                'dob': employee_data.get('dob')  # Add date of birth field
             }
             
             # Handle file uploads if they exist
@@ -177,8 +183,16 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             if 'citizenship_document' in request.FILES:
                 serializer_data['citizenship_document'] = request.FILES['citizenship_document']
             
+            # Debug the serializer data
+            print("Serializer data:", serializer_data)
+            
             serializer = self.get_serializer(data=serializer_data)
-            serializer.is_valid(raise_exception=True)
+            is_valid = serializer.is_valid()
+            
+            if not is_valid:
+                print("Serializer errors:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
@@ -203,6 +217,10 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'role': request.data.get('user.role')
             }
             
+            # Debug print statements
+            print("Update - User data:", user_data)
+            print("Update - Employee data:", employee_data)
+            
             # Create a serializer context with all the data needed
             serializer_data = {
                 'user': user_data,
@@ -211,7 +229,9 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'contact_number': employee_data.get('contact_number'),
                 'address': employee_data.get('address'),
                 'emergency_contact': employee_data.get('emergency_contact', ''),
-                'nationality': employee_data.get('nationality', '')
+                'nationality': employee_data.get('nationality', ''),
+                'gender': employee_data.get('gender', 'Other'),  # Default to Other if not provided
+                'dob': employee_data.get('dob')  # Add date of birth field
             }
             
             # Handle file uploads if they exist
@@ -221,9 +241,17 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             if 'citizenship_document' in request.FILES:
                 serializer_data['citizenship_document'] = request.FILES['citizenship_document']
             
+            # Debug the serializer data
+            print("Update - Serializer data:", serializer_data)
+            
             # Use partial=True to only update provided fields
             serializer = self.get_serializer(instance, data=serializer_data, partial=True)
-            serializer.is_valid(raise_exception=True)
+            is_valid = serializer.is_valid()
+            
+            if not is_valid:
+                print("Update - Serializer errors:", serializer.errors)
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
             self.perform_update(serializer)
             
             if getattr(instance, '_prefetched_objects_cache', None):

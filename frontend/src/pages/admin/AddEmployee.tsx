@@ -22,8 +22,12 @@ const AddEmployee = () => {
     contact_number: '',
     address: '',
     emergency_contact: '',
-    nationality: ''
+    nationality: '',
+    gender: 'Other'  // Default gender
   });
+  
+  // Add date state with empty string default
+  const [dob, setDob] = useState('');
   
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
@@ -160,7 +164,9 @@ const AddEmployee = () => {
         contact_number: formData.contact_number,
         address: formData.address,
         emergency_contact: formData.emergency_contact || '',
-        nationality: formData.nationality || ''
+        nationality: formData.nationality || '',
+        gender: formData.gender,
+        dob: dob || null
       };
       
       formDataToSend.append('employee_data', JSON.stringify(employeeData));
@@ -202,7 +208,30 @@ const AddEmployee = () => {
       console.error('Error adding employee:', err);
       if (err.response?.data) {
         console.log('Error details:', err.response.data);
+        
+        // Handle structured error responses
+        if (typeof err.response.data === 'object') {
+          const errorMessages = [];
+          
+          // Process nested errors (like user.email)
+          Object.entries(err.response.data).forEach(([key, value]) => {
+            if (typeof value === 'object') {
+              Object.entries(value as any).forEach(([nestedKey, nestedValue]) => {
+                errorMessages.push(`${key}.${nestedKey}: ${nestedValue}`);
+              });
+            } else {
+              errorMessages.push(`${key}: ${value}`);
+            }
+          });
+          
+          if (errorMessages.length > 0) {
+            setError(`Validation errors: ${errorMessages.join(', ')}`);
+            setLoading(false);
+            return;
+          }
+        }
       }
+      
       setError(
         err.response?.data?.detail || 
         err.response?.data?.message || 
@@ -308,6 +337,38 @@ const AddEmployee = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g. British, American, Indian"
               />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="gender" className="block text-gray-700 text-sm font-medium mb-2">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="dob" className="block text-gray-700 text-sm font-medium mb-2">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                id="dob"
+                name="dob"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Format: YYYY-MM-DD</p>
             </div>
 
             <div className="mb-6">

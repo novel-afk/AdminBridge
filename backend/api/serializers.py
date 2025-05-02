@@ -42,12 +42,16 @@ class EmployeeSerializer(serializers.ModelSerializer):
     joining_date = serializers.DateField(read_only=True)
     profile_image = serializers.ImageField(required=False)
     citizenship_document = serializers.FileField(required=False)
+    nationality = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    gender = serializers.CharField(required=False, default='Other')
+    dob = serializers.DateField(required=False, allow_null=True)
     
     class Meta:
         model = Employee
         fields = ['id', 'user', 'branch', 'branch_name', 'employee_id', 
                   'joining_date', 'salary', 'contact_number', 'address', 
                   'profile_image', 'citizenship_document', 'emergency_contact',
+                  'nationality', 'gender', 'dob',
                   'created_at', 'updated_at']
         
     def create(self, validated_data):

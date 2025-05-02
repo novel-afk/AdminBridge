@@ -9,6 +9,8 @@ interface Employee {
   branch_name: string;
   profile_image: string | null;
   citizenship_document: string | null;
+  dob: string | null;
+  gender: string | null;
   user: {
     id: number;
     email: string;
@@ -19,7 +21,6 @@ interface Employee {
   contact_number: string;
   address: string;
   nationality?: string;
-  gender?: string;
 }
 
 const EmployeeList = () => {
@@ -89,6 +90,17 @@ const EmployeeList = () => {
     }
   };
 
+  // Format date for display
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-6 flex justify-center items-center">
@@ -142,6 +154,12 @@ const EmployeeList = () => {
                       Contact
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      DOB
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gender
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Nationality
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -185,6 +203,12 @@ const EmployeeList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{employee.contact_number}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{formatDate(employee.dob)}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">{employee.gender || '-'}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900">{employee.nationality || '-'}</div>

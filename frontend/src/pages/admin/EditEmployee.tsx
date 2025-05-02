@@ -29,6 +29,8 @@ interface Employee {
   nationality: string | null;
   profile_image: string | null;
   citizenship_document: string | null;
+  dob: string | null;
+  gender: string | null;
 }
 
 const EditEmployee = () => {
@@ -48,6 +50,7 @@ const EditEmployee = () => {
     address: '',
     emergency_contact: '',
     nationality: '',
+    gender: 'Other',
     profile_image: null as string | null,
     citizenship_document: null as string | null
   });
@@ -56,6 +59,7 @@ const EditEmployee = () => {
   const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
   const [newCitizenshipDoc, setNewCitizenshipDoc] = useState<File | null>(null);
   const [citizenshipDocName, setCitizenshipDocName] = useState<string | null>(null);
+  const [dob, setDob] = useState('');
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(true);
@@ -99,6 +103,7 @@ const EditEmployee = () => {
           address: employee.address,
           emergency_contact: employee.emergency_contact || '',
           nationality: employee.nationality || '',
+          gender: employee.gender || 'Other',
           profile_image: employee.profile_image,
           citizenship_document: employee.citizenship_document
         });
@@ -112,6 +117,11 @@ const EditEmployee = () => {
         if (employee.citizenship_document) {
           const docNameParts = employee.citizenship_document.split('/');
           setCitizenshipDocName(docNameParts[docNameParts.length - 1]);
+        }
+        
+        // Set dob if available
+        if (employee.dob) {
+          setDob(employee.dob);
         }
       } catch (err) {
         console.error('Error fetching employee data:', err);
@@ -208,7 +218,9 @@ const EditEmployee = () => {
         contact_number: formData.contact_number,
         address: formData.address,
         emergency_contact: formData.emergency_contact || '',
-        nationality: formData.nationality || ''
+        nationality: formData.nationality || '',
+        gender: formData.gender,
+        dob: dob || null
       };
       
       formDataToSend.append('employee_data', JSON.stringify(employeeData));
@@ -250,7 +262,30 @@ const EditEmployee = () => {
       console.error('Error updating employee:', err);
       if (err.response?.data) {
         console.log('Error details:', err.response.data);
+        
+        // Handle structured error responses
+        if (typeof err.response.data === 'object') {
+          const errorMessages = [];
+          
+          // Process nested errors (like user.email)
+          Object.entries(err.response.data).forEach(([key, value]) => {
+            if (typeof value === 'object') {
+              Object.entries(value as any).forEach(([nestedKey, nestedValue]) => {
+                errorMessages.push(`${key}.${nestedKey}: ${nestedValue}`);
+              });
+            } else {
+              errorMessages.push(`${key}: ${value}`);
+            }
+          });
+          
+          if (errorMessages.length > 0) {
+            setError(`Validation errors: ${errorMessages.join(', ')}`);
+            setLoading(false);
+            return;
+          }
+        }
       }
+      
       setError(
         err.response?.data?.detail || 
         err.response?.data?.message || 
@@ -367,6 +402,38 @@ const EditEmployee = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g. British, American, Indian"
               />
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="gender" className="block text-gray-700 text-sm font-medium mb-2">
+                Gender
+              </label>
+              <select
+                id="gender"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            
+            <div className="mb-6">
+              <label htmlFor="dob" className="block text-gray-700 text-sm font-medium mb-2">
+                Date of Birth
+              </label>
+              <input
+                type="date"
+                id="dob"
+                name="dob"
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">Format: YYYY-MM-DD</p>
             </div>
             
             <div className="mb-6">
