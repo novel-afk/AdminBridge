@@ -95,18 +95,33 @@ class EmployeeSerializer(serializers.ModelSerializer):
 class StudentSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     branch_name = serializers.CharField(source='branch.name', read_only=True)
+    student_id = serializers.CharField(read_only=True)
+    enrollment_date = serializers.DateField(read_only=True)
+    profile_image = serializers.ImageField(required=False)
+    resume = serializers.FileField(required=False)
     
     class Meta:
         model = Student
         fields = ['id', 'user', 'branch', 'branch_name', 'student_id', 
-                  'enrollment_date', 'course', 'fee_status', 
-                  'contact_number', 'address', 'created_at', 'updated_at']
+                  'enrollment_date', 'age', 'gender', 'nationality',
+                  'contact_number', 'address', 'institution_name', 'language_test',
+                  'profile_image', 'emergency_contact', 'mother_name',
+                  'father_name', 'parent_number', 'resume', 'comments',
+                  'created_at', 'updated_at']
         
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user_data['role'] = 'Student'
         user = UserSerializer().create(user_data)
-        student = Student.objects.create(user=user, **validated_data)
+        
+        # Generate unique student ID
+        student_id = f"STD{str(uuid.uuid4())[:8].upper()}"
+        
+        student = Student.objects.create(
+            user=user, 
+            student_id=student_id,
+            **validated_data
+        )
         return student
         
     def update(self, instance, validated_data):

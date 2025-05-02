@@ -114,19 +114,52 @@ class Employee(models.Model):
 
 class Student(models.Model):
     """Student model connected to User"""
+    GENDER_CHOICES = (
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other'),
+    )
+    
+    LANGUAGE_TEST_CHOICES = (
+        ('IELTS', 'IELTS'),
+        ('PTE', 'PTE'),
+        ('TOEFL', 'TOEFL'),
+        ('None', 'None'),
+    )
+    
+    # Basic Information
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='students')
     student_id = models.CharField(max_length=50, unique=True)
-    enrollment_date = models.DateField()
-    course = models.CharField(max_length=100)
-    fee_status = models.CharField(max_length=50)
+    enrollment_date = models.DateField(auto_now_add=True)
+    
+    # Required Fields
+    age = models.IntegerField(default=18)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='Other')
+    nationality = models.CharField(max_length=100, default='Unknown')
     contact_number = models.CharField(max_length=20)
     address = models.TextField()
+    
+    # School/College Information
+    institution_name = models.CharField(max_length=200, verbose_name="College/School Name", default='Unknown')
+    language_test = models.CharField(max_length=10, choices=LANGUAGE_TEST_CHOICES, default='None')
+    
+    # Optional Fields
+    profile_image = models.ImageField(upload_to='student_profiles/', blank=True, null=True)
+    emergency_contact = models.CharField(max_length=20, blank=True, null=True)
+    mother_name = models.CharField(max_length=100, blank=True, null=True)
+    father_name = models.CharField(max_length=100, blank=True, null=True)
+    parent_number = models.CharField(max_length=20, blank=True, null=True)
+    resume = models.FileField(upload_to='student_resumes/', blank=True, null=True,
+                            help_text="Upload CV/Resume (PDF only)")
+    comments = models.TextField(blank=True, null=True)
+    
+    # System Fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name} - {self.course}"
+        return f"{self.user.first_name} {self.user.last_name} - {self.institution_name}"
 
 
 class Lead(models.Model):

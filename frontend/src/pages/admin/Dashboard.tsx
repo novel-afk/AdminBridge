@@ -239,7 +239,7 @@ const AdminDashboard = () => {
           {/* Quick Links Section */}
           <div className="mt-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="bg-white overflow-hidden shadow rounded-lg hover:bg-gray-50 transition-colors duration-300">
                 <a href="/admin/branches/add" className="block p-6">
                   <div className="flex items-center">
@@ -267,6 +267,22 @@ const AdminDashboard = () => {
                     <div className="ml-4">
                       <h3 className="text-lg font-medium text-gray-900">Add New Employee</h3>
                       <p className="text-sm text-gray-500">Register a new staff member</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                <a href="/admin/students/add" className="block p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                      <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900">Add New Student</h3>
+                      <p className="text-sm text-gray-500">Register a new student</p>
                     </div>
                   </div>
                 </a>

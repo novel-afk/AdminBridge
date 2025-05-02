@@ -7,6 +7,10 @@ import EditBranch from './pages/admin/EditBranch';
 import EmployeeList from './pages/admin/EmployeeList';
 import AddEmployee from './pages/admin/AddEmployee';
 import EditEmployee from './pages/admin/EditEmployee';
+import StudentList from './pages/admin/StudentList';
+import AddStudent from './pages/admin/AddStudent';
+import EditStudent from './pages/admin/EditStudent';
+import ViewStudent from './pages/admin/ViewStudent';
 import './App.css'
 
 function App() {
@@ -27,6 +31,12 @@ function App() {
         <Route path="/admin/employees" element={<EmployeeList />} />
         <Route path="/admin/employees/add" element={<AddEmployee />} />
         <Route path="/admin/employees/edit/:id" element={<EditEmployee />} />
+        
+        {/* Student management */}
+        <Route path="/admin/students" element={<StudentList />} />
+        <Route path="/admin/students/add" element={<AddStudent />} />
+        <Route path="/admin/students/edit/:id" element={<EditStudent />} />
+        <Route path="/admin/students/view/:id" element={<ViewStudent />} />
         
         {/* Default routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />

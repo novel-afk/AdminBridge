@@ -58,9 +58,27 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('get_student_name', 'branch', 'student_id', 'course', 'enrollment_date', 'fee_status')
-    list_filter = ('branch', 'course', 'fee_status')
-    search_fields = ('user__first_name', 'user__last_name', 'student_id', 'course')
+    list_display = ('get_student_name', 'branch', 'student_id', 'age', 'gender', 'institution_name', 'language_test')
+    list_filter = ('branch', 'gender', 'language_test', 'nationality')
+    search_fields = ('user__first_name', 'user__last_name', 'student_id', 'institution_name', 'nationality')
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('user', 'student_id', 'branch', 'age', 'gender', 'nationality')
+        }),
+        ('Education Information', {
+            'fields': ('institution_name', 'language_test')
+        }),
+        ('Contact Information', {
+            'fields': ('contact_number', 'emergency_contact', 'address')
+        }),
+        ('Family Information', {
+            'fields': ('mother_name', 'father_name', 'parent_number')
+        }),
+        ('Documents & Notes', {
+            'fields': ('profile_image', 'resume', 'comments')
+        }),
+    )
     
     def get_student_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
