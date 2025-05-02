@@ -235,11 +235,19 @@ class Lead(models.Model):
 
 class Job(models.Model):
     """Job posting model"""
+    JOB_TYPE_CHOICES = (
+        ('Full-Time', 'Full-Time'),
+        ('Part-Time', 'Part-Time'),
+        ('Contract', 'Contract'),
+        ('Internship', 'Internship'),
+        ('Remote', 'Remote'),
+    )
+    
     title = models.CharField(max_length=100)
     description = models.TextField()
     requirements = models.TextField()
-    location = models.CharField(max_length=100)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='jobs')
+    job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='Full-Time')
     salary_range = models.CharField(max_length=100, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_jobs')

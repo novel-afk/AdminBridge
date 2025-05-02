@@ -35,15 +35,40 @@ const Login = () => {
             'Authorization': `Bearer ${response.data.access}`
           }
         });
+        
         // Store the user details
         localStorage.setItem('user', JSON.stringify(userResponse.data));
+        
+        // Route based on user role
+        const userRole = userResponse.data.role;
+        
+        switch(userRole) {
+          case 'SuperAdmin':
+            navigate('/admin/dashboard');
+            break;
+          case 'BranchManager':
+            navigate('/branch-manager/dashboard');
+            break;
+          case 'Counsellor':
+            navigate('/counsellor/dashboard');
+            break;
+          case 'Receptionist':
+            navigate('/receptionist/dashboard');
+            break;
+          case 'BankManager':
+            navigate('/bank-manager/dashboard');
+            break;
+          case 'Student':
+            navigate('/student/dashboard');
+            break;
+          default:
+            navigate('/admin/dashboard');
+        }
       } catch (userError) {
         console.error('Error fetching user details:', userError);
-        // We'll continue with just the email if this fails
+        // Default to admin dashboard if we can't determine role
+        navigate('/admin/dashboard');
       }
-      
-      // Navigate to admin dashboard after successful login
-      navigate('/admin/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Invalid credentials');
     } finally {

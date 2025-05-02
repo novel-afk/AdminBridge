@@ -166,14 +166,22 @@ class LeadSerializer(serializers.ModelSerializer):
 class JobSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     branch_name = serializers.CharField(source='branch.name', read_only=True)
+    branch_location = serializers.SerializerMethodField()
     
     class Meta:
         model = Job
         fields = ['id', 'title', 'description', 'requirements', 
-                  'location', 'branch', 'branch_name', 'salary_range', 
-                  'is_active', 'created_by', 'created_by_name', 
+                  'branch', 'branch_name', 'branch_location', 'job_type',
+                  'salary_range', 'is_active', 'created_by', 'created_by_name', 
                   'created_at', 'updated_at']
         read_only_fields = ['created_by']
+        
+    def get_branch_location(self, obj):
+        if obj.branch:
+            if obj.branch.city and obj.branch.country:
+                return f"{obj.branch.city}, {obj.branch.country}"
+            return obj.branch.address
+        return ""
         
     def create(self, validated_data):
         user = self.context['request'].user

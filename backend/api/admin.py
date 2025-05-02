@@ -110,9 +110,21 @@ class LeadAdmin(admin.ModelAdmin):
 
 
 class JobAdmin(admin.ModelAdmin):
-    list_display = ('title', 'branch', 'location', 'is_active', 'created_by')
-    list_filter = ('branch', 'is_active')
+    list_display = ('title', 'branch', 'job_type', 'is_active', 'created_by')
+    list_filter = ('branch', 'job_type', 'is_active')
     search_fields = ('title', 'description', 'requirements')
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('title', 'branch', 'job_type', 'is_active')
+        }),
+        ('Job Details', {
+            'fields': ('description', 'requirements', 'salary_range')
+        }),
+        ('System Information', {
+            'fields': ('created_by',)
+        }),
+    )
 
 
 class JobResponseAdmin(admin.ModelAdmin):

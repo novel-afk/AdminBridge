@@ -7,6 +7,7 @@ interface DashboardStats {
   employeeCount: number;
   studentCount: number;
   leadCount: number;
+  jobCount: number;
 }
 
 interface User {
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
     employeeCount: 0,
     studentCount: 0,
     leadCount: 0,
+    jobCount: 0,
   });
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -61,6 +63,7 @@ const AdminDashboard = () => {
       employeeCount: 1,
       studentCount: 0,
       leadCount: 0,
+      jobCount: 0,
     });
     setLoading(false);
 
@@ -135,7 +138,7 @@ const AdminDashboard = () => {
           <h1 className="text-2xl font-semibold text-gray-900 mb-6">Admin Dashboard</h1>
           
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {/* Branch Count Card */}
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
@@ -234,12 +237,36 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
+
+            {/* Job Count Card */}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Active Jobs</dt>
+                      <dd className="text-3xl font-semibold text-gray-900">{stats.jobCount}</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="text-sm">
+                  <a href="/admin/jobs" className="font-medium text-purple-600 hover:text-purple-500">View all jobs</a>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Quick Links Section */}
           <div className="mt-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-6">
               <div className="bg-white overflow-hidden shadow rounded-lg hover:bg-gray-50 transition-colors duration-300">
                 <a href="/admin/branches/add" className="block p-6">
                   <div className="flex items-center">
@@ -315,6 +342,38 @@ const AdminDashboard = () => {
                     <div className="ml-4">
                       <h3 className="text-lg font-medium text-gray-900">Manage Leads</h3>
                       <p className="text-sm text-gray-500">View and assign new inquiries</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                <a href="/admin/jobs/add" className="block p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                      <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900">Post New Job</h3>
+                      <p className="text-sm text-gray-500">Create a new job posting</p>
+                    </div>
+                  </div>
+                </a>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg hover:bg-gray-50 transition-colors duration-300">
+                <a href="/admin/jobs" className="block p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                      <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-900">Manage Jobs</h3>
+                      <p className="text-sm text-gray-500">View and edit job postings</p>
                     </div>
                   </div>
                 </a>
