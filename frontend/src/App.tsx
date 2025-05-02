@@ -11,6 +11,10 @@ import StudentList from './pages/admin/StudentList';
 import AddStudent from './pages/admin/AddStudent';
 import EditStudent from './pages/admin/EditStudent';
 import ViewStudent from './pages/admin/ViewStudent';
+import LeadList from './pages/admin/LeadList';
+import AddLead from './pages/admin/AddLead';
+import EditLead from './pages/admin/EditLead';
+import ViewLead from './pages/admin/ViewLead';
 import './App.css'
 
 function App() {
@@ -37,6 +41,12 @@ function App() {
         <Route path="/admin/students/add" element={<AddStudent />} />
         <Route path="/admin/students/edit/:id" element={<EditStudent />} />
         <Route path="/admin/students/view/:id" element={<ViewStudent />} />
+        
+        {/* Lead management */}
+        <Route path="/admin/leads" element={<LeadList />} />
+        <Route path="/admin/leads/add" element={<AddLead />} />
+        <Route path="/admin/leads/edit/:id" element={<EditLead />} />
+        <Route path="/admin/leads/view/:id" element={<ViewLead />} />
         
         {/* Default routes */}
         <Route path="/" element={<Navigate to="/login" replace />} />

@@ -148,9 +148,11 @@ class LeadSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Lead
-        fields = ['id', 'name', 'email', 'phone', 'course_interest', 
-                  'branch', 'branch_name', 'status', 'notes', 
-                  'created_by', 'created_by_name', 
+        fields = ['id', 'name', 'email', 'phone', 'nationality', 
+                  'interested_country', 'interested_degree', 'language_test', 
+                  'language_score', 'referred_by', 'courses_studied', 
+                  'interested_course', 'gpa', 'branch', 'branch_name', 
+                  'lead_source', 'notes', 'created_by', 'created_by_name', 
                   'assigned_to', 'assigned_to_name', 
                   'created_at', 'updated_at']
         read_only_fields = ['created_by']

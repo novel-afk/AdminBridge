@@ -164,28 +164,73 @@ class Student(models.Model):
 
 class Lead(models.Model):
     """Lead model for prospective students"""
-    STATUS_CHOICES = (
-        ('New', 'New'),
-        ('Contacted', 'Contacted'),
-        ('Qualified', 'Qualified'),
-        ('Lost', 'Lost'),
-        ('Converted', 'Converted'),
+    LEAD_SOURCE_CHOICES = (
+        ('Website', 'Website'),
+        ('Social Media', 'Social Media'),
+        ('Referral', 'Referral'),
+        ('Walk-in', 'Walk-in'),
+        ('Phone Inquiry', 'Phone Inquiry'),
+        ('Email', 'Email'),
+        ('Event', 'Event'),
+        ('Other', 'Other'),
     )
     
+    DEGREE_CHOICES = (
+        ('Diploma', 'Diploma'),
+        ('Bachelor', 'Bachelor'),
+        ('Master', 'Master'),
+        ('PhD', 'PhD'),
+    )
+    
+    COUNTRY_CHOICES = (
+        ('USA', 'USA'),
+        ('UK', 'UK'),
+        ('Canada', 'Canada'),
+        ('Australia', 'Australia'),
+        ('New Zealand', 'New Zealand'),
+        ('Germany', 'Germany'),
+        ('France', 'France'),
+        ('Japan', 'Japan'),
+        ('Singapore', 'Singapore'),
+        ('South Korea', 'South Korea'),
+    )
+    
+    LANGUAGE_TEST_CHOICES = (
+        ('None', 'None'),
+        ('IELTS', 'IELTS'),
+        ('TOEFL', 'TOEFL'),
+        ('N1', 'N1'),
+        ('N2', 'N2'),
+        ('N3', 'N3'),
+    )
+    
+    # Required Fields
     name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
-    course_interest = models.CharField(max_length=100)
+    nationality = models.CharField(max_length=100)
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='leads')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='New')
+    
+    # Optional Fields
+    interested_country = models.CharField(max_length=50, choices=COUNTRY_CHOICES, blank=True, null=True)
+    interested_degree = models.CharField(max_length=20, choices=DEGREE_CHOICES, blank=True, null=True)
+    language_test = models.CharField(max_length=10, choices=LANGUAGE_TEST_CHOICES, default='None')
+    language_score = models.DecimalField(max_digits=4, decimal_places=1, blank=True, null=True)
+    referred_by = models.CharField(max_length=100, blank=True, null=True)
+    courses_studied = models.CharField(max_length=200, blank=True, null=True)
+    interested_course = models.CharField(max_length=200, blank=True, null=True)
+    gpa = models.DecimalField(max_digits=3, decimal_places=2, blank=True, null=True)
+    lead_source = models.CharField(max_length=50, choices=LEAD_SOURCE_CHOICES, default='Other')
     notes = models.TextField(blank=True, null=True)
+    
+    # System Fields
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_leads')
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.name} - {self.course_interest}"
+        return f"{self.name} - {self.interested_course or 'No course specified'}"
 
 
 class Job(models.Model):

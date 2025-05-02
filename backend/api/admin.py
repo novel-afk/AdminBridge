@@ -86,9 +86,27 @@ class StudentAdmin(admin.ModelAdmin):
 
 
 class LeadAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'phone', 'branch', 'course_interest', 'status', 'created_by')
-    list_filter = ('branch', 'status', 'course_interest')
-    search_fields = ('name', 'email', 'phone')
+    list_display = ('name', 'email', 'phone', 'nationality', 'branch', 'interested_course', 'lead_source', 'created_by')
+    list_filter = ('branch', 'lead_source', 'interested_degree', 'interested_country', 'language_test')
+    search_fields = ('name', 'email', 'phone', 'nationality', 'interested_course')
+    
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('name', 'email', 'phone', 'nationality', 'branch', 'lead_source')
+        }),
+        ('Education Interests', {
+            'fields': ('interested_country', 'interested_degree', 'interested_course', 'courses_studied', 'gpa')
+        }),
+        ('Language Information', {
+            'fields': ('language_test', 'language_score')
+        }),
+        ('Additional Information', {
+            'fields': ('referred_by', 'notes')
+        }),
+        ('Assignment', {
+            'fields': ('created_by', 'assigned_to')
+        }),
+    )
 
 
 class JobAdmin(admin.ModelAdmin):
