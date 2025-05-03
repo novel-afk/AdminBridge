@@ -250,8 +250,69 @@ const StudentList = () => {
       message: 'Are you sure you want to export the students data?',
       type: 'warning',
       onConfirm: () => {
-        console.log("Exporting data...");
-        // Add your export logic here
+        // Create CSV content
+        const headers = [
+          "ID", 
+          "Student ID", 
+          "First Name", 
+          "Last Name", 
+          "Email", 
+          "Phone", 
+          "Gender", 
+          "Nationality", 
+          "DOB", 
+          "Age",
+          "Address", 
+          "Emergency Contact", 
+          "Father's Name", 
+          "Mother's Name", 
+          "Parent Number", 
+          "Institution", 
+          "Language Test", 
+          "Branch", 
+          "Comments"
+        ];
+        
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+        
+        for (const student of filteredStudents) {
+          const row = [
+            student.id,
+            `"${student.student_id || ''}"`,
+            `"${student.user.first_name || ''}"`,
+            `"${student.user.last_name || ''}"`,
+            `"${student.user.email || ''}"`,
+            `"${student.contact_number || ''}"`,
+            `"${student.gender || ''}"`,
+            `"${student.nationality || ''}"`,
+            `"${student.dob || ''}"`,
+            student.age || '',
+            `"${student.address?.replace(/"/g, '""') || ''}"`,
+            `"${student.emergency_contact || ''}"`,
+            `"${student.father_name || ''}"`,
+            `"${student.mother_name || ''}"`,
+            `"${student.parent_number || ''}"`,
+            `"${student.institution_name || ''}"`,
+            `"${student.language_test || ''}"`,
+            `"${student.branch_name || ''}"`,
+            `"${student.comments?.replace(/"/g, '""') || ''}"`,
+          ];
+          csvRows.push(row.join(','));
+        }
+        
+        const csvContent = csvRows.join('\n');
+        
+        // Create download link
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `students_export_${new Date().toISOString().slice(0,10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       },
     });
   };
