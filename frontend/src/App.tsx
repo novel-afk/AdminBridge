@@ -17,6 +17,7 @@ import AddStudent from './pages/admin/AddStudent';
 import EditStudent from './pages/admin/EditStudent';
 import ViewStudent from './pages/admin/ViewStudent';
 import LeadList from './pages/admin/LeadList';
+import JobPage from './pages/admin/JobPage';
 import Layout from './components/Layout';
 import './App.css'
 
@@ -58,6 +59,9 @@ function App() {
           
           {/* Lead management */}
           <Route path="/admin/leads" element={<LeadList />} />
+          
+          {/* Job management */}
+          <Route path="/admin/jobs" element={<JobPage />} />
         </Route>
         
         {/* Role-based dashboards with layout */}
