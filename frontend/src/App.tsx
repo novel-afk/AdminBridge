@@ -19,6 +19,10 @@ import AddStudent from './pages/admin/AddStudent';
 import EditStudent from './pages/admin/EditStudent';
 import ViewStudent from './pages/admin/ViewStudent';
 import LeadList from './pages/admin/LeadList';
+import BranchManagerLeadList from './pages/branch-manager/LeadList';
+import BranchManagerEmployeeList from './pages/branch-manager/EmployeeList';
+import BranchManagerStudentList from './pages/branch-manager/StudentList';
+import BranchManagerJobPage from './pages/branch-manager/JobPage';
 import JobPage from './pages/admin/JobPage';
 import Profile from './pages/Profile';
 import './App.css'
@@ -71,21 +75,21 @@ function App() {
             <Route path="/branch-manager/dashboard" element={<BranchManagerDashboard />} />
             
             {/* Branch manager can manage employees in their branch */}
-            <Route path="/branch-manager/employees" element={<EmployeeList />} />
+            <Route path="/branch-manager/employees" element={<BranchManagerEmployeeList />} />
             <Route path="/branch-manager/employees/add" element={<AddEmployee />} />
             <Route path="/branch-manager/employees/edit/:id" element={<EditEmployee />} />
             
             {/* Branch manager can manage students in their branch */}
-            <Route path="/branch-manager/students" element={<StudentList />} />
+            <Route path="/branch-manager/students" element={<BranchManagerStudentList />} />
             <Route path="/branch-manager/students/add" element={<AddStudent />} />
             <Route path="/branch-manager/students/edit/:id" element={<EditStudent />} />
             <Route path="/branch-manager/students/view/:id" element={<ViewStudent />} />
             
             {/* Branch manager can see and create leads */}
-            <Route path="/branch-manager/leads" element={<LeadList />} />
+            <Route path="/branch-manager/leads" element={<BranchManagerLeadList />} />
             
             {/* Branch manager can manage jobs in their branch */}
-            <Route path="/branch-manager/jobs" element={<JobPage />} />
+            <Route path="/branch-manager/jobs" element={<BranchManagerJobPage />} />
           </Route>
           
           {/* Counsellor Routes */}
@@ -95,18 +99,6 @@ function App() {
             }
           >
             <Route path="/counsellor/dashboard" element={<CounsellorDashboard />} />
-            
-            {/* Counsellor can view students in their branch */}
-            <Route path="/counsellor/students" element={<StudentList />} />
-            <Route path="/counsellor/students/add" element={<AddStudent />} />
-            <Route path="/counsellor/students/edit/:id" element={<EditStudent />} />
-            <Route path="/counsellor/students/view/:id" element={<ViewStudent />} />
-            
-            {/* Counsellor can view and create leads */}
-            <Route path="/counsellor/leads" element={<LeadList />} />
-            
-            {/* Counsellor can view employees in their branch */}
-            <Route path="/counsellor/employees" element={<EmployeeList />} />
           </Route>
           
           {/* Receptionist Routes */}
@@ -116,16 +108,15 @@ function App() {
             }
           >
             <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
-            
-            {/* Receptionist can view students */}
-            <Route path="/receptionist/students" element={<StudentList />} />
-            <Route path="/receptionist/students/view/:id" element={<ViewStudent />} />
-            
-            {/* Receptionist can create and view leads */}
-            <Route path="/receptionist/leads" element={<LeadList />} />
-            
-            {/* Receptionist can view employees */}
-            <Route path="/receptionist/employees" element={<EmployeeList />} />
+          </Route>
+          
+          {/* Student Routes */}
+          <Route 
+            element={
+              <ProtectedRoute allowedRoles={['Student']} />
+            }
+          >
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
           </Route>
           
           {/* Bank Manager Routes */}
@@ -137,29 +128,17 @@ function App() {
             <Route path="/bank-manager/dashboard" element={<BankManagerDashboard />} />
           </Route>
           
-          {/* Student Routes */}
+          {/* Shared Routes */}
           <Route 
             element={
-              <ProtectedRoute allowedRoles={['Student']} />
-            }
-          >
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/student/profile" element={<Profile />} />
-          </Route>
-          
-          {/* Common Routes for all authenticated users */}
-          <Route
-            element={
-              <ProtectedRoute allowedRoles={['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist', 'BankManager', 'Student']} />
+              <ProtectedRoute allowedRoles={['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist', 'Student', 'BankManager']} />
             }
           >
             <Route path="/profile" element={<Profile />} />
           </Route>
           
-          {/* Default redirect to login */}
+          {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          
-          {/* Catch-all route to login */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>

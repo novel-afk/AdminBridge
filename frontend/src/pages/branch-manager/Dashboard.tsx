@@ -140,7 +140,7 @@ const BranchManagerDashboard = () => {
               Welcome to your Branch Manager dashboard. From here, you can manage your branch operations.
             </p>
 
-            {/* Placeholder for future functionality */}
+            {/* Branch management sections */}
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               <div className="bg-white overflow-hidden shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
@@ -151,7 +151,7 @@ const BranchManagerDashboard = () => {
                 </div>
                 <div className="bg-gray-50 px-4 py-4 sm:px-6">
                   <div className="text-sm">
-                    <a href="#" className="font-medium text-blue-600 hover:text-blue-500">View students</a>
+                    <a href="/branch-manager/students" className="font-medium text-blue-600 hover:text-blue-500">View students</a>
                   </div>
                 </div>
               </div>
@@ -160,12 +160,12 @@ const BranchManagerDashboard = () => {
                 <div className="px-4 py-5 sm:p-6">
                   <h3 className="text-lg font-medium text-gray-900">Branch Staff</h3>
                   <p className="mt-1 text-sm text-gray-500">
-                    Manage counsellors and staff at your branch.
+                    Manage employees at your branch.
                   </p>
                 </div>
                 <div className="bg-gray-50 px-4 py-4 sm:px-6">
                   <div className="text-sm">
-                    <a href="#" className="font-medium text-blue-600 hover:text-blue-500">View staff</a>
+                    <a href="/branch-manager/employees" className="font-medium text-blue-600 hover:text-blue-500">View staff</a>
                   </div>
                 </div>
               </div>
@@ -179,7 +179,21 @@ const BranchManagerDashboard = () => {
                 </div>
                 <div className="bg-gray-50 px-4 py-4 sm:px-6">
                   <div className="text-sm">
-                    <a href="#" className="font-medium text-blue-600 hover:text-blue-500">View leads</a>
+                    <a href="/branch-manager/leads" className="font-medium text-blue-600 hover:text-blue-500">View leads</a>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white overflow-hidden shadow rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                  <h3 className="text-lg font-medium text-gray-900">Branch Jobs</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Manage job listings for your branch.
+                  </p>
+                </div>
+                <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                  <div className="text-sm">
+                    <a href="/branch-manager/jobs" className="font-medium text-blue-600 hover:text-blue-500">View jobs</a>
                   </div>
                 </div>
               </div>

@@ -91,6 +91,10 @@ class BranchManagerPermission(permissions.BasePermission):
         if not request.user.is_authenticated or request.user.role != 'BranchManager':
             return False
             
+        # For Lead, don't allow DELETE operation
+        if hasattr(view, 'queryset') and view.queryset.model.__name__ == 'Lead' and request.method == 'DELETE':
+            return False
+            
         # For list views, we'll filter in the queryset
         # Allow permission here and filter in get_queryset
         return True
@@ -111,7 +115,7 @@ class BranchManagerPermission(permissions.BasePermission):
             
         # For Lead, check branch (CRU permissions)
         elif model_name == 'Lead':
-            if request.method in ['DELETE']:
+            if request.method == 'DELETE':
                 return False
             return obj.branch == manager_branch
             

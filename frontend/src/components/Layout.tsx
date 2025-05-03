@@ -30,15 +30,24 @@ const Sidebar = () => {
       }
     ];
     
-    // SuperAdmin and BranchManager can access branches
-    if (userRole === 'SuperAdmin' || userRole === 'BranchManager') {
-      const prefix = userRole === 'SuperAdmin' ? '/admin' : '/branch-manager';
+    // SuperAdmin gets access to branches
+    if (userRole === 'SuperAdmin') {
       baseItems.push(
-        { path: `${prefix}/branches`, icon: BuildingOfficeIcon, label: 'Branches' },
-        { path: `${prefix}/students`, icon: UserGroupIcon, label: 'Students' },
-        { path: `${prefix}/leads`, icon: UserPlusIcon, label: 'Leads' },
-        { path: `${prefix}/employees`, icon: BriefcaseIcon, label: 'Employees' },
-        { path: `${prefix}/jobs`, icon: ClipboardDocumentListIcon, label: 'Jobs' }
+        { path: '/admin/branches', icon: BuildingOfficeIcon, label: 'Branches' },
+        { path: '/admin/students', icon: UserGroupIcon, label: 'Students' },
+        { path: '/admin/leads', icon: UserPlusIcon, label: 'Leads' },
+        { path: '/admin/employees', icon: BriefcaseIcon, label: 'Employees' },
+        { path: '/admin/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' }
+      );
+    }
+    
+    // BranchManager access without branches
+    if (userRole === 'BranchManager') {
+      baseItems.push(
+        { path: '/branch-manager/students', icon: UserGroupIcon, label: 'Students' },
+        { path: '/branch-manager/leads', icon: UserPlusIcon, label: 'Leads' },
+        { path: '/branch-manager/employees', icon: BriefcaseIcon, label: 'Employees' },
+        { path: '/branch-manager/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' }
       );
     }
     
