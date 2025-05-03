@@ -147,10 +147,12 @@ const Layout: React.FC<LayoutProps> = ({ children, user }) => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar userRole={userInfo.role} />
-      <div className="flex-1">
+      <div className="fixed left-0 top-0 h-screen z-20">
+        <Sidebar userRole={userInfo.role} />
+      </div>
+      <div className="flex-1 ml-64 flex flex-col h-screen">
         <Header user={userInfo} />
-        <main className="p-8">{children}</main>
+        <main className="flex-1 p-8 overflow-auto">{children}</main>
       </div>
     </div>
   );

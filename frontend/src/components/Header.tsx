@@ -33,8 +33,8 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
   const userRole = user?.role || 'Guest';
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="flex justify-between items-center px-6 py-3">
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+      <div className="flex justify-between items-center px-6 py-3 h-16">
         <div className="flex items-center space-x-4">
           <div className="relative">
             <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
