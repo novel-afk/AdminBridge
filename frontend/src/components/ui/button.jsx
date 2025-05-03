@@ -1,37 +1,41 @@
-import React from 'react';
+import * as React from "react"
+import { cva } from "class-variance-authority"
 
-const Button = React.forwardRef(({ 
-  className = '',
-  variant = 'default',
-  size = 'default',
-  children,
-  ...props 
-}, ref) => {
-  const variants = {
-    default: 'bg-[#1e1b4b] hover:bg-[#1e1b4b]/90 text-white',
-    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700',
-    link: 'bg-transparent underline-offset-4 hover:underline text-blue-600',
-    destructive: 'bg-red-600 hover:bg-red-700 text-white',
-  };
+import { cn } from "../../lib/utils"
 
-  const sizes = {
-    default: 'px-4 py-2',
-    sm: 'px-3 py-1 text-sm',
-    lg: 'px-6 py-3 text-lg',
-  };
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-slate-900 text-slate-50 hover:bg-slate-900/90",
+        destructive: "bg-red-500 text-slate-50 hover:bg-red-500/90",
+        outline: "border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900",
+        secondary: "bg-slate-100 text-slate-900 hover:bg-slate-100/80",
+        ghost: "hover:bg-slate-100 hover:text-slate-900",
+        link: "text-slate-900 underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-10 px-4 py-2",
+        sm: "h-9 rounded-md px-3",
+        lg: "h-11 rounded-md px-8",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
 
-  return (
-    <button
-      ref={ref}
-      className={`inline-flex items-center justify-center rounded-md font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-50 disabled:pointer-events-none ${variants[variant]} ${sizes[size]} ${className}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-});
+const Button = React.forwardRef(({ className, variant, size, ...props }, ref) => (
+  <button
+    className={cn(buttonVariants({ variant, size, className }))}
+    ref={ref}
+    {...props}
+  />
+))
+Button.displayName = "Button"
 
-Button.displayName = 'Button';
-
-export { Button }; 
+export { Button, buttonVariants } 
