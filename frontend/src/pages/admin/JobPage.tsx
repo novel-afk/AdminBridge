@@ -438,7 +438,7 @@ export default function JobPage() {
               {filteredJobs.map((job) => (
                 <div 
                   key={job.id}
-                  className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 border border-gray-100"
+                  className="group relative bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_16px_rgba(30,27,75,0.12)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 border border-gray-100"
                 >
                   {/* Checkbox for selection */}
                   <div className="absolute top-3 left-3 z-10">
@@ -450,7 +450,7 @@ export default function JobPage() {
                     />
                   </div>
 
-                  {/* Status Indicator */}
+                  {/* Status Indicator - Top */}
                   <div 
                     className={`absolute top-0 left-0 w-full h-1 ${
                       job.is_active 
@@ -458,8 +458,17 @@ export default function JobPage() {
                         : 'bg-gradient-to-r from-red-400/80 via-red-500 to-red-400/80'
                     }`}
                   />
+                  
+                  {/* Status Indicator - Left Side */}
+                  <div 
+                    className={`absolute top-0 left-0 w-1 h-full ${
+                      job.is_active 
+                        ? 'bg-gradient-to-b from-[#1e1b4b]/60 via-[#1e1b4b] to-[#1e1b4b]/60'
+                        : 'bg-gradient-to-b from-red-400/80 via-red-500 to-red-400/80'
+                    }`}
+                  />
 
-                  <div className="p-5">
+                  <div className="p-5 pl-6">
                     {/* Header */}
                     <div className="flex justify-between items-start">
                       <div className="pl-7">

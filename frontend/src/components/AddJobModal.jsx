@@ -247,7 +247,10 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative">
+        {/* Gradient Line */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#1e1b4b]/60 via-[#1e1b4b] to-[#1e1b4b]/60"></div>
+        
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-800">Add New Job</h2>
@@ -270,39 +273,145 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                  Job Title <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  type="text"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  placeholder="e.g., Senior Software Engineer"
-                  className={`mt-1 ${errors.title ? "border-red-300" : ""}`}
-                />
-                {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left column */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                    Job Title <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    type="text"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleChange}
+                    placeholder="e.g., Senior Software Engineer"
+                    className={`mt-1 ${errors.title ? "border-red-300" : ""}`}
+                  />
+                  {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                </div>
 
-              <div>
-                <Label htmlFor="location" className="block text-sm font-medium text-gray-700">
-                  Location <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="location"
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                  placeholder="e.g., New York, USA"
-                  className={`mt-1 ${errors.location ? "border-red-300" : ""}`}
-                />
-                {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
-              </div>
+                <div>
+                  <Label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                    Location <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="location"
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    placeholder="e.g., New York, USA"
+                    className={`mt-1 ${errors.location ? "border-red-300" : ""}`}
+                  />
+                  {errors.location && <p className="mt-1 text-sm text-red-600">{errors.location}</p>}
+                </div>
+                
+                <div>
+                  <Label htmlFor="branch" className="block text-sm font-medium text-gray-700">
+                    Branch <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    name="branch"
+                    value={formData.branch}
+                    onValueChange={(value) => handleSelectChange('branch', value)}
+                  >
+                    <SelectTrigger id="branch" className={`mt-1 ${errors.branch ? "border-red-300" : ""}`}>
+                      <SelectValue placeholder="Select branch" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {branches.map((branch) => (
+                        <SelectItem key={branch.id} value={branch.id.toString()}>
+                          {branch.name} - {branch.city}, {branch.country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.branch && <p className="mt-1 text-sm text-red-600">{errors.branch}</p>}
+                </div>
 
+                <div>
+                  <Label htmlFor="job_type" className="block text-sm font-medium text-gray-700">
+                    Job Type <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    name="job_type"
+                    value={formData.job_type}
+                    onValueChange={(value) => handleSelectChange('job_type', value)}
+                  >
+                    <SelectTrigger id="job_type" className={`mt-1 ${errors.job_type ? "border-red-300" : ""}`}>
+                      <SelectValue placeholder="Select job type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Full-Time">Full-Time</SelectItem>
+                      <SelectItem value="Part-Time">Part-Time</SelectItem>
+                      <SelectItem value="Contract">Contract</SelectItem>
+                      <SelectItem value="Internship">Internship</SelectItem>
+                      <SelectItem value="Remote">Remote</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.job_type && <p className="mt-1 text-sm text-red-600">{errors.job_type}</p>}
+                </div>
+              </div>
+              
+              {/* Right column */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="status" className="block text-sm font-medium text-gray-700">
+                    Status <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    name="is_active"
+                    value={formData.is_active ? "Open" : "Closed"}
+                    onValueChange={(value) => handleSwitchChange(value === "Open")}
+                  >
+                    <SelectTrigger id="status" className={`mt-1 ${errors.is_active ? "border-red-300" : ""}`}>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Open">Open</SelectItem>
+                      <SelectItem value="Closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="required_experience" className="block text-sm font-medium text-gray-700">
+                    Required Experience <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="required_experience"
+                    type="text"
+                    name="required_experience"
+                    value={formData.required_experience}
+                    onChange={handleChange}
+                    placeholder="e.g., 3-5 years"
+                    className={`mt-1 ${errors.required_experience ? "border-red-300" : ""}`}
+                  />
+                  {errors.required_experience && <p className="mt-1 text-sm text-red-600">{errors.required_experience}</p>}
+                </div>
+
+                <div>
+                  <Label htmlFor="salary_range" className="block text-sm font-medium text-gray-700">
+                    Salary Range <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="salary_range"
+                    type="text"
+                    name="salary_range"
+                    value={formData.salary_range}
+                    onChange={handleChange}
+                    placeholder="e.g., $80,000 - $100,000"
+                    className={`mt-1 ${errors.salary_range ? "border-red-300" : ""}`}
+                  />
+                  {errors.salary_range && <p className="mt-1 text-sm text-red-600">{errors.salary_range}</p>}
+                </div>
+              </div>
+            </div>
+            
+            {/* Full width columns for description and requirements */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
               <div>
                 <Label htmlFor="description" className="block text-sm font-medium text-gray-700">
                   Job Description <span className="text-red-500">*</span>
@@ -333,103 +442,6 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
                   className={`mt-1 min-h-[120px] bg-white text-gray-900 !bg-white border-gray-300 ${errors.requirements ? "border-red-300" : ""}`}
                 />
                 {errors.requirements && <p className="mt-1 text-sm text-red-600">{errors.requirements}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="branch" className="block text-sm font-medium text-gray-700">
-                  Branch <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  name="branch"
-                  value={formData.branch}
-                  onValueChange={(value) => handleSelectChange('branch', value)}
-                >
-                  <SelectTrigger id="branch" className={`mt-1 ${errors.branch ? "border-red-300" : ""}`}>
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id.toString()}>
-                        {branch.name} - {branch.city}, {branch.country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.branch && <p className="mt-1 text-sm text-red-600">{errors.branch}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="job_type" className="block text-sm font-medium text-gray-700">
-                  Job Type <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  name="job_type"
-                  value={formData.job_type}
-                  onValueChange={(value) => handleSelectChange('job_type', value)}
-                >
-                  <SelectTrigger id="job_type" className={`mt-1 ${errors.job_type ? "border-red-300" : ""}`}>
-                    <SelectValue placeholder="Select job type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full-Time">Full-Time</SelectItem>
-                    <SelectItem value="Part-Time">Part-Time</SelectItem>
-                    <SelectItem value="Contract">Contract</SelectItem>
-                    <SelectItem value="Internship">Internship</SelectItem>
-                    <SelectItem value="Remote">Remote</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.job_type && <p className="mt-1 text-sm text-red-600">{errors.job_type}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                  Status <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  name="is_active"
-                  value={formData.is_active ? "Open" : "Closed"}
-                  onValueChange={(value) => handleSwitchChange(value === "Open")}
-                >
-                  <SelectTrigger id="status" className={`mt-1 ${errors.is_active ? "border-red-300" : ""}`}>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Open">Open</SelectItem>
-                    <SelectItem value="Closed">Closed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="required_experience" className="block text-sm font-medium text-gray-700">
-                  Required Experience <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="required_experience"
-                  type="text"
-                  name="required_experience"
-                  value={formData.required_experience}
-                  onChange={handleChange}
-                  placeholder="e.g., 3-5 years"
-                  className={`mt-1 ${errors.required_experience ? "border-red-300" : ""}`}
-                />
-                {errors.required_experience && <p className="mt-1 text-sm text-red-600">{errors.required_experience}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="salary_range" className="block text-sm font-medium text-gray-700">
-                  Salary Range <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="salary_range"
-                  type="text"
-                  name="salary_range"
-                  value={formData.salary_range}
-                  onChange={handleChange}
-                  placeholder="e.g., $80,000 - $100,000"
-                  className={`mt-1 ${errors.salary_range ? "border-red-300" : ""}`}
-                />
-                {errors.salary_range && <p className="mt-1 text-sm text-red-600">{errors.salary_range}</p>}
               </div>
             </div>
           </form>
