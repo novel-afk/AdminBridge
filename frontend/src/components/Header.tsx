@@ -1,26 +1,16 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BellIcon, MagnifyingGlassIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../lib/AuthContext';
 
-interface HeaderProps {
-  user?: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    role?: string;
-  };
-}
-
-const Header: React.FC<HeaderProps> = ({ user }) => {
+const Header = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const handleLogout = () => {
-    // Clear user data from localStorage
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('user_email');
+    // Use the logout function from AuthContext
+    logout();
     
     // Redirect to login page
     navigate('/login');

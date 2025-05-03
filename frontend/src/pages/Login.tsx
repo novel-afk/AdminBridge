@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { XMarkIcon, EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { EyeIcon, EyeSlashIcon, EnvelopeIcon, LockClosedIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../lib/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +12,11 @@ const Login = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+
+  // Get the intended destination from location state, or use default paths by role
+  const from = location.state?.from?.pathname || '/';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,58 +51,45 @@ const Login = () => {
     if (validateForm()) {
       setLoading(true);
       try {
-        // Using the correct endpoint from your Django API
-        const response = await axios.post('http://localhost:8000/api/token/', {
-          email: formData.email,
-          password: formData.password
-        });
-
-        // Store the tokens
-        localStorage.setItem('access_token', response.data.access);
-        localStorage.setItem('refresh_token', response.data.refresh);
+        // Use the login function from AuthContext
+        await login(formData.email, formData.password);
         
-        // Store minimal user info we have
-        localStorage.setItem('user_email', formData.email);
-        
-        // Try to get user details from the me endpoint
-        try {
-          const userResponse = await axios.get('http://localhost:8000/api/users/me/', {
-            headers: {
-              'Authorization': `Bearer ${response.data.access}`
-            }
-          });
+        // Get user details from localStorage to determine role
+        const userString = localStorage.getItem('user');
+        if (userString) {
+          const user = JSON.parse(userString);
+          const userRole = user.role;
           
-          // Store the user details
-          localStorage.setItem('user', JSON.stringify(userResponse.data));
-          
-          // Route based on user role
-          const userRole = userResponse.data.role;
-          
+          // Determine redirect path based on role
+          let redirectPath;
           switch(userRole) {
             case 'SuperAdmin':
-              navigate('/admin/dashboard');
+              redirectPath = '/admin/dashboard';
               break;
             case 'BranchManager':
-              navigate('/branch-manager/dashboard');
+              redirectPath = '/branch-manager/dashboard';
               break;
             case 'Counsellor':
-              navigate('/counsellor/dashboard');
+              redirectPath = '/counsellor/dashboard';
               break;
             case 'Receptionist':
-              navigate('/receptionist/dashboard');
+              redirectPath = '/receptionist/dashboard';
               break;
             case 'BankManager':
-              navigate('/bank-manager/dashboard');
+              redirectPath = '/bank-manager/dashboard';
               break;
             case 'Student':
-              navigate('/student/dashboard');
+              redirectPath = '/student/dashboard';
               break;
             default:
-              navigate('/admin/dashboard');
+              // If from is not login page, navigate there, otherwise default to admin
+              redirectPath = from !== '/login' ? from : '/admin/dashboard';
           }
-        } catch (userError) {
-          console.error('Error fetching user details:', userError);
-          // Default to admin dashboard if we can't determine role
+          
+          // Navigate to appropriate dashboard
+          navigate(redirectPath);
+        } else {
+          // Fallback if no user info
           navigate('/admin/dashboard');
         }
       } catch (err: any) {
@@ -126,6 +118,9 @@ const Login = () => {
           <h1 className="text-3xl font-bold text-[#1a237e] mb-2">Welcome Back</h1>
           <p className="text-gray-600 text-center">
             Please sign in to continue to Admin Bridge
+          </p>
+          <p className="text-xs text-gray-500 mt-2">
+            Default login: Email from database, Password: Nepal@123
           </p>
         </div>
 

@@ -8,48 +8,67 @@ import {
   ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import Header from './Header';
+import { useAuth } from '../lib/AuthContext';
+import { User } from '../lib/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
-  user?: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-    role?: string;
-  };
 }
 
-const Sidebar = ({ userRole }: { userRole?: string }) => {
+const Sidebar = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const userRole = user?.role || '';
 
   // Define menu items based on user role
   const getMenuItems = () => {
     const baseItems = [
-      { path: '/admin/dashboard', icon: HomeIcon, label: 'Dashboard' }
+      { 
+        path: `/${userRole === 'SuperAdmin' ? 'admin' : userRole.toLowerCase()}/dashboard`, 
+        icon: HomeIcon, 
+        label: 'Dashboard'
+      }
     ];
     
     // SuperAdmin and BranchManager can access branches
     if (userRole === 'SuperAdmin' || userRole === 'BranchManager') {
-      baseItems.push({ path: '/admin/branches', icon: BuildingOfficeIcon, label: 'Branches' });
+      const prefix = userRole === 'SuperAdmin' ? '/admin' : '/branch-manager';
+      baseItems.push(
+        { path: `${prefix}/branches`, icon: BuildingOfficeIcon, label: 'Branches' },
+        { path: `${prefix}/students`, icon: UserGroupIcon, label: 'Students' },
+        { path: `${prefix}/leads`, icon: UserPlusIcon, label: 'Leads' },
+        { path: `${prefix}/employees`, icon: BriefcaseIcon, label: 'Employees' },
+        { path: `${prefix}/jobs`, icon: ClipboardDocumentListIcon, label: 'Jobs' }
+      );
     }
     
-    // All admin roles can access these
-    if (userRole && userRole !== 'Student') {
+    // Counsellor access
+    if (userRole === 'Counsellor') {
       baseItems.push(
-        { path: '/admin/students', icon: UserGroupIcon, label: 'Students' },
-        { path: '/admin/leads', icon: UserPlusIcon, label: 'Leads' },
-        { path: '/admin/employees', icon: BriefcaseIcon, label: 'Employees' },
-        { path: '/admin/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' }
+        { path: '/counsellor/students', icon: UserGroupIcon, label: 'Students' },
+        { path: '/counsellor/leads', icon: UserPlusIcon, label: 'Leads' },
+        { path: '/counsellor/employees', icon: BriefcaseIcon, label: 'Employees' }
+      );
+    }
+    
+    // Receptionist access
+    if (userRole === 'Receptionist') {
+      baseItems.push(
+        { path: '/receptionist/students', icon: UserGroupIcon, label: 'Students' },
+        { path: '/receptionist/leads', icon: UserPlusIcon, label: 'Leads' },
+        { path: '/receptionist/employees', icon: BriefcaseIcon, label: 'Employees' }
       );
     }
     
     // Student specific menu
     if (userRole === 'Student') {
       baseItems.push(
-        { path: '/student/profile', icon: UserGroupIcon, label: 'My Profile' },
-        { path: '/student/courses', icon: ClipboardDocumentListIcon, label: 'Courses' }
+        { path: '/student/profile', icon: UserGroupIcon, label: 'My Profile' }
       );
     }
+    
+    // Add profile link for all users
+    baseItems.push({ path: '/profile', icon: UserGroupIcon, label: 'Profile' });
     
     return baseItems;
   };
@@ -119,39 +138,16 @@ const Sidebar = ({ userRole }: { userRole?: string }) => {
   );
 };
 
-const Layout: React.FC<LayoutProps> = ({ children, user }) => {
-  // Retrieve user info from localStorage if not provided directly
-  const getUserInfo = () => {
-    if (user) return user;
-    
-    try {
-      const storedUser = localStorage.getItem('user');
-      return storedUser ? JSON.parse(storedUser) : {
-        first_name: 'Guest',
-        last_name: 'User',
-        email: '',
-        role: ''
-      };
-    } catch (e) {
-      console.error('Error parsing user from localStorage:', e);
-      return {
-        first_name: 'Guest',
-        last_name: 'User',
-        email: '',
-        role: ''
-      };
-    }
-  };
-
-  const userInfo = getUserInfo();
+const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { user } = useAuth();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       <div className="fixed left-0 top-0 h-screen z-20">
-        <Sidebar userRole={userInfo.role} />
+        <Sidebar />
       </div>
       <div className="flex-1 ml-64 flex flex-col h-screen">
-        <Header user={userInfo} />
+        <Header />
         <main className="flex-1 p-8 overflow-auto">{children}</main>
       </div>
     </div>
