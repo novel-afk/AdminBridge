@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { 
@@ -351,8 +351,19 @@ const EmployeeList = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-2xl text-gray-600">Loading...</div>
+      <div className="flex flex-col h-full">
+        <div className="flex-none pb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your staff information</p>
+        </div>
+        
+        <div className="flex-1 flex justify-center items-center">
+          <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+            <div className="text-xl text-gray-600">Loading employees...</div>
+            <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -396,54 +407,87 @@ const EmployeeList = () => {
 
       {/* Page title and controls */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="md:flex md:items-center md:justify-between mb-4">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-              Employee Management
-            </h2>
-          </div>
-          <div className="mt-4 flex md:mt-0 md:ml-4 space-x-2">
-            <Button onClick={() => setIsAddModalOpen(true)} className="inline-flex items-center gap-x-2">
-              <PlusIcon className="h-5 w-5" aria-hidden="true" />
-              Add Employee
-            </Button>
-            <Button onClick={handleExport} variant="outline" className="inline-flex items-center gap-x-2">
-              <ArrowDownTrayIcon className="h-5 w-5" aria-hidden="true" />
-              Export
-            </Button>
-            {selectedEmployees.length > 0 && (
-              <Button onClick={handleDeleteSelected} variant="destructive" className="inline-flex items-center gap-x-2">
-                <TrashIcon className="h-5 w-5" aria-hidden="true" />
-                Delete Selected
-              </Button>
-            )}
-          </div>
-        </div>
+        <div className="flex-none pb-6">
+          <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your staff information</p>
 
-        {/* Search and filter */}
-        <div className="w-full mb-5">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+          <div className="flex justify-between items-center mt-8">
+            <Button 
+              onClick={() => setIsAddModalOpen(true)} 
+              className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              disabled={refreshing}
+            >
+              <PlusIcon className="h-5 w-5" />
+              Add
+            </Button>
+
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => fetchEmployees(true)}
+                disabled={refreshing}
+                className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+              >
+                {refreshing ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleExport} 
+                disabled={filteredEmployees.length === 0 || refreshing}
+                className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                Export
+              </Button>
+              <Button 
+                onClick={handleDeleteSelected} 
+                disabled={selectedEmployees.length === 0 || refreshing}
+                className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
+                variant="ghost"
+              >
+                <TrashIcon className="h-5 w-5" />
+                Delete
+              </Button>
+              <div className="relative ml-2">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Search employees..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
+                  disabled={refreshing}
+                />
+              </div>
             </div>
-            <Input
-              type="text"
-              placeholder="Search employees..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 py-2 block w-full"
-            />
           </div>
         </div>
 
         {/* Error message if any */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            </div>
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {error}
+            <button 
+              onClick={() => fetchEmployees()} 
+              className="ml-auto text-sm text-red-700 hover:text-red-900 underline"
+            >
+              Try Again
+            </button>
           </div>
         )}
 

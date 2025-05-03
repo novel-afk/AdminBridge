@@ -77,8 +77,14 @@ const BranchManagerDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-2xl text-gray-600">Loading...</div>
+      <div className="flex flex-col h-screen">
+        <div className="flex-1 flex justify-center items-center">
+          <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+            <div className="text-xl text-gray-600">Loading dashboard...</div>
+            <p className="text-sm text-gray-500 mt-2">Please wait while we prepare your dashboard</p>
+          </div>
+        </div>
       </div>
     );
   }
@@ -96,8 +102,22 @@ const BranchManagerDashboard = () => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-800">AdminBridge</h1>
+                <a href="/branch-manager/dashboard" className="text-xl font-bold text-gray-800">AdminBridge</a>
               </div>
+              <nav className="ml-6 flex space-x-8">
+                <a href="/branch-manager/students" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Students
+                </a>
+                <a href="/branch-manager/employees" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Employees
+                </a>
+                <a href="/branch-manager/leads" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Leads
+                </a>
+                <a href="/branch-manager/jobs" className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                  Jobs
+                </a>
+              </nav>
             </div>
             <div className="flex items-center">
               <span className="text-gray-700 mr-4">Welcome, {displayName}</span>
@@ -115,12 +135,13 @@ const BranchManagerDashboard = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white overflow-hidden shadow rounded-lg p-6">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-4">Branch Manager Dashboard</h1>
+          <div className="bg-white shadow-lg rounded-lg p-6">
+            <h1 className="text-2xl font-bold text-gray-800">Branch Manager Dashboard</h1>
+            <p className="text-sm text-gray-500 mt-1 mb-6">Access and manage your branch operations</p>
             
             <DefaultPasswordAlert />
             
-            <div className="bg-blue-50 p-4 rounded-md mb-6">
+            <div className="bg-blue-50 p-4 rounded-md mb-6 border border-blue-100">
               <p className="text-blue-800">
                 <span className="font-medium">Role:</span> Branch Manager
               </p>
@@ -135,65 +156,117 @@ const BranchManagerDashboard = () => {
                 </>
               )}
             </div>
-            
-            <p className="text-gray-600">
-              Welcome to your Branch Manager dashboard. From here, you can manage your branch operations.
-            </p>
 
             {/* Branch management sections */}
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">Branch Students</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View and manage students at your branch.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-indigo-100 rounded-md p-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">Students</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        View and manage students at your branch
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-200">
                   <div className="text-sm">
-                    <a href="/branch-manager/students" className="font-medium text-blue-600 hover:text-blue-500">View students</a>
+                    <a href="/branch-manager/students" className="font-medium text-indigo-600 hover:text-indigo-500 flex justify-between items-center">
+                      View students
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">Branch Staff</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Manage employees at your branch.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">Employees</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Manage employees at your branch
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-200">
                   <div className="text-sm">
-                    <a href="/branch-manager/employees" className="font-medium text-blue-600 hover:text-blue-500">View staff</a>
+                    <a href="/branch-manager/employees" className="font-medium text-green-600 hover:text-green-500 flex justify-between items-center">
+                      View staff
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">Branch Leads</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View and manage leads for your branch.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                      </svg>
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">Leads</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        View and manage leads for your branch
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-200">
                   <div className="text-sm">
-                    <a href="/branch-manager/leads" className="font-medium text-blue-600 hover:text-blue-500">View leads</a>
+                    <a href="/branch-manager/leads" className="font-medium text-blue-600 hover:text-blue-500 flex justify-between items-center">
+                      View leads
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">Branch Jobs</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Manage job listings for your branch.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">Jobs</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Manage job listings for your branch
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="bg-gray-50 px-4 py-4 sm:px-6 border-t border-gray-200">
                   <div className="text-sm">
-                    <a href="/branch-manager/jobs" className="font-medium text-blue-600 hover:text-blue-500">View jobs</a>
+                    <a href="/branch-manager/jobs" className="font-medium text-purple-600 hover:text-purple-500 flex justify-between items-center">
+                      View jobs
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </div>
