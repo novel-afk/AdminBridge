@@ -49,6 +49,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (headers['x-default-password'] === 'true') {
       setIsUsingDefaultPassword(true);
     }
+    
+    // Also check if password is Nepal@123 which is our default
+    const storedPassword = localStorage.getItem('temp_password');
+    if (storedPassword === 'Nepal@123') {
+      setIsUsingDefaultPassword(true);
+      // Clear the temporary stored password
+      localStorage.removeItem('temp_password');
+    }
   };
 
   // Check authentication on mount
@@ -93,6 +101,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     
     try {
+      // Temporarily store password to check if default
+      if (password === 'Nepal@123') {
+        localStorage.setItem('temp_password', password);
+      }
+      
       // Get tokens using the API utility
       const response = await authAPI.login(email, password);
       

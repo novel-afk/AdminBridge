@@ -35,6 +35,10 @@ class UserViewSet(viewsets.ModelViewSet):
             permission_classes = [IsSuperAdmin]
         elif self.action in ['update', 'partial_update', 'destroy']:
             permission_classes = [IsSuperAdmin]
+        elif self.action in ['reset_default_password']:
+            permission_classes = [IsSuperAdmin | IsBranchManager]
+        elif self.action in ['change_password']:
+            permission_classes = [permissions.IsAuthenticated]
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -46,6 +50,84 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+        
+    @action(detail=True, methods=['post'])
+    def reset_default_password(self, request, pk=None):
+        """
+        Reset a user's password to the default (Nepal@123)
+        """
+        user = self.get_object()
+        
+        # Branch managers can only reset passwords for users in their branch
+        if request.user.role == 'BranchManager':
+            if not hasattr(request.user, 'employee_profile'):
+                return Response(
+                    {"detail": "You don't have permission to reset this password."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
+            manager_branch = request.user.employee_profile.branch
+            
+            # Check if user belongs to manager's branch
+            user_branch = None
+            if hasattr(user, 'employee_profile'):
+                user_branch = user.employee_profile.branch
+            elif hasattr(user, 'student_profile'):
+                user_branch = user.student_profile.branch
+                
+            if user_branch != manager_branch:
+                return Response(
+                    {"detail": "You don't have permission to reset password for users outside your branch."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        
+        # Don't allow resetting SuperAdmin passwords
+        if user.role == 'SuperAdmin':
+            return Response(
+                {"detail": "Cannot reset password for SuperAdmin users."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        # Reset the password
+        user.set_default_password()
+        
+        return Response({"detail": "Password has been reset to the default."}, status=status.HTTP_200_OK)
+        
+    @action(detail=False, methods=['post'])
+    def change_password(self, request):
+        """
+        Change the current user's password
+        """
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        
+        # Validate input
+        if not current_password or not new_password:
+            return Response(
+                {"detail": "Both current and new password are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Check current password
+        if not user.check_password(current_password):
+            return Response(
+                {"detail": "Current password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Validate new password
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "New password must be at least 8 characters long."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Set new password
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+        
+        return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
     
     def get_queryset(self):
         user = self.request.user
@@ -156,7 +238,8 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 'last_name': request.data.get('user.last_name'),
                 'email': request.data.get('user.email'),
                 'role': request.data.get('user.role'),
-                'password': request.data.get('user.password')
+                # Use default password for non-SuperAdmin roles
+                'password': 'Nepal@123' if request.data.get('user.role') != 'SuperAdmin' else request.data.get('user.password')
             }
             
             # Debug print statements
@@ -310,7 +393,7 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'last_name': request.data.get('user.last_name'),
                 'email': request.data.get('user.email'),
                 'role': 'Student',
-                'password': request.data.get('user.password', 'defaultpassword123')  # Default password
+                'password': 'Nepal@123'  # Default password for all students
             }
             
             # Debug print statements

@@ -119,8 +119,8 @@ const Login = () => {
           <p className="text-gray-600 text-center">
             Please sign in to continue to Admin Bridge
           </p>
-          <p className="text-xs text-gray-500 mt-2">
-            Default login: Email from database, Password: Nepal@123
+          <p className="text-sm text-blue-600 mt-2 bg-blue-50 p-2 rounded-md">
+            Default login for all non-admin users: <span className="font-bold">Nepal@123</span>
           </p>
         </div>
 

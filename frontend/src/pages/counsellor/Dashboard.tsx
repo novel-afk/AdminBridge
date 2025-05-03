@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
 
 interface User {
   id: number;
@@ -116,6 +117,8 @@ const CounsellorDashboard = () => {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white overflow-hidden shadow rounded-lg p-6">
             <h1 className="text-2xl font-semibold text-gray-900 mb-4">Counsellor Dashboard</h1>
+            
+            <DefaultPasswordAlert />
             
             <div className="bg-green-50 p-4 rounded-md mb-6">
               <p className="text-green-800">

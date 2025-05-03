@@ -12,11 +12,14 @@ class UserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
+        
+        # Set default password for non-SuperAdmin roles
+        if not password and extra_fields.get('role') and extra_fields.get('role') != 'SuperAdmin':
+            password = 'Nepal@123'
+            
         user.set_password(password)
         user.save(using=self._db)
         return user
-
-
 
     def create_user(self, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', False)
@@ -59,6 +62,14 @@ class User(AbstractUser, PermissionsMixin):
     
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.role})"
+        
+    def set_default_password(self):
+        """Set the default password for non-SuperAdmin users"""
+        if self.role != 'SuperAdmin':
+            self.set_password('Nepal@123')
+            self.save(update_fields=['password'])
+            return True
+        return False
 
 
 class Branch(models.Model):

@@ -66,6 +66,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "api.middleware.RoleBasedAccessMiddleware",
     "api.middleware.BranchAccessMiddleware",
+    "api.middleware.DefaultPasswordFlagMiddleware",
 ]
 
 ROOT_URLCONF = "admin_bridge.urls"
