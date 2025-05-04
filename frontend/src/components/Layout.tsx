@@ -9,6 +9,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import Header from './Header';
+import StudentHeader from './StudentHeader';
 import { useAuth } from '../lib/AuthContext';
 import { User } from '../lib/AuthContext';
 
@@ -17,6 +18,15 @@ interface LayoutProps {
   showSidebar?: boolean;
   showHeader?: boolean;
 }
+
+// Student-specific layout that always shows StudentHeader
+export const StudentLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col w-full">
+      <main className="w-full flex-1 overflow-auto">{children}</main>
+    </div>
+  );
+};
 
 const Sidebar = () => {
   const location = useLocation();
@@ -190,13 +200,18 @@ const PublicHeader = () => {
 
 const Layout: React.FC<LayoutProps> = ({ 
   children, 
-  showSidebar = false, 
-  showHeader = false
+  showSidebar = true, 
+  showHeader = true
 }) => {
   const { user } = useAuth();
-
+  const userRole = user?.role || '';
+  const isStudent = userRole === 'Student';
+  
+  // Hide sidebar for Student role
+  const shouldShowSidebar = showSidebar && !isStudent;
+  
   // Simple layout with just the content (no headers)
-  if (!showSidebar && !showHeader) {
+  if (!shouldShowSidebar && !showHeader) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <main className="w-full flex-1">{children}</main>
@@ -205,7 +220,7 @@ const Layout: React.FC<LayoutProps> = ({
   }
 
   // Public layout with just the header
-  if (!showSidebar && showHeader) {
+  if (!shouldShowSidebar && showHeader && !isStudent) {
     return (
       <div className="flex flex-col min-h-screen bg-gray-50">
         <PublicHeader />
@@ -213,18 +228,28 @@ const Layout: React.FC<LayoutProps> = ({
       </div>
     );
   }
+  
+  // Student layout with student header
+  if (isStudent && showHeader) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <StudentHeader />
+        <main className="w-full flex-1 overflow-auto">{children}</main>
+      </div>
+    );
+  }
 
-  // Full layout with sidebar and header
+  // Full layout with sidebar and header for non-student roles
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {showSidebar && (
+      {shouldShowSidebar && (
         <div className="fixed left-0 top-0 h-screen z-20">
           <Sidebar />
         </div>
       )}
-      <div className={`flex-1 ${showSidebar ? 'ml-64' : ''} flex flex-col h-screen`}>
-        {showHeader && <Header />}
-        <main className={`flex-1 ${showHeader ? 'p-8' : ''} overflow-auto`}>{children}</main>
+      <div className={`flex-1 ${shouldShowSidebar ? 'ml-64' : ''} flex flex-col h-screen`}>
+        {showHeader && !isStudent && <Header />}
+        <main className={`flex-1 ${showHeader && !isStudent ? 'p-8' : ''} overflow-auto`}>{children}</main>
       </div>
     </div>
   );

@@ -165,6 +165,9 @@ export const leadAPI = {
 export const jobAPI = {
   getAll: () => 
     api.get('/jobs/'),
+    
+  getActive: () => 
+    api.get('/jobs/?is_active=true&ordering=-created_at'),
   
   getById: (id: number) => 
     api.get(`/jobs/${id}/`),
@@ -204,6 +207,9 @@ export const branchAPI = {
 export const blogAPI = {
   getAll: () => 
     api.get('/blogs/'),
+    
+  getPublished: () => 
+    api.get('/blogs/?status=published&ordering=-published_date'),
   
   getById: (id: number) => 
     api.get(`/blogs/${id}/`),

@@ -4,8 +4,7 @@ import axios from 'axios';
 import { Calendar, User, ArrowLeft, Clock } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import Layout from '../../components/Layout';
-import StudentHeader from '../../components/StudentHeader';
+import { StudentLayout } from '../../components/Layout';
 
 interface Blog {
   id: number;
@@ -86,112 +85,109 @@ const BlogDetail: React.FC = () => {
   };
 
   return (
-    <>
-      <StudentHeader />
-      <Layout showSidebar={false} showHeader={false}>
-        <div className="container mx-auto px-6 py-12">
-          {loading ? (
-            <div className="text-center py-12">Loading article...</div>
-          ) : !blog ? (
-            <div className="text-center py-12">
-              <p>Article not found or has been removed.</p>
+    <StudentLayout>
+      <div className="container mx-auto px-6 py-12">
+        {loading ? (
+          <div className="text-center py-12">Loading article...</div>
+        ) : !blog ? (
+          <div className="text-center py-12">
+            <p>Article not found or has been removed.</p>
+            <Button 
+              variant="outline"
+              className="mt-4"
+              onClick={() => navigate('/student/blogs')}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Articles
+            </Button>
+          </div>
+        ) : (
+          <div className="flex flex-col max-w-4xl mx-auto">
+            <div className="mb-6">
               <Button 
                 variant="outline"
-                className="mt-4"
+                className="mb-6"
                 onClick={() => navigate('/student/blogs')}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Articles
               </Button>
-            </div>
-          ) : (
-            <div className="flex flex-col max-w-4xl mx-auto">
-              <div className="mb-6">
-                <Button 
-                  variant="outline"
-                  className="mb-6"
-                  onClick={() => navigate('/student/blogs')}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Articles
-                </Button>
-                
-                <h1 className="text-4xl font-bold text-[#153147] mb-4">{blog.title}</h1>
-                
-                <div className="flex flex-wrap items-center gap-4 mb-6">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-700">{blog.author.first_name} {blog.author.last_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-700">{formatDate(blog.published_date || blog.created_at)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-700">{calculateReadingTime(blog.content)} min read</span>
-                  </div>
+              
+              <h1 className="text-4xl font-bold text-[#153147] mb-4">{blog.title}</h1>
+              
+              <div className="flex flex-wrap items-center gap-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{blog.author.first_name} {blog.author.last_name}</span>
                 </div>
-                
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {getRandomTags(blog.id).map((tag, index) => (
-                    <Badge 
-                      key={index} 
-                      variant="outline" 
-                      className="bg-[#153147]/5 text-[#153147] border-[#153147]/20"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{formatDate(blog.published_date || blog.created_at)}</span>
                 </div>
-                
-                {blog.featured_image && (
-                  <div className="mb-8">
-                    <img 
-                      src={blog.featured_image} 
-                      alt={blog.title} 
-                      className="w-full h-auto rounded-xl object-cover"
-                      style={{ maxHeight: '400px' }}
-                    />
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-gray-400" />
+                  <span className="text-gray-700">{calculateReadingTime(blog.content)} min read</span>
+                </div>
               </div>
               
-              <div className="prose prose-lg max-w-none mb-12">
-                {blog.content.split('\n\n').map((paragraph, index) => (
-                  <p key={index} className="mb-6 text-gray-700 leading-relaxed">
-                    {paragraph}
-                  </p>
+              <div className="flex flex-wrap gap-2 mb-8">
+                {getRandomTags(blog.id).map((tag, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="outline" 
+                    className="bg-[#153147]/5 text-[#153147] border-[#153147]/20"
+                  >
+                    {tag}
+                  </Badge>
                 ))}
               </div>
               
-              <div className="border-t border-gray-200 pt-8 mt-8">
-                <h3 className="text-lg font-semibold text-[#153147] mb-4">About the Author</h3>
-                <div className="flex items-center gap-4">
-                  <div className="bg-[#153147] text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
-                    {blog.author.first_name.charAt(0)}
-                    {blog.author.last_name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-medium">{blog.author.first_name} {blog.author.last_name}</p>
-                    <p className="text-gray-500 text-sm">{blog.branch.name}</p>
-                  </div>
+              {blog.featured_image && (
+                <div className="mb-8">
+                  <img 
+                    src={blog.featured_image} 
+                    alt={blog.title} 
+                    className="w-full h-auto rounded-xl object-cover"
+                    style={{ maxHeight: '400px' }}
+                  />
+                </div>
+              )}
+            </div>
+            
+            <div className="prose prose-lg max-w-none mb-12">
+              {blog.content.split('\n\n').map((paragraph, index) => (
+                <p key={index} className="mb-6 text-gray-700 leading-relaxed">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+            
+            <div className="border-t border-gray-200 pt-8 mt-8">
+              <h3 className="text-lg font-semibold text-[#153147] mb-4">About the Author</h3>
+              <div className="flex items-center gap-4">
+                <div className="bg-[#153147] text-white rounded-full w-12 h-12 flex items-center justify-center text-xl font-bold">
+                  {blog.author.first_name.charAt(0)}
+                  {blog.author.last_name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-medium">{blog.author.first_name} {blog.author.last_name}</p>
+                  <p className="text-gray-500 text-sm">{blog.branch.name}</p>
                 </div>
               </div>
-              
-              <div className="mt-12 text-center">
-                <Button 
-                  onClick={() => navigate('/student/blogs')}
-                  className="bg-[#153147] hover:bg-[#0e2336]"
-                >
-                  Read more articles
-                </Button>
-              </div>
             </div>
-          )}
-        </div>
-      </Layout>
-    </>
+            
+            <div className="mt-12 text-center">
+              <Button 
+                onClick={() => navigate('/student/blogs')}
+                className="bg-[#153147] hover:bg-[#0e2336]"
+              >
+                Read more articles
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </StudentLayout>
   );
 };
 
