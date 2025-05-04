@@ -47,6 +47,7 @@ import StudentBlogs from './pages/student/Blogs';
 import StudentProfile from './pages/student/Profile';
 import StudentJobDetail from './pages/student/JobDetail';
 import StudentBlogDetail from './pages/student/BlogDetail';
+import JobApplications from './pages/student/JobApplications';
 
 import './App.css'
 
@@ -187,6 +188,7 @@ function App() {
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/student/jobs" element={<StudentJobs />} />
             <Route path="/student/jobs/:id" element={<StudentJobDetail />} />
+            <Route path="/student/applications" element={<JobApplications />} />
             <Route path="/student/blogs" element={<StudentBlogs />} />
             <Route path="/student/blogs/:id" element={<StudentBlogDetail />} />
             <Route path="/student/profile" element={<StudentProfile />} />

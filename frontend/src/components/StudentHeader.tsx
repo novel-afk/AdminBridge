@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/AuthContext';
-import { Home, Briefcase, BookOpen, User, LogOut, Menu, X } from 'lucide-react';
+import { Home, Briefcase, BookOpen, User, LogOut, Menu, X, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 
 const StudentHeader: React.FC = () => {
@@ -13,6 +13,7 @@ const StudentHeader: React.FC = () => {
   const menuItems = [
     { path: '/student/dashboard', icon: <Home className="h-5 w-5" />, label: 'Home' },
     { path: '/student/jobs', icon: <Briefcase className="h-5 w-5" />, label: 'Jobs' },
+    { path: '/student/applications', icon: <FileText className="h-5 w-5" />, label: 'My Applications' },
     { path: '/student/blogs', icon: <BookOpen className="h-5 w-5" />, label: 'Blogs' },
     { path: '/student/profile', icon: <User className="h-5 w-5" />, label: 'Profile' },
   ];

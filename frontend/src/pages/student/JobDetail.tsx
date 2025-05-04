@@ -80,14 +80,25 @@ const JobDetail: React.FC = () => {
         ) : (
           <div className="flex flex-col">
             <div className="mb-6">
-              <Button 
-                variant="outline"
-                className="mb-4"
-                onClick={() => navigate('/student/jobs')}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Jobs
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline"
+                  className="mb-4"
+                  onClick={() => navigate('/student/jobs')}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Jobs
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  className="mb-4"
+                  onClick={() => navigate('/student/applications')}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  My Applications
+                </Button>
+              </div>
               
               <div className="flex justify-between items-start">
                 <div>
