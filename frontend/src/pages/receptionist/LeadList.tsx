@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { UserPlusIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../lib/AuthContext';
 
 interface Lead {
   id: number;
@@ -13,9 +14,11 @@ interface Lead {
   nationality: string;
   created_at: string;
   lead_source: string;
+  branch: number;
 }
 
 const ReceptionistLeadList = () => {
+  const { user } = useAuth();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +37,12 @@ const ReceptionistLeadList = () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        setLeads(response.data);
+        // Filter leads by branch if the receptionist has a branch
+        const filteredLeads = user?.branch 
+          ? response.data.filter((lead: Lead) => lead.branch === user.branch)
+          : response.data;
+
+        setLeads(filteredLeads);
         setLoading(false);
       } catch (err: any) {
         console.error('Error fetching leads:', err);
@@ -44,7 +52,7 @@ const ReceptionistLeadList = () => {
     };
 
     fetchLeads();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -78,7 +86,7 @@ const ReceptionistLeadList = () => {
       <div className="flex justify-between items-center p-6 border-b">
         <h1 className="text-2xl font-semibold text-gray-800">Lead Management</h1>
         <Link 
-          to="/receptionist/leads/add" 
+          to="/receptionist/add-lead" 
           className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
         >
           <UserPlusIcon className="w-5 h-5 mr-2" />

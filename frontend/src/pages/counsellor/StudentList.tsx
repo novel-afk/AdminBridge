@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { UserIcon, PencilSquareIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../lib/AuthContext';
 
 interface Student {
   id: number;
@@ -16,9 +17,11 @@ interface Student {
   contact_number: string;
   nationality: string;
   enrollment_date: string;
+  branch: number;
 }
 
 const CounsellorStudentList = () => {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +40,12 @@ const CounsellorStudentList = () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        setStudents(response.data);
+        // Filter students by branch if the counsellor has a branch
+        const filteredStudents = user?.branch 
+          ? response.data.filter((student: Student) => student.branch === user.branch)
+          : response.data;
+
+        setStudents(filteredStudents);
         setLoading(false);
       } catch (err: any) {
         console.error('Error fetching students:', err);
@@ -47,7 +55,7 @@ const CounsellorStudentList = () => {
     };
 
     fetchStudents();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -71,7 +79,7 @@ const CounsellorStudentList = () => {
       <div className="flex justify-between items-center p-6 border-b">
         <h1 className="text-2xl font-semibold text-gray-800">Student Management</h1>
         <Link 
-          to="/counsellor/students/add" 
+          to="/counsellor/add-student" 
           className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
         >
           <UserIcon className="w-5 h-5 mr-2" />
@@ -135,7 +143,7 @@ const CounsellorStudentList = () => {
                       <EyeIcon className="w-5 h-5" />
                     </Link>
                     <Link 
-                      to={`/counsellor/students/edit/${student.id}`} 
+                      to={`/counsellor/edit-student/${student.id}`} 
                       className="text-indigo-600 hover:text-indigo-900"
                       title="Edit"
                     >

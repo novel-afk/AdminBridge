@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { UserPlusIcon, PencilSquareIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../../lib/AuthContext';
+import { leadAPI } from '../../lib/api';
 
 interface Lead {
   id: number;
@@ -13,12 +15,14 @@ interface Lead {
   nationality: string;
   created_at: string;
   lead_source: string;
+  branch: number;
 }
 
 const CounsellorLeadList = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -30,11 +34,17 @@ const CounsellorLeadList = () => {
           return;
         }
 
+        // Only fetch leads from the counsellor's branch
         const response = await axios.get('http://localhost:8000/api/leads/', {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        setLeads(response.data);
+        // Filter leads by branch
+        const filteredLeads = user?.branch 
+          ? response.data.filter((lead: Lead) => lead.branch === user.branch)
+          : response.data;
+
+        setLeads(filteredLeads);
         setLoading(false);
       } catch (err: any) {
         console.error('Error fetching leads:', err);
@@ -44,7 +54,7 @@ const CounsellorLeadList = () => {
     };
 
     fetchLeads();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -78,7 +88,7 @@ const CounsellorLeadList = () => {
       <div className="flex justify-between items-center p-6 border-b">
         <h1 className="text-2xl font-semibold text-gray-800">Lead Management</h1>
         <Link 
-          to="/counsellor/leads/add" 
+          to="/counsellor/add-lead" 
           className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
         >
           <UserPlusIcon className="w-5 h-5 mr-2" />
@@ -147,7 +157,7 @@ const CounsellorLeadList = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
                     <Link 
-                      to={`/counsellor/leads/edit/${lead.id}`} 
+                      to={`/counsellor/edit-lead/${lead.id}`} 
                       className="text-indigo-600 hover:text-indigo-900"
                       title="Edit"
                     >

@@ -30,11 +30,12 @@ import BranchManagerBlogList from './pages/branch-manager/BlogList';
 import CounsellorStudentList from './pages/counsellor/StudentList';
 import CounsellorLeadList from './pages/counsellor/LeadList';
 import CounsellorEmployeeList from './pages/counsellor/EmployeeList';
-import CounsellorBlogList from './pages/counsellor/BlogList';
+import CounsellorAddLead from './pages/counsellor/AddLead';
+import CounsellorAddStudent from './pages/counsellor/AddStudent';
 import ReceptionistStudentList from './pages/receptionist/StudentList';
 import ReceptionistLeadList from './pages/receptionist/LeadList';
+import ReceptionistAddLead from './pages/receptionist/AddLead';
 import ReceptionistEmployeeList from './pages/receptionist/EmployeeList';
-import ReceptionistBlogList from './pages/receptionist/BlogList';
 import JobPage from './pages/admin/JobPage';
 import JobResponsePage from './pages/admin/JobResponsePage';
 import Profile from './pages/Profile';
@@ -140,20 +141,17 @@ function App() {
             
             {/* Counsellor can manage students in their branch */}
             <Route path="/counsellor/students" element={<CounsellorStudentList />} />
-            <Route path="/counsellor/students/add" element={<AddStudent />} />
-            <Route path="/counsellor/students/edit/:id" element={<EditStudent />} />
+            <Route path="/counsellor/add-student" element={<CounsellorAddStudent />} />
+            <Route path="/counsellor/edit-student/:id" element={<EditStudent />} />
             <Route path="/counsellor/students/view/:id" element={<ViewStudent />} />
             
             {/* Counsellor can manage leads in their branch */}
             <Route path="/counsellor/leads" element={<CounsellorLeadList />} />
-            <Route path="/counsellor/leads/add" element={<AddLead />} />
-            <Route path="/counsellor/leads/edit/:id" element={<EditLead />} />
+            <Route path="/counsellor/add-lead" element={<CounsellorAddLead />} />
+            <Route path="/counsellor/edit-lead/:id" element={<EditLead />} />
             
             {/* Counsellor can view employees in their branch */}
             <Route path="/counsellor/employees" element={<CounsellorEmployeeList />} />
-            
-            {/* Counsellor can view blogs in their branch */}
-            <Route path="/counsellor/blogs" element={<CounsellorBlogList />} />
           </Route>
           
           {/* Receptionist Routes */}
@@ -170,13 +168,10 @@ function App() {
             
             {/* Receptionist can create and view leads in their branch */}
             <Route path="/receptionist/leads" element={<ReceptionistLeadList />} />
-            <Route path="/receptionist/leads/add" element={<AddLead />} />
+            <Route path="/receptionist/add-lead" element={<ReceptionistAddLead />} />
             
             {/* Receptionist can view employees in their branch */}
             <Route path="/receptionist/employees" element={<ReceptionistEmployeeList />} />
-            
-            {/* Receptionist can view blogs in their branch */}
-            <Route path="/receptionist/blogs" element={<ReceptionistBlogList />} />
           </Route>
           
           {/* Student Routes */}

@@ -73,8 +73,7 @@ const Sidebar = () => {
       baseItems.push(
         { path: '/counsellor/students', icon: UserGroupIcon, label: 'Students' },
         { path: '/counsellor/leads', icon: UserPlusIcon, label: 'Leads' },
-        { path: '/counsellor/employees', icon: BriefcaseIcon, label: 'Employees' },
-        { path: '/counsellor/blogs', icon: DocumentTextIcon, label: 'Blogs' }
+        { path: '/counsellor/employees', icon: BriefcaseIcon, label: 'Employees' }
       );
     }
     
@@ -83,8 +82,7 @@ const Sidebar = () => {
       baseItems.push(
         { path: '/receptionist/students', icon: UserGroupIcon, label: 'Students' },
         { path: '/receptionist/leads', icon: UserPlusIcon, label: 'Leads' },
-        { path: '/receptionist/employees', icon: BriefcaseIcon, label: 'Employees' },
-        { path: '/receptionist/blogs', icon: DocumentTextIcon, label: 'Blogs' }
+        { path: '/receptionist/employees', icon: BriefcaseIcon, label: 'Employees' }
       );
     }
     
