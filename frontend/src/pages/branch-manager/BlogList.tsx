@@ -1,0 +1,540 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  MagnifyingGlassIcon, 
+  PlusIcon, 
+  ArrowDownTrayIcon, 
+  TrashIcon, 
+  EyeIcon, 
+  PencilIcon 
+} from '@heroicons/react/24/outline';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Checkbox } from '../../components/ui/checkbox';
+import { Badge } from '../../components/ui/badge';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import AddBlogModal from '../../components/AddBlogModal';
+import EditBlogModal from '../../components/EditBlogModal';
+import ViewBlogModal from '../../components/ViewBlogModal';
+import { blogAPI } from '../../lib/api';
+import { useAuth } from '../../lib/AuthContext';
+
+interface Blog {
+  id: number;
+  title: string;
+  content: string;
+  thumbnail_image: string | null;
+  branch: number;
+  branch_name: string;
+  author: number;
+  author_name: string;
+  created_at: string;
+  updated_at: string;
+  status: 'draft' | 'published';
+  slug: string;
+  tags: string[];
+}
+
+const columns = [
+  { key: "select", label: "" },
+  { key: "sNo", label: "S.No" },
+  { key: "title", label: "Title" },
+  { key: "author", label: "Author" },
+  { key: "status", label: "Status" },
+  { key: "created", label: "Created At" },
+  { key: "updated", label: "Updated At" },
+  { key: "actions", label: "Actions" },
+];
+
+const BranchManagerBlogList = () => {
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // UI state variables
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedBlogs, setSelectedBlogs] = useState<number[]>([]);
+  const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  // Confirmation modal states
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'success' as 'success' | 'warning' | 'danger',
+    confirmText: 'Confirm'
+  });
+
+  const showConfirmation = (config: Partial<typeof confirmationModal>) => {
+    setConfirmationModal({
+      ...confirmationModal,
+      isOpen: true,
+      ...config,
+    });
+  };
+  
+  // Function to fetch blogs from API
+  const fetchBlogs = async (showRefreshing = false) => {
+    try {
+      if (showRefreshing) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError('');
+      
+      // Branch Manager can only see blogs from their branch
+      if (!user?.branch) {
+        setError('Branch information not available.');
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+      
+      // Make API call filtered by branch
+      const response = await blogAPI.getByBranch(user.branch);
+      
+      setBlogs(response.data);
+      setLoading(false);
+      setRefreshing(false);
+    } catch (err: any) {
+      console.error('Error fetching blogs:', err);
+      setError(err.response?.data?.detail || 'Failed to fetch blogs. Please try again.');
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    // Check if user is logged in and is a Branch Manager
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      navigate('/login');
+      return;
+    }
+    
+    if (user?.role !== 'BranchManager') {
+      navigate('/login');
+      return;
+    }
+
+    fetchBlogs();
+  }, [navigate, user]);
+
+  // Filtered blogs based on search query
+  const filteredBlogs = blogs.filter((blog) =>
+    blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    blog.author_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    blog.status.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentBlogs = filteredBlogs.slice(startIndex, endIndex);
+
+  const handleSelectBlog = (id: number) => {
+    setSelectedBlogs((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((blogId) => blogId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allBlogIds = currentBlogs.map((blog) => blog.id);
+      setSelectedBlogs(allBlogIds);
+    } else {
+      setSelectedBlogs([]);
+    }
+  };
+
+  const handleExport = () => {
+    // Convert blogs to CSV
+    const headers = columns.filter(col => col.key !== 'select' && col.key !== 'actions').map(col => col.label);
+    
+    const rows = selectedBlogs.length > 0 
+      ? filteredBlogs.filter(blog => selectedBlogs.includes(blog.id)) 
+      : filteredBlogs;
+    
+    const csvRows = rows.map(blog => {
+      return [
+        '',
+        blog.id,
+        blog.title,
+        blog.author_name,
+        blog.status,
+        new Date(blog.created_at).toLocaleString(),
+        new Date(blog.updated_at).toLocaleString(),
+      ].join(',');
+    });
+    
+    const csvContent = `${headers.join(',')}\n${csvRows.join('\n')}`;
+    
+    // Create a blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'branch_blogs_export.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedBlogs.length === 0) return;
+    
+    showConfirmation({
+      title: 'Delete Selected Blogs',
+      message: `Are you sure you want to delete ${selectedBlogs.length} selected blog${selectedBlogs.length > 1 ? 's' : ''}?`,
+      type: 'danger',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          // Delete each selected blog
+          for (const blogId of selectedBlogs) {
+            await blogAPI.delete(blogId);
+          }
+          
+          // Refresh blog list
+          fetchBlogs(true);
+          setSelectedBlogs([]);
+          
+          // Show success message
+          showConfirmation({
+            title: 'Success',
+            message: `${selectedBlogs.length} blog${selectedBlogs.length > 1 ? 's were' : ' was'} deleted successfully.`,
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false }))
+          });
+        } catch (err: any) {
+          console.error('Error deleting blogs:', err);
+          // Show error message
+          showConfirmation({
+            title: 'Error',
+            message: err.response?.data?.detail || 'Failed to delete blogs. Please try again.',
+            type: 'danger',
+            confirmText: 'OK',
+            onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false }))
+          });
+        }
+      }
+    });
+  };
+
+  const handleDeleteSingle = (blog: Blog) => {
+    showConfirmation({
+      title: 'Delete Blog',
+      message: `Are you sure you want to delete the blog "${blog.title}"?`,
+      type: 'danger',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await blogAPI.delete(blog.id);
+          
+          // Refresh blog list
+          fetchBlogs(true);
+          
+          // Show success message
+          showConfirmation({
+            title: 'Success',
+            message: 'Blog was deleted successfully.',
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false }))
+          });
+        } catch (err: any) {
+          console.error('Error deleting blog:', err);
+          // Show error message
+          showConfirmation({
+            title: 'Error',
+            message: err.response?.data?.detail || 'Failed to delete blog. Please try again.',
+            type: 'danger',
+            confirmText: 'OK',
+            onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false }))
+          });
+        }
+      }
+    });
+  };
+
+  const handleView = (blog: Blog) => {
+    setSelectedBlog(blog);
+    setIsViewModalOpen(true);
+  };
+
+  const handleEdit = (blog: Blog) => {
+    setSelectedBlog(blog);
+    setIsEditModalOpen(true);
+  };
+
+  const handleAddSuccess = () => {
+    fetchBlogs(true);
+    setIsAddModalOpen(false);
+  };
+
+  const handleEditSuccess = () => {
+    fetchBlogs(true);
+    setIsEditModalOpen(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">Branch Blogs</h1>
+        <div className="flex space-x-2">
+          <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Add Blog
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="p-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4">
+          <div className="flex flex-1 min-w-[260px]">
+            <div className="relative w-full">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+              <Input
+                type="text"
+                placeholder="Search blogs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2 w-full"
+              />
+            </div>
+          </div>
+          
+          <div className="flex space-x-2">
+            <Button 
+              onClick={handleExport}
+              variant="outline" 
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              disabled={blogs.length === 0}
+            >
+              <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+              Export
+            </Button>
+            
+            <Button
+              onClick={handleDeleteSelected}
+              variant="outline"
+              className="border-red-300 text-red-700 hover:bg-red-50"
+              disabled={selectedBlogs.length === 0}
+            >
+              <TrashIcon className="h-5 w-5 mr-2" />
+              Delete Selected
+            </Button>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left">
+                  <Checkbox
+                    checked={currentBlogs.length > 0 && selectedBlogs.length === currentBlogs.length}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  S.No
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Author
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Created At
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Updated At
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentBlogs.length > 0 ? (
+                currentBlogs.map((blog, index) => (
+                  <tr key={blog.id} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Checkbox
+                        checked={selectedBlogs.includes(blog.id)}
+                        onCheckedChange={() => handleSelectBlog(blog.id)}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {startIndex + index + 1}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {blog.title}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {blog.author_name}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <Badge 
+                        className={`${
+                          blog.status === 'published' 
+                            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                            : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                        } px-2 py-1 text-xs`}
+                      >
+                        {blog.status ? blog.status.charAt(0).toUpperCase() + blog.status.slice(1) : 'Unknown'}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(blog.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(blog.updated_at).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex space-x-2">
+                        <Button 
+                          onClick={() => handleView(blog)} 
+                          size="sm"
+                          variant="ghost"
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        >
+                          <EyeIcon className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => handleEdit(blog)} 
+                          size="sm"
+                          variant="ghost"
+                          className="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => handleDeleteSingle(blog)} 
+                          size="sm"
+                          variant="ghost"
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                    {error ? 
+                      <div className="text-red-500">{error}</div> :
+                      blogs.length === 0 ? 
+                        "No blogs found. Create your first blog!" : 
+                        "No blogs match your search criteria."
+                    }
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center border-t border-gray-200 px-4 py-3 sm:px-6">
+            <div className="flex items-center">
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+                <span className="font-medium">
+                  {Math.min(endIndex, filteredBlogs.length)}
+                </span>{" "}
+                of <span className="font-medium">{filteredBlogs.length}</span> results
+              </p>
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="text-sm rounded"
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="text-sm rounded"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        confirmText={confirmationModal.confirmText}
+        onConfirm={confirmationModal.onConfirm}
+        onCancel={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        type={confirmationModal.type}
+      />
+      
+      {/* Add Blog Modal */}
+      <AddBlogModal
+        isOpen={isAddModalOpen}
+        onSuccess={handleAddSuccess}
+        onClose={() => setIsAddModalOpen(false)}
+      />
+      
+      {/* Edit Blog Modal */}
+      <EditBlogModal
+        isOpen={isEditModalOpen}
+        blog={selectedBlog}
+        onSuccess={handleEditSuccess}
+        onClose={() => setIsEditModalOpen(false)}
+      />
+      
+      {/* View Blog Modal */}
+      <ViewBlogModal
+        isOpen={isViewModalOpen}
+        blog={selectedBlog}
+        onClose={() => setIsViewModalOpen(false)}
+      />
+    </div>
+  );
+};
+
+export default BranchManagerBlogList; 

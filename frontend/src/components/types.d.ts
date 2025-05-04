@@ -27,3 +27,23 @@ export interface Student {
   parent_number?: string;
   comments?: string;
 }
+
+export interface Employee {
+  // ... existing properties ...
+}
+
+export interface Blog {
+  id: number;
+  title: string;
+  content: string;
+  thumbnail_image?: string | null;
+  branch: number;
+  branch_name?: string;
+  author: number;
+  author_name?: string;
+  created_at: string;
+  updated_at: string;
+  status: 'draft' | 'published';
+  slug?: string;
+  tags?: string[];
+}

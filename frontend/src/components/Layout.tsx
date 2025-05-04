@@ -6,6 +6,7 @@ import {
   BriefcaseIcon,
   BuildingOfficeIcon,
   ClipboardDocumentListIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import Header from './Header';
 import { useAuth } from '../lib/AuthContext';
@@ -37,7 +38,8 @@ const Sidebar = () => {
         { path: '/admin/students', icon: UserGroupIcon, label: 'Students' },
         { path: '/admin/leads', icon: UserPlusIcon, label: 'Leads' },
         { path: '/admin/employees', icon: BriefcaseIcon, label: 'Employees' },
-        { path: '/admin/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' }
+        { path: '/admin/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' },
+        { path: '/admin/blogs', icon: DocumentTextIcon, label: 'Blogs' }
       );
     }
     
@@ -47,7 +49,8 @@ const Sidebar = () => {
         { path: '/branch-manager/students', icon: UserGroupIcon, label: 'Students' },
         { path: '/branch-manager/leads', icon: UserPlusIcon, label: 'Leads' },
         { path: '/branch-manager/employees', icon: BriefcaseIcon, label: 'Employees' },
-        { path: '/branch-manager/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' }
+        { path: '/branch-manager/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' },
+        { path: '/branch-manager/blogs', icon: DocumentTextIcon, label: 'Blogs' }
       );
     }
     
@@ -56,7 +59,8 @@ const Sidebar = () => {
       baseItems.push(
         { path: '/counsellor/students', icon: UserGroupIcon, label: 'Students' },
         { path: '/counsellor/leads', icon: UserPlusIcon, label: 'Leads' },
-        { path: '/counsellor/employees', icon: BriefcaseIcon, label: 'Employees' }
+        { path: '/counsellor/employees', icon: BriefcaseIcon, label: 'Employees' },
+        { path: '/counsellor/blogs', icon: DocumentTextIcon, label: 'Blogs' }
       );
     }
     
@@ -65,7 +69,8 @@ const Sidebar = () => {
       baseItems.push(
         { path: '/receptionist/students', icon: UserGroupIcon, label: 'Students' },
         { path: '/receptionist/leads', icon: UserPlusIcon, label: 'Leads' },
-        { path: '/receptionist/employees', icon: BriefcaseIcon, label: 'Employees' }
+        { path: '/receptionist/employees', icon: BriefcaseIcon, label: 'Employees' },
+        { path: '/receptionist/blogs', icon: DocumentTextIcon, label: 'Blogs' }
       );
     }
     

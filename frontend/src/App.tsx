@@ -21,16 +21,20 @@ import ViewStudent from './pages/admin/ViewStudent';
 import LeadList from './pages/admin/LeadList';
 import AddLead from './pages/admin/AddLead';
 import EditLead from './pages/admin/EditLead';
+import BlogList from './pages/admin/BlogList';
 import BranchManagerLeadList from './pages/branch-manager/LeadList';
 import BranchManagerEmployeeList from './pages/branch-manager/EmployeeList';
 import BranchManagerStudentList from './pages/branch-manager/StudentList';
 import BranchManagerJobPage from './pages/branch-manager/JobPage';
+import BranchManagerBlogList from './pages/branch-manager/BlogList';
 import CounsellorStudentList from './pages/counsellor/StudentList';
 import CounsellorLeadList from './pages/counsellor/LeadList';
 import CounsellorEmployeeList from './pages/counsellor/EmployeeList';
+import CounsellorBlogList from './pages/counsellor/BlogList';
 import ReceptionistStudentList from './pages/receptionist/StudentList';
 import ReceptionistLeadList from './pages/receptionist/LeadList';
 import ReceptionistEmployeeList from './pages/receptionist/EmployeeList';
+import ReceptionistBlogList from './pages/receptionist/BlogList';
 import JobPage from './pages/admin/JobPage';
 import Profile from './pages/Profile';
 import './App.css'
@@ -72,6 +76,9 @@ function App() {
             
             {/* Job management */}
             <Route path="/admin/jobs" element={<JobPage />} />
+            
+            {/* Blog management */}
+            <Route path="/admin/blogs" element={<BlogList />} />
           </Route>
           
           {/* Branch Manager Routes */}
@@ -98,6 +105,9 @@ function App() {
             
             {/* Branch manager can manage jobs in their branch */}
             <Route path="/branch-manager/jobs" element={<BranchManagerJobPage />} />
+            
+            {/* Branch manager can manage blogs in their branch */}
+            <Route path="/branch-manager/blogs" element={<BranchManagerBlogList />} />
           </Route>
           
           {/* Counsellor Routes */}
@@ -121,6 +131,9 @@ function App() {
             
             {/* Counsellor can view employees in their branch */}
             <Route path="/counsellor/employees" element={<CounsellorEmployeeList />} />
+            
+            {/* Counsellor can view blogs in their branch */}
+            <Route path="/counsellor/blogs" element={<CounsellorBlogList />} />
           </Route>
           
           {/* Receptionist Routes */}
@@ -141,6 +154,9 @@ function App() {
             
             {/* Receptionist can view employees in their branch */}
             <Route path="/receptionist/employees" element={<ReceptionistEmployeeList />} />
+            
+            {/* Receptionist can view blogs in their branch */}
+            <Route path="/receptionist/blogs" element={<ReceptionistBlogList />} />
           </Route>
           
           {/* Student Routes */}

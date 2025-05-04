@@ -198,4 +198,26 @@ export const branchAPI = {
   
   delete: (id: number) => 
     api.delete(`/branches/${id}/`),
+};
+
+// Blog API
+export const blogAPI = {
+  getAll: () => 
+    api.get('/blogs/'),
+  
+  getById: (id: number) => 
+    api.get(`/blogs/${id}/`),
+  
+  create: (blogData: any) => 
+    api.post('/blogs/', blogData),
+  
+  update: (id: number, blogData: any) => 
+    api.put(`/blogs/${id}/`, blogData),
+  
+  delete: (id: number) => 
+    api.delete(`/blogs/${id}/`),
+    
+  // Additional endpoint to get blogs by branch
+  getByBranch: (branchId: number) => 
+    api.get(`/blogs/?branch=${branchId}`),
 }; 
