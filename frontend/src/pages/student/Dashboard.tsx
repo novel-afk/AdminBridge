@@ -127,7 +127,7 @@ const Dashboard: React.FC = () => {
   const JobCard = ({ job }: { job: FeaturedJob }) => (
     <Link 
       to={`/student/jobs/${job.id}`}
-      className="bg-white rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#EDEAE4] group transform hover:-translate-y-2"
+      className="bg-white rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-[#EDEAE4] group transform hover:-translate-y-2 hover:border-blue-300"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -164,7 +164,7 @@ const Dashboard: React.FC = () => {
     <Link 
       key={blog.id}
       to={`/student/blogs/${blog.id}`}
-      className="bg-[#F9F8F7] rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#EDEAE4] group transform hover:-translate-y-2"
+      className="bg-[#F9F8F7] rounded-xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-[#EDEAE4] group transform hover:-translate-y-3 hover:border-indigo-300"
     >
       <div className="mb-4">
         <h3 className="text-xl font-semibold text-[#153147] group-hover:text-[#232A2F] transition-colors">

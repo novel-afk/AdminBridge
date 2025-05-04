@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, ArrowLeft, Building } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -7,6 +7,7 @@ import { StudentLayout } from '../../components/Layout';
 
 const JobApplications: React.FC = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   // Sample job applications with only accepted/rejected statuses
   const sampleApplications = [
@@ -64,13 +65,19 @@ const JobApplications: React.FC = () => {
           <p className="text-gray-600 mb-6">
             See the status of your job applications reviewed by branch managers or administrators.
           </p>
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-6">
+              {error}
+            </div>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sampleApplications.map((application) => (
             <div 
               key={application.id} 
-              className="bg-white rounded-xl border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300"
+              className="bg-white rounded-xl border-2 border-gray-200 shadow-2xl hover:shadow-2xl transition-all duration-300"
             >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6 border-b pb-4">

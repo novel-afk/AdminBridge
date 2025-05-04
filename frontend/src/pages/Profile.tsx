@@ -123,14 +123,14 @@ const Profile = () => {
         <div className="p-6">
           <div className="flex items-start">
             <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
-              {user.first_name?.[0]}{user.last_name?.[0]}
+              {user?.first_name?.[0]}{user?.last_name?.[0]}
             </div>
             
             <div className="ml-6">
-              <h2 className="text-2xl font-bold text-gray-900">{user.first_name} {user.last_name}</h2>
-              <p className="text-gray-600">{user.email}</p>
+              <h2 className="text-2xl font-bold text-gray-900">{user?.first_name || ''} {user?.last_name || ''}</h2>
+              <p className="text-gray-600">{user?.email || 'No email available'}</p>
               <div className="mt-2 inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                {user.role}
+                {user?.role || 'User'}
               </div>
             </div>
           </div>
@@ -142,19 +142,19 @@ const Profile = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <p className="text-sm text-gray-500">First Name</p>
-              <p className="text-gray-800">{user.first_name}</p>
+              <p className="text-gray-800">{user?.first_name || 'Not provided'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Last Name</p>
-              <p className="text-gray-800">{user.last_name}</p>
+              <p className="text-gray-800">{user?.last_name || 'Not provided'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Email</p>
-              <p className="text-gray-800">{user.email}</p>
+              <p className="text-gray-800">{user?.email || 'Not provided'}</p>
             </div>
             <div>
               <p className="text-sm text-gray-500">Role</p>
-              <p className="text-gray-800">{user.role}</p>
+              <p className="text-gray-800">{user?.role || 'Not specified'}</p>
             </div>
           </div>
           

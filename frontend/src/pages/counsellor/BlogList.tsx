@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MagnifyingGlassIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { 
+  MagnifyingGlassIcon, 
+  ArrowDownTrayIcon, 
+  EyeIcon 
+} from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
@@ -28,6 +32,7 @@ const CounsellorBlogList = () => {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
   
@@ -44,9 +49,11 @@ const CounsellorBlogList = () => {
       setLoading(true);
       setError('');
       
-      // Counsellor can only see blogs from their branch
+      // Try to fetch all published blogs if branch information is missing
       if (!user?.branch) {
-        setError('Branch information not available.');
+        console.warn('Branch information not available, fetching published blogs instead');
+        const response = await blogAPI.getPublished();
+        setBlogs(response.data);
         setLoading(false);
         return;
       }
@@ -60,6 +67,15 @@ const CounsellorBlogList = () => {
       console.error('Error fetching blogs:', err);
       setError(err.response?.data?.detail || 'Failed to fetch blogs. Please try again.');
       setLoading(false);
+      
+      // Fallback to published blogs on error
+      try {
+        const response = await blogAPI.getPublished();
+        setBlogs(response.data);
+        setError('');
+      } catch (fallbackErr) {
+        console.error('Error fetching fallback blogs:', fallbackErr);
+      }
     }
   };
 
@@ -97,6 +113,33 @@ const CounsellorBlogList = () => {
     setIsViewModalOpen(true);
   };
 
+  const handleExport = () => {
+    // Convert blogs to CSV
+    const headers = ['S.No', 'Title', 'Author', 'Status', 'Created At', 'Updated At'];
+    
+    const csvRows = filteredBlogs.map((blog, index) => {
+      return [
+        index + 1,
+        blog.title,
+        blog.author_name,
+        blog.status,
+        new Date(blog.created_at).toLocaleString(),
+        new Date(blog.updated_at).toLocaleString(),
+      ].join(',');
+    });
+    
+    const csvContent = `${headers.join(',')}\n${csvRows.join('\n')}`;
+    
+    // Create a blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'blogs_export.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -108,7 +151,19 @@ const CounsellorBlogList = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Blogs</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Branch Blogs</h1>
+        {blogs.length > 0 && (
+          <div className="flex space-x-2">
+            <Button 
+              onClick={handleExport}
+              variant="outline" 
+              className="border-gray-300 text-gray-700 hover:bg-gray-100"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+              Export
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -147,6 +202,9 @@ const CounsellorBlogList = () => {
                   Created At
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Updated At
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -178,6 +236,9 @@ const CounsellorBlogList = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(blog.created_at).toLocaleString()}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(blog.updated_at).toLocaleString()}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <Button 
@@ -194,11 +255,11 @@ const CounsellorBlogList = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                     {error ? 
                       <div className="text-red-500">{error}</div> :
                       blogs.length === 0 ? 
-                        "No blogs found in your branch." : 
+                        user?.branch ? "No blogs found in your branch." : "No blogs available at this time." : 
                         "No blogs match your search criteria."
                     }
                   </td>

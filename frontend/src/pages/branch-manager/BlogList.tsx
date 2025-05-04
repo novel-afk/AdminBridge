@@ -92,9 +92,11 @@ const BranchManagerBlogList = () => {
       }
       setError('');
       
-      // Branch Manager can only see blogs from their branch
+      // Try to fetch all published blogs if branch information is missing
       if (!user?.branch) {
-        setError('Branch information not available.');
+        console.warn('Branch information not available, fetching published blogs instead');
+        const response = await blogAPI.getPublished();
+        setBlogs(response.data);
         setLoading(false);
         setRefreshing(false);
         return;
@@ -111,6 +113,15 @@ const BranchManagerBlogList = () => {
       setError(err.response?.data?.detail || 'Failed to fetch blogs. Please try again.');
       setLoading(false);
       setRefreshing(false);
+      
+      // Fallback to published blogs on error
+      try {
+        const response = await blogAPI.getPublished();
+        setBlogs(response.data);
+        setError('');
+      } catch (fallbackErr) {
+        console.error('Error fetching fallback blogs:', fallbackErr);
+      }
     }
   };
 
@@ -457,7 +468,7 @@ const BranchManagerBlogList = () => {
                     {error ? 
                       <div className="text-red-500">{error}</div> :
                       blogs.length === 0 ? 
-                        "No blogs found. Create your first blog!" : 
+                        user?.branch ? "No blogs found in your branch." : "No blogs available at this time." : 
                         "No blogs match your search criteria."
                     }
                   </td>
