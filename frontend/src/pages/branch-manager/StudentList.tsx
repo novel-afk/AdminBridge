@@ -315,7 +315,6 @@ const StudentList = (): ReactElement => {
           setSelectedStudent(null);
           fetchStudents(true);
         }}
-        student={selectedStudent}
         hideBranch={true}
       />
       <AddStudentModal
