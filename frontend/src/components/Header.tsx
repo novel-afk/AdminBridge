@@ -18,7 +18,7 @@ const Header = () => {
 
   const userName = user?.first_name && user?.last_name 
     ? `${user.first_name} ${user.last_name}` 
-    : 'User';
+    : (user?.email || 'User');
     
   const userRole = user?.role || 'Guest';
 
@@ -48,7 +48,9 @@ const Header = () => {
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#1A3A64] to-[#2A4A7F] flex items-center justify-center text-white text-sm font-medium">
-                {userName.split(' ').map(name => name[0]).join('')}
+                {user?.first_name && user?.last_name 
+                  ? userName.split(' ').map(name => name[0]).join('')
+                  : user?.email?.[0]?.toUpperCase() || 'U'}
               </div>
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium text-gray-700">{userName}</span>

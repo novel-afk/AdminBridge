@@ -28,6 +28,9 @@ import BranchManagerJobPage from './pages/branch-manager/JobPage';
 import CounsellorStudentList from './pages/counsellor/StudentList';
 import CounsellorLeadList from './pages/counsellor/LeadList';
 import CounsellorEmployeeList from './pages/counsellor/EmployeeList';
+import ReceptionistStudentList from './pages/receptionist/StudentList';
+import ReceptionistLeadList from './pages/receptionist/LeadList';
+import ReceptionistEmployeeList from './pages/receptionist/EmployeeList';
 import JobPage from './pages/admin/JobPage';
 import Profile from './pages/Profile';
 import './App.css'
@@ -127,6 +130,17 @@ function App() {
             }
           >
             <Route path="/receptionist/dashboard" element={<ReceptionistDashboard />} />
+            
+            {/* Receptionist can view students in their branch */}
+            <Route path="/receptionist/students" element={<ReceptionistStudentList />} />
+            <Route path="/receptionist/students/view/:id" element={<ViewStudent />} />
+            
+            {/* Receptionist can create and view leads in their branch */}
+            <Route path="/receptionist/leads" element={<ReceptionistLeadList />} />
+            <Route path="/receptionist/leads/add" element={<AddLead />} />
+            
+            {/* Receptionist can view employees in their branch */}
+            <Route path="/receptionist/employees" element={<ReceptionistEmployeeList />} />
           </Route>
           
           {/* Student Routes */}
