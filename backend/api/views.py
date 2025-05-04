@@ -279,6 +279,12 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
             self.perform_create(serializer)
+            
+            # Send email notification for new employee
+            if user_data['role'] in ['BranchManager', 'Counsellor', 'Receptionist']:
+                from utils.email_sender import send_employee_credentials_email
+                send_employee_credentials_email(user_data, employee_data)
+                
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
@@ -402,30 +408,25 @@ class StudentViewSet(viewsets.ModelViewSet):
             print("User data:", user_data)
             print("Student data:", student_data)
             
-            # Create a new serializer context with all the data needed
+            # Create a serializer context with all the data needed
             serializer_data = {
                 'user': user_data,
                 'branch': student_data.get('branch'),
-                'age': student_data.get('age'),
-                'gender': student_data.get('gender'),
-                'nationality': student_data.get('nationality'),
-                'contact_number': student_data.get('contact_number'),
-                'address': student_data.get('address'),
-                'institution_name': student_data.get('institution_name'),
-                'language_test': student_data.get('language_test'),
+                'registration_number': student_data.get('registration_number', ''),
+                'contact_number': student_data.get('contact_number', ''),
+                'address': student_data.get('address', ''),
                 'emergency_contact': student_data.get('emergency_contact', ''),
-                'mother_name': student_data.get('mother_name', ''),
-                'father_name': student_data.get('father_name', ''),
-                'parent_number': student_data.get('parent_number', ''),
-                'comments': student_data.get('comments', '')
+                'dob': student_data.get('dob'),  # Add date of birth field
+                'nationality': student_data.get('nationality', ''),
+                'gender': student_data.get('gender', 'Other'),  # Default to Other if not provided
             }
             
             # Handle file uploads if they exist
             if 'profile_image' in request.FILES:
                 serializer_data['profile_image'] = request.FILES['profile_image']
                 
-            if 'resume' in request.FILES:
-                serializer_data['resume'] = request.FILES['resume']
+            if 'citizenship_document' in request.FILES:
+                serializer_data['citizenship_document'] = request.FILES['citizenship_document']
             
             # Debug the serializer data
             print("Serializer data:", serializer_data)
@@ -438,6 +439,11 @@ class StudentViewSet(viewsets.ModelViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
             self.perform_create(serializer)
+            
+            # Send email notification to the new student
+            from utils.email_sender import send_employee_credentials_email
+            send_employee_credentials_email(user_data, student_data)
+            
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         
