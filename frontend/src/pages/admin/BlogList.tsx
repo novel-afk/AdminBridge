@@ -6,7 +6,10 @@ import {
   ArrowDownTrayIcon, 
   TrashIcon, 
   EyeIcon, 
-  PencilIcon 
+  PencilIcon,
+  CalendarIcon,
+  UserIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -19,6 +22,26 @@ import ViewBlogModal from '../../components/ViewBlogModal';
 import { blogAPI } from '../../lib/api';
 import { useAuth } from '../../lib/AuthContext';
 
+// This is the type from the API response
+interface ApiBlog {
+  id: number;
+  title: string;
+  content: string;
+  featured_image: string | null;
+  branch: number;
+  branch_name: string;
+  author: number;
+  author_name: string;
+  created_at: string;
+  updated_at: string;
+  status: 'draft' | 'published';
+  is_published?: boolean;
+  published_date?: string | null;
+  slug: string;
+  tags: string[];
+}
+
+// This type is used by the components (with thumbnail_image instead of featured_image)
 interface Blog {
   id: number;
   title: string;
@@ -48,7 +71,7 @@ const columns = [
 ];
 
 const BlogList = () => {
-  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogs, setBlogs] = useState<ApiBlog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -63,7 +86,7 @@ const BlogList = () => {
   const [selectedBlogs, setSelectedBlogs] = useState<number[]>([]);
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 9; // Changed from 10 to 9 for better grid layout (3x3)
   
   // Confirmation modal states
   const [confirmationModal, setConfirmationModal] = useState({
@@ -74,6 +97,18 @@ const BlogList = () => {
     type: 'success' as 'success' | 'warning' | 'danger',
     confirmText: 'Confirm'
   });
+
+  // Helper function to convert from ApiBlog to Blog type
+  const convertApiBlogToBlog = (apiBlog: ApiBlog): Blog => {
+    return {
+      ...apiBlog,
+      thumbnail_image: apiBlog.featured_image,
+      // Ensure all fields from Blog interface are present
+      slug: apiBlog.slug || '',
+      tags: apiBlog.tags || [],
+      status: apiBlog.status || (apiBlog.is_published ? 'published' : 'draft')
+    };
+  };
 
   const showConfirmation = (config: Partial<typeof confirmationModal>) => {
     setConfirmationModal({
@@ -123,7 +158,7 @@ const BlogList = () => {
     blog.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     blog.branch_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     blog.author_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    blog.status.toLowerCase().includes(searchQuery.toLowerCase())
+    (blog.status?.toLowerCase() || '').includes(searchQuery.toLowerCase())
   );
 
   // Pagination logic
@@ -166,7 +201,7 @@ const BlogList = () => {
         blog.title,
         blog.branch_name,
         blog.author_name,
-        blog.status,
+        blog.status || (blog.is_published ? 'published' : 'draft'),
         new Date(blog.created_at).toLocaleString(),
         new Date(blog.updated_at).toLocaleString(),
       ].join(',');
@@ -226,7 +261,7 @@ const BlogList = () => {
     });
   };
 
-  const handleDeleteSingle = (blog: Blog) => {
+  const handleDeleteSingle = (blog: ApiBlog) => {
     showConfirmation({
       title: 'Delete Blog',
       message: `Are you sure you want to delete the blog "${blog.title}"?`,
@@ -262,13 +297,13 @@ const BlogList = () => {
     });
   };
 
-  const handleView = (blog: Blog) => {
-    setSelectedBlog(blog);
+  const handleView = (blog: ApiBlog) => {
+    setSelectedBlog(convertApiBlogToBlog(blog));
     setIsViewModalOpen(true);
   };
 
-  const handleEdit = (blog: Blog) => {
-    setSelectedBlog(blog);
+  const handleEdit = (blog: ApiBlog) => {
+    setSelectedBlog(convertApiBlogToBlog(blog));
     setIsEditModalOpen(true);
   };
 
@@ -282,10 +317,32 @@ const BlogList = () => {
     setIsEditModalOpen(false);
   };
 
+  // Function to generate a placeholder image if featured image is missing
+  const getImageUrl = (blog: ApiBlog) => {
+    if (blog.featured_image) return blog.featured_image;
+    
+    // Use a deterministic placeholder based on blog ID
+    const imageId = (blog.id % 10) + 1; // 1-10 range
+    return `https://source.unsplash.com/collection/1346951/800x450?sig=${imageId}`;
+  };
+  
+  // Function to truncate text
+  const truncateText = (text: string, maxLength: number) => {
+    if (!text) return '';
+    const strippedText = text.replace(/<[^>]*>?/gm, '');
+    return strippedText.length > maxLength ? strippedText.slice(0, maxLength) + '...' : strippedText;
+  };
+
+  // Get blog status (handle different API field names)
+  const getBlogStatus = (blog: ApiBlog): string => {
+    if (blog.status) return blog.status;
+    return blog.is_published ? 'published' : 'draft';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="w-16 h-16 border-4 border-t-blue-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -340,127 +397,138 @@ const BlogList = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left">
-                  <Checkbox
-                    checked={currentBlogs.length > 0 && selectedBlogs.length === currentBlogs.length}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  S.No
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Branch
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Updated At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentBlogs.length > 0 ? (
-                currentBlogs.map((blog, index) => (
-                  <tr key={blog.id} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
-                    <td className="px-6 py-4 whitespace-nowrap">
+        {/* Select All Checkbox */}
+        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center">
+          <Checkbox
+            checked={currentBlogs.length > 0 && selectedBlogs.length === currentBlogs.length}
+            onCheckedChange={handleSelectAll}
+            className="mr-2"
+          />
+          <span className="text-sm text-gray-600">
+            {selectedBlogs.length > 0 ? 
+              `${selectedBlogs.length} blog${selectedBlogs.length > 1 ? 's' : ''} selected` : 
+              'Select all blogs on this page'
+            }
+          </span>
+        </div>
+
+        {/* Blog Cards Grid View */}
+        <div className="p-6">
+          {currentBlogs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentBlogs.map((blog) => (
+                <div 
+                  key={blog.id}
+                  className={`rounded-lg border overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 ${
+                    selectedBlogs.includes(blog.id) ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+                  }`}
+                >
+                  {/* Blog Image */}
+                  <div className="h-48 relative">
+                    <img 
+                      src={getImageUrl(blog)} 
+                      alt={blog.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
                       <Checkbox
                         checked={selectedBlogs.includes(blog.id)}
                         onCheckedChange={() => handleSelectBlog(blog.id)}
+                        className="bg-white/80 text-blue-500 shadow-sm border-gray-300"
                       />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {startIndex + index + 1}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {blog.title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {blog.branch_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {blog.author_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </div>
+                    <div className="absolute top-2 right-2">
                       <Badge 
                         className={`${
-                          blog.status === 'published' 
+                          getBlogStatus(blog) === 'published' 
                             ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                             : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        } px-2 py-1 text-xs`}
+                        } px-2 py-1 text-xs font-semibold`}
                       >
-                        {blog.status ? blog.status.charAt(0).toUpperCase() + blog.status.slice(1) : 'Unknown'}
+                        {getBlogStatus(blog).charAt(0).toUpperCase() + getBlogStatus(blog).slice(1)}
                       </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(blog.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(blog.updated_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <Button 
-                          onClick={() => handleView(blog)} 
-                          size="sm"
-                          variant="ghost"
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button 
-                          onClick={() => handleEdit(blog)} 
-                          size="sm"
-                          variant="ghost"
-                          className="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button 
-                          onClick={() => handleDeleteSingle(blog)} 
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Blog Content */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-2 line-clamp-1">{blog.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {truncateText(blog.content, 100)}
+                    </p>
+                    
+                    <div className="space-y-2 text-sm text-gray-500 mb-4">
+                      <div className="flex items-center">
+                        <UserIcon className="h-4 w-4 mr-2" />
+                        <span>{blog.author_name}</span>
                       </div>
-                    </td>
-                  </tr>
-                ))
+                      <div className="flex items-center">
+                        <BuildingOfficeIcon className="h-4 w-4 mr-2" />
+                        <span>{blog.branch_name}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <CalendarIcon className="h-4 w-4 mr-2" />
+                        <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100">
+                      <Button 
+                        onClick={() => handleView(blog)} 
+                        size="sm"
+                        variant="ghost"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      >
+                        <EyeIcon className="h-4 w-4 mr-1" /> View
+                      </Button>
+                      
+                      <Button 
+                        onClick={() => handleEdit(blog)} 
+                        size="sm"
+                        variant="ghost"
+                        className="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
+                      >
+                        <PencilIcon className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      
+                      <Button 
+                        onClick={() => handleDeleteSingle(blog)} 
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              {error ? (
+                <div className="text-red-500">
+                  <div className="text-4xl mb-4">⚠️</div>
+                  <p>{error}</p>
+                </div>
+              ) : blogs.length === 0 ? (
+                <div>
+                  <div className="text-4xl mb-4">📝</div>
+                  <p className="text-gray-500 mb-4">No blogs found. Create your first blog!</p>
+                  <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <PlusIcon className="h-5 w-5 mr-2" />
+                    Add Blog
+                  </Button>
+                </div>
               ) : (
-                <tr>
-                  <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
-                    {error ? 
-                      <div className="text-red-500">{error}</div> :
-                      blogs.length === 0 ? 
-                        "No blogs found. Create your first blog!" : 
-                        "No blogs match your search criteria."
-                    }
-                  </td>
-                </tr>
+                <div>
+                  <div className="text-4xl mb-4">🔍</div>
+                  <p className="text-gray-500">No blogs match your search criteria.</p>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
         
         {/* Pagination */}
@@ -497,37 +565,34 @@ const BlogList = () => {
         )}
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Modals */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         title={confirmationModal.title}
         message={confirmationModal.message}
         confirmText={confirmationModal.confirmText}
-        onConfirm={confirmationModal.onConfirm}
-        onCancel={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
         type={confirmationModal.type}
+        onConfirm={confirmationModal.onConfirm}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
       />
       
-      {/* Add Blog Modal */}
       <AddBlogModal
         isOpen={isAddModalOpen}
-        onSuccess={handleAddSuccess}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
       />
       
-      {/* Edit Blog Modal */}
       <EditBlogModal
         isOpen={isEditModalOpen}
-        blog={selectedBlog}
-        onSuccess={handleEditSuccess}
         onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleEditSuccess}
+        blog={selectedBlog}
       />
       
-      {/* View Blog Modal */}
       <ViewBlogModal
         isOpen={isViewModalOpen}
-        blog={selectedBlog}
         onClose={() => setIsViewModalOpen(false)}
+        blog={selectedBlog}
       />
     </div>
   );

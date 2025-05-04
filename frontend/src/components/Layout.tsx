@@ -51,6 +51,7 @@ const Sidebar = () => {
         { path: '/admin/leads', icon: UserPlusIcon, label: 'Leads' },
         { path: '/admin/employees', icon: BriefcaseIcon, label: 'Employees' },
         { path: '/admin/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' },
+        { path: '/admin/job-responses', icon: ClipboardDocumentListIcon, label: 'Job Responses' },
         { path: '/admin/blogs', icon: DocumentTextIcon, label: 'Blogs' }
       );
     }
@@ -62,6 +63,7 @@ const Sidebar = () => {
         { path: '/branch-manager/leads', icon: UserPlusIcon, label: 'Leads' },
         { path: '/branch-manager/employees', icon: BriefcaseIcon, label: 'Employees' },
         { path: '/branch-manager/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' },
+        { path: '/branch-manager/job-responses', icon: ClipboardDocumentListIcon, label: 'Job Responses' },
         { path: '/branch-manager/blogs', icon: DocumentTextIcon, label: 'Blogs' }
       );
     }

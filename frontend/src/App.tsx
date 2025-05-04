@@ -36,6 +36,7 @@ import ReceptionistLeadList from './pages/receptionist/LeadList';
 import ReceptionistEmployeeList from './pages/receptionist/EmployeeList';
 import ReceptionistBlogList from './pages/receptionist/BlogList';
 import JobPage from './pages/admin/JobPage';
+import JobResponsePage from './pages/admin/JobResponsePage';
 import Profile from './pages/Profile';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -89,6 +90,9 @@ function App() {
             {/* Job management */}
             <Route path="/admin/jobs" element={<JobPage />} />
             
+            {/* Job Applications */}
+            <Route path="/admin/job-responses" element={<JobResponsePage />} />
+            
             {/* Blog management */}
             <Route path="/admin/blogs" element={<BlogList />} />
           </Route>
@@ -117,6 +121,9 @@ function App() {
             
             {/* Branch manager can manage jobs in their branch */}
             <Route path="/branch-manager/jobs" element={<BranchManagerJobPage />} />
+            
+            {/* Branch manager can manage job applications in their branch */}
+            <Route path="/branch-manager/job-responses" element={<JobResponsePage />} />
             
             {/* Branch manager can manage blogs in their branch */}
             <Route path="/branch-manager/blogs" element={<BranchManagerBlogList />} />

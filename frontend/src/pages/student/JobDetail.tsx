@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { MapPin, Calendar, Briefcase, ArrowLeft, Building, FileText, DollarSign } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { Textarea } from '../../components/ui/textarea';
-import { Input } from '../../components/ui/input';
-import { Label } from '../../components/ui/label';
 import { StudentLayout } from '../../components/Layout';
+import JobApplicationModal from '../../components/student/JobApplicationModal';
+import { jobAPI } from '../../lib/api';
 
 interface Job {
   id: number;
@@ -35,22 +33,12 @@ const JobDetail: React.FC = () => {
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showApplyForm, setShowApplyForm] = useState<boolean>(false);
-  
-  // Form state
-  const [name, setName] = useState<string>('');
-  const [email, setEmail] = useState<string>('');
-  const [phone, setPhone] = useState<string>('');
-  const [coverLetter, setCoverLetter] = useState<string>('');
-  const [resume, setResume] = useState<File | null>(null);
-  const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchJobDetail = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/jobs/${id}/`);
+        const response = await jobAPI.getById(parseInt(id || '0'));
         setJob(response.data);
       } catch (error) {
         console.error('Error fetching job details:', error);
@@ -70,59 +58,6 @@ const JobDetail: React.FC = () => {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setResume(e.target.files[0]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!resume) {
-      setFormError('Please upload your resume');
-      return;
-    }
-    
-    try {
-      setFormSubmitting(true);
-      setFormError(null);
-      
-      const formData = new FormData();
-      formData.append('job', id || '');
-      formData.append('name', name);
-      formData.append('email', email);
-      formData.append('phone', phone);
-      formData.append('cover_letter', coverLetter);
-      formData.append('resume', resume);
-      
-      await axios.post('/api/job-responses/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      setFormSuccess(true);
-      // Reset form
-      setName('');
-      setEmail('');
-      setPhone('');
-      setCoverLetter('');
-      setResume(null);
-      
-      // Hide form after successful submission
-      setTimeout(() => {
-        setShowApplyForm(false);
-      }, 3000);
-      
-    } catch (error) {
-      console.error('Error submitting application:', error);
-      setFormError('An error occurred while submitting your application. Please try again.');
-    } finally {
-      setFormSubmitting(false);
-    }
   };
 
   return (
@@ -224,112 +159,12 @@ const JobDetail: React.FC = () => {
               </div>
             </div>
             
-            {/* Application Form */}
-            {showApplyForm && (
-              <div className="bg-white rounded-xl border border-gray-200 p-8 mb-8">
-                <h2 className="text-2xl font-semibold text-[#153147] mb-6">Submit Your Application</h2>
-                
-                {formSuccess ? (
-                  <div className="bg-green-50 text-green-800 p-4 rounded-lg mb-6">
-                    Your application has been submitted successfully! We'll review it and get back to you soon.
-                  </div>
-                ) : (
-                  <form onSubmit={handleSubmit}>
-                    {formError && (
-                      <div className="bg-red-50 text-red-800 p-4 rounded-lg mb-6">
-                        {formError}
-                      </div>
-                    )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input 
-                          id="name"
-                          type="text"
-                          value={name}
-                          onChange={(e) => setName(e.target.value)}
-                          required
-                          className="w-full"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input 
-                          id="email"
-                          type="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          required
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="mb-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
-                        <Input 
-                          id="phone"
-                          type="tel"
-                          value={phone}
-                          onChange={(e) => setPhone(e.target.value)}
-                          required
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="mb-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="resume">Resume/CV (PDF only)</Label>
-                        <Input 
-                          id="resume"
-                          type="file"
-                          accept=".pdf"
-                          onChange={handleFileChange}
-                          required
-                          className="w-full"
-                        />
-                        <p className="text-sm text-gray-500">Upload your resume in PDF format</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="coverLetter">Cover Letter (Optional)</Label>
-                        <Textarea 
-                          id="coverLetter"
-                          value={coverLetter}
-                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCoverLetter(e.target.value)}
-                          rows={6}
-                          className="w-full"
-                          placeholder="Tell us why you're a good fit for this position..."
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-end gap-4">
-                      <Button 
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowApplyForm(false)}
-                        disabled={formSubmitting}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit"
-                        className="bg-[#153147] hover:bg-[#0e2336]"
-                        disabled={formSubmitting}
-                      >
-                        {formSubmitting ? 'Submitting...' : 'Submit Application'}
-                      </Button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            )}
+            {/* Application Modal */}
+            <JobApplicationModal 
+              isOpen={showApplyForm} 
+              onClose={() => setShowApplyForm(false)} 
+              job={job}
+            />
           </div>
         )}
       </div>

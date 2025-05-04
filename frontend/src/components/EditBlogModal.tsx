@@ -168,23 +168,34 @@ const EditBlogModal = ({ isOpen, onClose, onSuccess, blog }: EditBlogModalProps)
       formData.append('title', title);
       formData.append('content', content);
       formData.append('branch', branchId.toString());
-      formData.append('status', isPublished ? 'published' : 'draft');
       
-      // Handle image scenarios
-      if (featuredImage) {
-        formData.append('thumbnail_image', featuredImage);
-      } else if (removeExistingImage) {
-        formData.append('remove_thumbnail', 'true');
+      // Set publish status field
+      if (isPublished) {
+        formData.append('is_published', 'true');
+      } else {
+        formData.append('is_published', 'false');
       }
       
-      // Make API call
-      await blogAPI.update(blog.id, formData);
+      // Handle image scenarios
+      if (featuredImage && featuredImage instanceof File) {
+        formData.append('featured_image', featuredImage, featuredImage.name);
+        console.log('Uploading file:', featuredImage.name, featuredImage.type, featuredImage.size);
+      } else if (removeExistingImage) {
+        formData.append('remove_featured_image', 'true');
+      }
+      
+      // Make API call with correct headers
+      const response = await blogAPI.update(blog.id, formData);
+      console.log('Blog updated successfully:', response);
       
       // Success handling
       setLoading(false);
       onSuccess();
     } catch (err: any) {
       console.error('Error updating blog:', err);
+      if (err.response?.data) {
+        console.log('Server error details:', err.response.data);
+      }
       setError(err.response?.data?.detail || 'Failed to update blog. Please try again.');
       setLoading(false);
     }
@@ -203,7 +214,7 @@ const EditBlogModal = ({ isOpen, onClose, onSuccess, blog }: EditBlogModalProps)
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4" encType="multipart/form-data">
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}

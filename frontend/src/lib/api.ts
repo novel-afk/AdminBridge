@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base API URL - should be environment-based in production
-const API_URL = 'http://localhost:8000/api';
+export const API_URL = 'http://localhost:8000/api';
 
 // Create an axios instance with default config
 const api = axios.create({
@@ -183,6 +183,18 @@ export const jobAPI = {
   
   getResponses: (jobId: number) => 
     api.get(`/job-responses/?job=${jobId}`),
+    
+  getAllResponses: () => 
+    api.get('/job-responses/'),
+    
+  getResponseById: (id: number) => 
+    api.get(`/job-responses/${id}/`),
+    
+  updateResponseStatus: (id: number, statusData: {status: string}) => 
+    api.patch(`/job-responses/${id}/`, statusData),
+    
+  deleteResponse: (id: number) => 
+    api.delete(`/job-responses/${id}/`)
 };
 
 // Branch API
@@ -214,14 +226,35 @@ export const blogAPI = {
   getById: (id: number) => 
     api.get(`/blogs/${id}/`),
   
-  create: (blogData: any) => 
-    api.post('/blogs/', blogData),
+  create: (blogData: FormData) => {
+    const token = localStorage.getItem('access_token');
+    return api.post('/blogs/', blogData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+  },
   
-  update: (id: number, blogData: any) => 
-    api.put(`/blogs/${id}/`, blogData),
+  update: (id: number, blogData: FormData) => {
+    const token = localStorage.getItem('access_token');
+    return api.put(`/blogs/${id}/`, blogData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      }
+    });
+  },
   
-  delete: (id: number) => 
-    api.delete(`/blogs/${id}/`),
+  delete: (id: number) => {
+    // Get token from localStorage to ensure it's included
+    const token = localStorage.getItem('access_token');
+    return api.delete(`/blogs/${id}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
     
   // Additional endpoint to get blogs by branch
   getByBranch: (branchId: number) => 
