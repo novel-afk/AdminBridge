@@ -22,6 +22,12 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
     
+    // For debugging purposes
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`, { 
+      headers: config.headers,
+      hasAuthHeader: !!config.headers.Authorization
+    });
+    
     return config;
   },
   (error) => {
@@ -163,38 +169,104 @@ export const leadAPI = {
 
 // Job API
 export const jobAPI = {
-  getAll: () => 
-    api.get('/jobs/'),
+  getAll: () => {
+    const token = localStorage.getItem('access_token');
+    return api.get('/jobs/', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
     
-  getActive: () => 
-    api.get('/jobs/?is_active=true&ordering=-created_at'),
+  getActive: () => {
+    const token = localStorage.getItem('access_token');
+    return api.get('/jobs/?is_active=true&ordering=-created_at', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
   
-  getById: (id: number) => 
-    api.get(`/jobs/${id}/`),
+  getById: (id: number) => {
+    const token = localStorage.getItem('access_token');
+    return api.get(`/jobs/${id}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
   
-  create: (jobData: any) => 
-    api.post('/jobs/', jobData),
+  create: (jobData: any) => {
+    const token = localStorage.getItem('access_token');
+    return api.post('/jobs/', jobData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
   
-  update: (id: number, jobData: any) => 
-    api.put(`/jobs/${id}/`, jobData),
+  update: (id: number, jobData: any) => {
+    const token = localStorage.getItem('access_token');
+    return api.put(`/jobs/${id}/`, jobData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
   
-  delete: (id: number) => 
-    api.delete(`/jobs/${id}/`),
+  delete: (id: number) => {
+    const token = localStorage.getItem('access_token');
+    return api.delete(`/jobs/${id}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
   
-  getResponses: (jobId: number) => 
-    api.get(`/job-responses/?job=${jobId}`),
+  getResponses: (jobId: number) => {
+    const token = localStorage.getItem('access_token');
+    return api.get(`/job-responses/?job=${jobId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
     
-  getAllResponses: () => 
-    api.get('/job-responses/'),
+  getAllResponses: () => {
+    const token = localStorage.getItem('access_token');
+    return api.get('/job-responses/', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
     
-  getResponseById: (id: number) => 
-    api.get(`/job-responses/${id}/`),
+  getResponseById: (id: number) => {
+    const token = localStorage.getItem('access_token');
+    return api.get(`/job-responses/${id}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
     
-  updateResponseStatus: (id: number, statusData: {status: string}) => 
-    api.patch(`/job-responses/${id}/`, statusData),
+  updateResponseStatus: (id: number, statusData: {status: string}) => {
+    const token = localStorage.getItem('access_token');
+    return api.patch(`/job-responses/${id}/`, statusData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  },
     
-  deleteResponse: (id: number) => 
-    api.delete(`/job-responses/${id}/`)
+  deleteResponse: (id: number) => {
+    const token = localStorage.getItem('access_token');
+    return api.delete(`/job-responses/${id}/`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+  }
 };
 
 // Branch API
@@ -259,4 +331,16 @@ export const blogAPI = {
   // Additional endpoint to get blogs by branch
   getByBranch: (branchId: number) => 
     api.get(`/blogs/?branch=${branchId}`),
+};
+
+// Student Profile API
+export const studentProfileAPI = {
+  getProfile: () => api.get('/student-profile/'),
+  
+  updateProfile: (profileData: FormData) => 
+    api.patch('/student-profile/', profileData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
 }; 

@@ -7,6 +7,8 @@ import { Label } from '../../components/ui/label';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
 import { StudentLayout } from '../../components/Layout';
+import { studentProfileAPI } from '../../lib/api';
+import { useAuth } from '../../lib/AuthContext';
 
 interface StudentProfile {
   id: number;
@@ -41,6 +43,7 @@ interface StudentProfile {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get authenticated user info
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [editing, setEditing] = useState<boolean>(false);
@@ -69,7 +72,10 @@ const Profile: React.FC = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/student-profile/');
+        setError(null);
+        const response = await studentProfileAPI.getProfile();
+        
+        console.log('Profile data:', response.data);
         setProfile(response.data);
         
         // Initialize form data
@@ -138,17 +144,13 @@ const Profile: React.FC = () => {
         formPayload.append('profile_image', profileImage);
       }
       
-      await axios.patch('/api/student-profile/', formPayload, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      await studentProfileAPI.updateProfile(formPayload);
       
       setSuccess('Profile updated successfully!');
       setEditing(false);
       
       // Refresh profile data
-      const response = await axios.get('/api/student-profile/');
+      const response = await studentProfileAPI.getProfile();
       setProfile(response.data);
       
       // Clear success message after a delay
@@ -170,6 +172,18 @@ const Profile: React.FC = () => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Handle invalid or missing dates
+  const formatSafeDate = (dateString: string | undefined | null) => {
+    if (!dateString) return 'Not specified';
+    
+    try {
+      return formatDate(dateString);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
   };
 
   if (loading) {
@@ -238,16 +252,21 @@ const Profile: React.FC = () => {
                   </div>
                 ) : (
                   <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                    {profile.profile_image ? (
+                    {profile?.profile_image ? (
                       <img 
                         src={profile.profile_image} 
-                        alt={`${profile.user.first_name} ${profile.user.last_name}`} 
+                        alt={`${profile.user?.first_name || 'User'} ${profile.user?.last_name || ''}`} 
                         className="w-full h-full object-cover"
                       />
+                    ) : user?.first_name ? (
+                      <div className="w-full h-full bg-[#285172] flex items-center justify-center text-3xl font-bold">
+                        {user.first_name.charAt(0) || ''}
+                        {user.last_name?.charAt(0) || ''}
+                      </div>
                     ) : (
                       <div className="w-full h-full bg-[#285172] flex items-center justify-center text-3xl font-bold">
-                        {profile.user.first_name.charAt(0)}
-                        {profile.user.last_name.charAt(0)}
+                        {profile?.user?.first_name?.charAt(0) || ''}
+                        {profile?.user?.last_name?.charAt(0) || ''}
                       </div>
                     )}
                   </div>
@@ -255,11 +274,14 @@ const Profile: React.FC = () => {
               </div>
               
               <div className="text-center md:text-left">
-                <h2 className="text-2xl font-bold">{profile.user.first_name} {profile.user.last_name}</h2>
-                <p className="text-gray-300 mb-2">Student ID: {profile.student_id}</p>
+                <h2 className="text-2xl font-bold">
+                  {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 
+                   profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
+                </h2>
+                <p className="text-gray-300 mb-2">Student ID: {profile?.student_id || 'Not assigned'}</p>
                 <p className="text-gray-300 flex items-center justify-center md:justify-start gap-2">
                   <MapPin size={16} />
-                  {profile.branch.city}, {profile.branch.country}
+                  {profile?.branch?.city || 'Unknown'}, {profile?.branch?.country || 'Unknown'}
                 </p>
               </div>
               
@@ -306,7 +328,8 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Full Name</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <User size={16} className="text-gray-400" />
-                      {profile.user.first_name} {profile.user.last_name}
+                      {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 
+                       profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
                     </div>
                   </div>
                   
@@ -314,7 +337,7 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Email</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <Mail size={16} className="text-gray-400" />
-                      {profile.user.email}
+                      {user?.email || profile?.user?.email || 'No email available'}
                     </div>
                   </div>
                   
@@ -322,7 +345,7 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Age</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <Users size={16} className="text-gray-400" />
-                      {profile.age} years old
+                      {profile?.age ? `${profile.age} years old` : 'Not specified'}
                     </div>
                   </div>
                   
@@ -330,7 +353,7 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Gender</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <Users size={16} className="text-gray-400" />
-                      {profile.gender}
+                      {profile?.gender || 'Not specified'}
                     </div>
                   </div>
                   
@@ -346,7 +369,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="flex items-center gap-2 text-gray-800">
                         <MapPin size={16} className="text-gray-400" />
-                        {profile.nationality}
+                        {profile?.nationality || 'Not specified'}
                       </div>
                     )}
                   </div>
@@ -355,7 +378,7 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Enrollment Date</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <Calendar size={16} className="text-gray-400" />
-                      {formatDate(profile.enrollment_date)}
+                      {formatSafeDate(profile?.enrollment_date)}
                     </div>
                   </div>
                 </div>
@@ -378,7 +401,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="flex items-center gap-2 text-gray-800">
                         <Phone size={16} className="text-gray-400" />
-                        {profile.contact_number}
+                        {profile?.contact_number || 'Not specified'}
                       </div>
                     )}
                   </div>
@@ -396,7 +419,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="flex items-start gap-2 text-gray-800">
                         <MapPin size={16} className="text-gray-400 mt-1" />
-                        <span>{profile.address}</span>
+                        <span>{profile?.address || 'Not specified'}</span>
                       </div>
                     )}
                   </div>
@@ -413,7 +436,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="flex items-center gap-2 text-gray-800">
                         <Phone size={16} className="text-gray-400" />
-                        {profile.emergency_contact || 'Not specified'}
+                        {profile?.emergency_contact || 'Not specified'}
                       </div>
                     )}
                   </div>
@@ -446,9 +469,9 @@ const Profile: React.FC = () => {
                       </div>
                     ) : (
                       <div className="space-y-2 text-gray-800">
-                        <p>Father: {profile.father_name || 'Not specified'}</p>
-                        <p>Mother: {profile.mother_name || 'Not specified'}</p>
-                        <p>Contact: {profile.parent_number || 'Not specified'}</p>
+                        <p>Father: {profile?.father_name || 'Not specified'}</p>
+                        <p>Mother: {profile?.mother_name || 'Not specified'}</p>
+                        <p>Contact: {profile?.parent_number || 'Not specified'}</p>
                       </div>
                     )}
                   </div>
@@ -472,7 +495,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="flex items-center gap-2 text-gray-800">
                         <School size={16} className="text-gray-400" />
-                        {profile.institution_name}
+                        {profile?.institution_name || 'Not specified'}
                       </div>
                     )}
                   </div>
@@ -494,7 +517,7 @@ const Profile: React.FC = () => {
                     ) : (
                       <div className="flex items-center gap-2 text-gray-800">
                         <Book size={16} className="text-gray-400" />
-                        {profile.language_test}
+                        {profile?.language_test || 'None'}
                       </div>
                     )}
                   </div>

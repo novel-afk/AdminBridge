@@ -126,9 +126,8 @@ const Dashboard: React.FC = () => {
   // Job card component
   const JobCard = ({ job }: { job: FeaturedJob }) => (
     <Link 
-      key={job.id}
       to={`/student/jobs/${job.id}`}
-      className="bg-white rounded-xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#EDEAE4] group transform hover:-translate-y-1"
+      className="bg-white rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#EDEAE4] group transform hover:-translate-y-2"
     >
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -137,7 +136,7 @@ const Dashboard: React.FC = () => {
           </h3>
           <p className="text-[#ADB8BB] mt-1">{job.branch?.name || "Branch"}</p>
         </div>
-        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 font-medium px-3 py-1">
           {job.job_type || "Job Type"}
         </Badge>
       </div>
@@ -165,7 +164,7 @@ const Dashboard: React.FC = () => {
     <Link 
       key={blog.id}
       to={`/student/blogs/${blog.id}`}
-      className="bg-[#F9F8F7] rounded-xl p-6 hover:shadow-xl transition-all duration-300 group transform hover:-translate-y-1"
+      className="bg-[#F9F8F7] rounded-xl p-6 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-[#EDEAE4] group transform hover:-translate-y-2"
     >
       <div className="mb-4">
         <h3 className="text-xl font-semibold text-[#153147] group-hover:text-[#232A2F] transition-colors">
