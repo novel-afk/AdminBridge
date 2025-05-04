@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { UserGroupIcon, UserPlusIcon, BriefcaseIcon, CalendarIcon } from '@heroicons/react/24/outline';
 import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
 
 interface User {
@@ -140,46 +141,95 @@ const CounsellorDashboard = () => {
               Welcome to your Counsellor dashboard. From here, you can manage your student consultations and leads.
             </p>
 
-            {/* Placeholder for future functionality */}
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="bg-white overflow-hidden shadow rounded-lg transition-all duration-300 hover:shadow-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">My Students</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View and manage your assigned students.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                      <UserGroupIcon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">My Students</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        View and manage your assigned students
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-4 sm:px-6">
                   <div className="text-sm">
-                    <a href="#" className="font-medium text-green-600 hover:text-green-500">View students</a>
+                    <Link to="/counsellor/students" className="font-medium text-blue-600 hover:text-blue-500">
+                      View students <span aria-hidden="true">&rarr;</span>
+                    </Link>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white overflow-hidden shadow rounded-lg transition-all duration-300 hover:shadow-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">My Leads</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View and manage your assigned leads.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-green-100 rounded-md p-3">
+                      <UserPlusIcon className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">My Leads</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        View and manage your assigned leads
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-4 sm:px-6">
                   <div className="text-sm">
-                    <a href="#" className="font-medium text-green-600 hover:text-green-500">View leads</a>
+                    <Link to="/counsellor/leads" className="font-medium text-green-600 hover:text-green-500">
+                      View leads <span aria-hidden="true">&rarr;</span>
+                    </Link>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="bg-white overflow-hidden shadow rounded-lg transition-all duration-300 hover:shadow-lg border border-gray-200">
                 <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">Today's Appointments</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View your scheduled appointments for today.
-                  </p>
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                      <BriefcaseIcon className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">Branch Employees</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        View employees in your branch
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <div className="bg-gray-50 px-4 py-4 sm:px-6">
                   <div className="text-sm">
-                    <a href="#" className="font-medium text-green-600 hover:text-green-500">View appointments</a>
+                    <Link to="/counsellor/employees" className="font-medium text-purple-600 hover:text-purple-500">
+                      View employees <span aria-hidden="true">&rarr;</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white overflow-hidden shadow rounded-lg transition-all duration-300 hover:shadow-lg border border-gray-200">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                      <CalendarIcon className="h-6 w-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-5">
+                      <h3 className="text-lg font-medium text-gray-900">My Profile</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        View and update your personal information
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                  <div className="text-sm">
+                    <Link to="/profile" className="font-medium text-yellow-600 hover:text-yellow-500">
+                      View profile <span aria-hidden="true">&rarr;</span>
+                    </Link>
                   </div>
                 </div>
               </div>

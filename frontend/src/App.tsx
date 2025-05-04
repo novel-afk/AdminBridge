@@ -19,10 +19,15 @@ import AddStudent from './pages/admin/AddStudent';
 import EditStudent from './pages/admin/EditStudent';
 import ViewStudent from './pages/admin/ViewStudent';
 import LeadList from './pages/admin/LeadList';
+import AddLead from './pages/admin/AddLead';
+import EditLead from './pages/admin/EditLead';
 import BranchManagerLeadList from './pages/branch-manager/LeadList';
 import BranchManagerEmployeeList from './pages/branch-manager/EmployeeList';
 import BranchManagerStudentList from './pages/branch-manager/StudentList';
 import BranchManagerJobPage from './pages/branch-manager/JobPage';
+import CounsellorStudentList from './pages/counsellor/StudentList';
+import CounsellorLeadList from './pages/counsellor/LeadList';
+import CounsellorEmployeeList from './pages/counsellor/EmployeeList';
 import JobPage from './pages/admin/JobPage';
 import Profile from './pages/Profile';
 import './App.css'
@@ -99,6 +104,20 @@ function App() {
             }
           >
             <Route path="/counsellor/dashboard" element={<CounsellorDashboard />} />
+            
+            {/* Counsellor can manage students in their branch */}
+            <Route path="/counsellor/students" element={<CounsellorStudentList />} />
+            <Route path="/counsellor/students/add" element={<AddStudent />} />
+            <Route path="/counsellor/students/edit/:id" element={<EditStudent />} />
+            <Route path="/counsellor/students/view/:id" element={<ViewStudent />} />
+            
+            {/* Counsellor can manage leads in their branch */}
+            <Route path="/counsellor/leads" element={<CounsellorLeadList />} />
+            <Route path="/counsellor/leads/add" element={<AddLead />} />
+            <Route path="/counsellor/leads/edit/:id" element={<EditLead />} />
+            
+            {/* Counsellor can view employees in their branch */}
+            <Route path="/counsellor/employees" element={<CounsellorEmployeeList />} />
           </Route>
           
           {/* Receptionist Routes */}
