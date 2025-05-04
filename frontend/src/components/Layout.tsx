@@ -52,7 +52,8 @@ const Sidebar = () => {
         { path: '/admin/employees', icon: BriefcaseIcon, label: 'Employees' },
         { path: '/admin/jobs', icon: ClipboardDocumentListIcon, label: 'Jobs' },
         { path: '/admin/job-responses', icon: ClipboardDocumentListIcon, label: 'Job Responses' },
-        { path: '/admin/blogs', icon: DocumentTextIcon, label: 'Blogs' }
+        { path: '/admin/blogs', icon: DocumentTextIcon, label: 'Blogs' },
+        { path: '/admin/attendance', icon: ClipboardDocumentListIcon, label: 'Attendance' }
       );
     }
     

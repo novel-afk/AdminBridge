@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models import (
     User, Branch, Employee, Student, Lead,
-    Job, JobResponse, Blog
+    Job, JobResponse, Blog, StudentAttendance, EmployeeAttendance
 )
 
 class UserAdmin(BaseUserAdmin):
@@ -151,6 +151,50 @@ class BranchAdmin(admin.ModelAdmin):
     )
 
 
+class StudentAttendanceAdmin(admin.ModelAdmin):
+    list_display = ('get_student_name', 'date', 'time_in', 'time_out', 'status', 'created_by')
+    list_filter = ('date', 'status', 'student__branch')
+    search_fields = ('student__user__first_name', 'student__user__last_name', 'student__student_id')
+    date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('Attendance Information', {
+            'fields': ('student', 'date', 'time_in', 'time_out', 'status')
+        }),
+        ('Additional Information', {
+            'fields': ('remarks', 'created_by', 'updated_by')
+        }),
+    )
+    
+    def get_student_name(self, obj):
+        return f"{obj.student.user.first_name} {obj.student.user.last_name}"
+    get_student_name.short_description = 'Student Name'
+
+
+class EmployeeAttendanceAdmin(admin.ModelAdmin):
+    list_display = ('get_employee_name', 'get_role', 'date', 'time_in', 'time_out', 'status', 'created_by')
+    list_filter = ('date', 'status', 'employee__branch')
+    search_fields = ('employee__user__first_name', 'employee__user__last_name', 'employee__employee_id')
+    date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('Attendance Information', {
+            'fields': ('employee', 'date', 'time_in', 'time_out', 'status')
+        }),
+        ('Additional Information', {
+            'fields': ('remarks', 'created_by', 'updated_by')
+        }),
+    )
+    
+    def get_employee_name(self, obj):
+        return f"{obj.employee.user.first_name} {obj.employee.user.last_name}"
+    get_employee_name.short_description = 'Employee Name'
+    
+    def get_role(self, obj):
+        return obj.employee.user.role
+    get_role.short_description = 'Role'
+
+
 # Register models
 admin.site.register(User, UserAdmin)
 admin.site.register(Branch, BranchAdmin)
@@ -160,3 +204,5 @@ admin.site.register(Lead, LeadAdmin)
 admin.site.register(Job, JobAdmin)
 admin.site.register(JobResponse, JobResponseAdmin)
 admin.site.register(Blog, BlogAdmin)
+admin.site.register(StudentAttendance, StudentAttendanceAdmin)
+admin.site.register(EmployeeAttendance, EmployeeAttendanceAdmin)

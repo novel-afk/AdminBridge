@@ -299,3 +299,65 @@ class Blog(models.Model):
     
     def __str__(self):
         return self.title
+
+
+class EmployeeAttendance(models.Model):
+    """Employee attendance tracking model"""
+    ATTENDANCE_STATUS_CHOICES = (
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+        ('Late', 'Late'),
+        ('Half Day', 'Half Day'),
+        ('On Leave', 'On Leave'),
+    )
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_records')
+    date = models.DateField()
+    time_in = models.TimeField(null=True, blank=True)
+    time_out = models.TimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=ATTENDANCE_STATUS_CHOICES, default='Present')
+    remarks = models.TextField(blank=True, null=True)
+    
+    # For tracking who made changes
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='employee_attendance_created')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='employee_attendance_updated')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('employee', 'date')
+        ordering = ['-date', 'employee__user__first_name']
+    
+    def __str__(self):
+        return f"{self.employee.user.first_name} {self.employee.user.last_name} - {self.date} - {self.status}"
+
+
+class StudentAttendance(models.Model):
+    """Student attendance tracking model"""
+    ATTENDANCE_STATUS_CHOICES = (
+        ('Present', 'Present'),
+        ('Absent', 'Absent'),
+        ('Late', 'Late'),
+        ('Half Day', 'Half Day'),
+        ('On Leave', 'On Leave'),
+    )
+    
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
+    date = models.DateField()
+    time_in = models.TimeField(null=True, blank=True)
+    time_out = models.TimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=ATTENDANCE_STATUS_CHOICES, default='Present')
+    remarks = models.TextField(blank=True, null=True)
+    
+    # For tracking who made changes
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='student_attendance_created')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='student_attendance_updated')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('student', 'date')
+        ordering = ['-date', 'student__user__first_name']
+    
+    def __str__(self):
+        return f"{self.student.user.first_name} {self.student.user.last_name} - {self.date} - {self.status}"

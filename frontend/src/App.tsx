@@ -38,6 +38,7 @@ import ReceptionistAddLead from './pages/receptionist/AddLead';
 import ReceptionistEmployeeList from './pages/receptionist/EmployeeList';
 import JobPage from './pages/admin/JobPage';
 import JobResponsePage from './pages/admin/JobResponsePage';
+import AttendancePage from './pages/admin/Attendance';
 import Profile from './pages/Profile';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
@@ -97,6 +98,9 @@ function App() {
             
             {/* Blog management */}
             <Route path="/admin/blogs" element={<BlogList />} />
+            
+            {/* Attendance management */}
+            <Route path="/admin/attendance" element={<AttendancePage />} />
           </Route>
           
           {/* Branch Manager Routes */}

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     User, Branch, Employee, Student, Lead, 
-    Job, JobResponse, Blog
+    Job, JobResponse, Blog, StudentAttendance, EmployeeAttendance
 )
 from django.contrib.auth.password_validation import validate_password
 import uuid
@@ -243,4 +243,86 @@ class BlogSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         validated_data['author'] = user
-        return super().create(validated_data) 
+        return super().create(validated_data)
+
+
+class EmployeeAttendanceSerializer(serializers.ModelSerializer):
+    employee_name = serializers.SerializerMethodField()
+    employee_role = serializers.SerializerMethodField()
+    employee_id = serializers.SerializerMethodField()
+    branch_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = EmployeeAttendance
+        fields = [
+            'id', 'employee', 'employee_name', 'employee_role', 'employee_id', 
+            'branch_name', 'date', 'time_in', 'time_out', 'status', 'remarks',
+            'created_by', 'updated_by', 'created_at', 'updated_at'
+        ]
+    
+    def get_employee_name(self, obj):
+        return f"{obj.employee.user.first_name} {obj.employee.user.last_name}"
+    
+    def get_employee_role(self, obj):
+        return obj.employee.user.role
+    
+    def get_employee_id(self, obj):
+        return obj.employee.employee_id
+    
+    def get_branch_name(self, obj):
+        return obj.employee.branch.name
+    
+    def create(self, validated_data):
+        # Set the created_by field if not provided
+        request = self.context.get('request')
+        if request and not validated_data.get('created_by'):
+            validated_data['created_by'] = request.user
+        
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        # Set the updated_by field
+        request = self.context.get('request')
+        if request:
+            validated_data['updated_by'] = request.user
+            
+        return super().update(instance, validated_data)
+
+
+class StudentAttendanceSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()
+    student_id = serializers.SerializerMethodField()
+    branch_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = StudentAttendance
+        fields = [
+            'id', 'student', 'student_name', 'student_id', 'branch_name',
+            'date', 'time_in', 'time_out', 'status', 'remarks',
+            'created_by', 'updated_by', 'created_at', 'updated_at'
+        ]
+    
+    def get_student_name(self, obj):
+        return f"{obj.student.user.first_name} {obj.student.user.last_name}"
+    
+    def get_student_id(self, obj):
+        return obj.student.student_id
+    
+    def get_branch_name(self, obj):
+        return obj.student.branch.name
+    
+    def create(self, validated_data):
+        # Set the created_by field if not provided
+        request = self.context.get('request')
+        if request and not validated_data.get('created_by'):
+            validated_data['created_by'] = request.user
+        
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        # Set the updated_by field
+        request = self.context.get('request')
+        if request:
+            validated_data['updated_by'] = request.user
+            
+        return super().update(instance, validated_data) 

@@ -9,13 +9,13 @@ from rest_framework.views import APIView
 
 from .models import (
     User, Branch, Employee, Student, Lead,
-    Job, JobResponse, Blog
+    Job, JobResponse, Blog, StudentAttendance, EmployeeAttendance
 )
 from .serializers import (
     UserSerializer, BranchSerializer, EmployeeSerializer, 
     StudentSerializer, LeadSerializer, JobSerializer,
     JobResponseSerializer, BlogSerializer, StudentDetailSerializer,
-    StudentUpdateSerializer
+    StudentUpdateSerializer, StudentAttendanceSerializer, EmployeeAttendanceSerializer
 )
 from .permissions import (
     IsSuperAdmin, IsBranchManager, IsCounsellor, IsReceptionist,
@@ -688,4 +688,139 @@ class StudentJobResponseListView(APIView):
         # Get job responses by student email
         responses = JobResponse.objects.filter(email=request.user.email).order_by('-created_at')
         serializer = JobResponseSerializer(responses, many=True)
+        return Response(serializer.data)
+
+class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
+    queryset = EmployeeAttendance.objects.all()
+    serializer_class = EmployeeAttendanceSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsSuperAdmin | BranchManagerPermission]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsSuperAdmin]
+        else:
+            permission_classes = [IsSuperAdmin]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        # SuperAdmin can see all attendance records
+        if user.role == 'SuperAdmin':
+            return EmployeeAttendance.objects.all()
+        
+        # Branch Manager can see attendance records for employees in their branch
+        if user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
+            user_branch = user.employee_profile.branch
+            return EmployeeAttendance.objects.filter(employee__branch=user_branch)
+        
+        # Others can't see any records
+        return EmployeeAttendance.objects.none()
+    
+    @action(detail=False, methods=['get'])
+    def by_date(self, request):
+        """Get attendance records for a specific date"""
+        date_str = request.query_params.get('date')
+        if not date_str:
+            return Response(
+                {"detail": "Date parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from datetime import datetime
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(date=date)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def by_employee(self, request):
+        """Get attendance records for a specific employee"""
+        employee_id = request.query_params.get('employee_id')
+        if not employee_id:
+            return Response(
+                {"detail": "Employee ID parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(employee__employee_id=employee_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class StudentAttendanceViewSet(viewsets.ModelViewSet):
+    queryset = StudentAttendance.objects.all()
+    serializer_class = StudentAttendanceSerializer
+    
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsSuperAdmin | BranchManagerPermission]
+        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsSuperAdmin]
+        else:
+            permission_classes = [IsSuperAdmin]
+        return [permission() for permission in permission_classes]
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        # SuperAdmin can see all attendance records
+        if user.role == 'SuperAdmin':
+            return StudentAttendance.objects.all()
+        
+        # Branch Manager can see attendance records for students in their branch
+        if user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
+            user_branch = user.employee_profile.branch
+            return StudentAttendance.objects.filter(student__branch=user_branch)
+        
+        # Students can see their own attendance records
+        if user.role == 'Student' and hasattr(user, 'student_profile'):
+            return StudentAttendance.objects.filter(student=user.student_profile)
+        
+        # Others can't see any records
+        return StudentAttendance.objects.none()
+    
+    @action(detail=False, methods=['get'])
+    def by_date(self, request):
+        """Get attendance records for a specific date"""
+        date_str = request.query_params.get('date')
+        if not date_str:
+            return Response(
+                {"detail": "Date parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from datetime import datetime
+            date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {"detail": "Invalid date format. Use YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(date=date)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def by_student(self, request):
+        """Get attendance records for a specific student"""
+        student_id = request.query_params.get('student_id')
+        if not student_id:
+            return Response(
+                {"detail": "Student ID parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(student__student_id=student_id)
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
