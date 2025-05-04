@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   HomeIcon,
   UserGroupIcon,
@@ -14,6 +14,8 @@ import { User } from '../lib/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
+  showSidebar?: boolean;
+  showHeader?: boolean;
 }
 
 const Sidebar = () => {
@@ -152,17 +154,77 @@ const Sidebar = () => {
   );
 };
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const PublicHeader = () => {
+  const navigate = useNavigate();
+  
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+      <div className="container mx-auto flex justify-between items-center px-6 py-3 h-16">
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="group w-10 h-10 flex items-center justify-center rounded-lg p-2 relative bg-gradient-to-br from-[#0A1A2F] via-[#0F2847] to-[#1A3A64]">
+              <img 
+                src="/logo.png" 
+                alt="Admin Bridge Logo" 
+                className="w-full h-full object-contain brightness-0 invert" 
+              />
+            </div>
+            <span className="font-bold text-gray-900">Admin Bridge</span>
+          </Link>
+        </div>
+        
+        <nav className="hidden md:flex items-center space-x-6">
+          <Link to="/" className="text-gray-700 hover:text-gray-900 text-sm font-medium">Home</Link>
+          <Link to="/blog" className="text-gray-700 hover:text-gray-900 text-sm font-medium">Blog</Link>
+          <button 
+            onClick={() => navigate('/login')}
+            className="bg-[#1A3A64] hover:bg-[#2A4A7F] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Login
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+};
+
+const Layout: React.FC<LayoutProps> = ({ 
+  children, 
+  showSidebar = false, 
+  showHeader = false
+}) => {
   const { user } = useAuth();
 
+  // Simple layout with just the content (no headers)
+  if (!showSidebar && !showHeader) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <main className="w-full flex-1">{children}</main>
+      </div>
+    );
+  }
+
+  // Public layout with just the header
+  if (!showSidebar && showHeader) {
+    return (
+      <div className="flex flex-col min-h-screen bg-gray-50">
+        <PublicHeader />
+        <main className="flex-1">{children}</main>
+      </div>
+    );
+  }
+
+  // Full layout with sidebar and header
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <div className="fixed left-0 top-0 h-screen z-20">
-        <Sidebar />
-      </div>
-      <div className="flex-1 ml-64 flex flex-col h-screen">
-        <Header />
-        <main className="flex-1 p-8 overflow-auto">{children}</main>
+      {showSidebar && (
+        <div className="fixed left-0 top-0 h-screen z-20">
+          <Sidebar />
+        </div>
+      )}
+      <div className={`flex-1 ${showSidebar ? 'ml-64' : ''} flex flex-col h-screen`}>
+        {showHeader && <Header />}
+        <main className={`flex-1 ${showHeader ? 'p-8' : ''} overflow-auto`}>{children}</main>
       </div>
     </div>
   );

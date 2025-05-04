@@ -37,6 +37,16 @@ import ReceptionistEmployeeList from './pages/receptionist/EmployeeList';
 import ReceptionistBlogList from './pages/receptionist/BlogList';
 import JobPage from './pages/admin/JobPage';
 import Profile from './pages/Profile';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
+
+// Student pages
+import StudentJobs from './pages/student/Jobs';
+import StudentBlogs from './pages/student/Blogs';
+import StudentProfile from './pages/student/Profile';
+import StudentJobDetail from './pages/student/JobDetail';
+import StudentBlogDetail from './pages/student/BlogDetail';
+
 import './App.css'
 
 function App() {
@@ -44,8 +54,10 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public route */}
+          {/* Public routes */}
           <Route path="/login" element={<Login />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:id" element={<BlogPost />} />
           
           {/* Super Admin Routes */}
           <Route 
@@ -166,6 +178,11 @@ function App() {
             }
           >
             <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/jobs" element={<StudentJobs />} />
+            <Route path="/student/jobs/:id" element={<StudentJobDetail />} />
+            <Route path="/student/blogs" element={<StudentBlogs />} />
+            <Route path="/student/blogs/:id" element={<StudentBlogDetail />} />
+            <Route path="/student/profile" element={<StudentProfile />} />
           </Route>
           
           {/* Bank Manager Routes */}
@@ -180,7 +197,7 @@ function App() {
           {/* Shared Routes */}
           <Route 
             element={
-              <ProtectedRoute allowedRoles={['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist', 'Student', 'BankManager']} />
+              <ProtectedRoute allowedRoles={['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist', 'BankManager']} />
             }
           >
             <Route path="/profile" element={<Profile />} />

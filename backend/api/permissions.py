@@ -44,10 +44,21 @@ class IsBankManager(permissions.BasePermission):
 
 class IsStudent(permissions.BasePermission):
     """
-    Allows access only to Student users.
+    Permission to only allow students to access their own data.
     """
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == 'Student'
+    
+    def has_object_permission(self, request, view, obj):
+        # Check if the object has a user field
+        if hasattr(obj, 'user'):
+            return obj.user == request.user
+        
+        # If the object has a student field
+        if hasattr(obj, 'student'):
+            return obj.student.user == request.user
+        
+        return False
 
 
 class BelongsToBranch(permissions.BasePermission):

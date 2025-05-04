@@ -141,6 +141,35 @@ class StudentSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class StudentDetailSerializer(serializers.ModelSerializer):
+    """Detailed serializer for Student model with user and branch details"""
+    user = UserSerializer(read_only=True)
+    branch = BranchSerializer(read_only=True)
+    
+    class Meta:
+        model = Student
+        fields = [
+            'id', 'user', 'branch', 'student_id', 'age', 'gender', 
+            'nationality', 'contact_number', 'address', 'institution_name',
+            'language_test', 'emergency_contact', 'mother_name', 'father_name',
+            'parent_number', 'profile_image', 'comments', 'enrollment_date'
+        ]
+        read_only_fields = ['student_id', 'enrollment_date']
+
+
+class StudentUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating student profile details"""
+    profile_image = serializers.ImageField(required=False)
+    
+    class Meta:
+        model = Student
+        fields = [
+            'nationality', 'contact_number', 'address', 'institution_name',
+            'language_test', 'emergency_contact', 'mother_name', 'father_name',
+            'parent_number', 'profile_image', 'comments'
+        ]
+
+
 class LeadSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     assigned_to_name = serializers.CharField(source='assigned_to.get_full_name', read_only=True)

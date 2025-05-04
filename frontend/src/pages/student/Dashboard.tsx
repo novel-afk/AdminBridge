@@ -1,194 +1,262 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
+import { ArrowRight, Briefcase, Book, Search, MapPin, Calendar, User, ChevronRight, Sparkles, Users, Globe, TrendingUp } from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { Badge } from '../../components/ui/badge';
+import Layout from '../../components/Layout';
+import StudentHeader from '../../components/StudentHeader';
 
-interface User {
+interface FeaturedJob {
   id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  role: string;
+  title: string;
+  description: string;
+  requirements: string;
+  job_type: string;
+  branch: {
+    name: string;
+    city: string;
+    country: string;
+  };
+  created_at: string;
 }
 
-const StudentDashboard = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+interface Blog {
+  id: number;
+  title: string;
+  content: string;
+  author: {
+    first_name: string;
+    last_name: string;
+  };
+  published_date: string;
+  created_at: string;
+}
+
+const features = [
+  {
+    icon: <Globe className="h-6 w-6" />,
+    title: "Global Opportunities",
+    description: "Connect with companies worldwide and explore international career paths."
+  },
+  {
+    icon: <Users className="h-6 w-6" />,
+    title: "Professional Network",
+    description: "Build relationships with industry experts and like-minded professionals."
+  },
+  {
+    icon: <TrendingUp className="h-6 w-6" />,
+    title: "Career Growth",
+    description: "Access resources and insights to accelerate your professional development."
+  }
+];
+
+const Dashboard: React.FC = () => {
+  const [featuredJobs, setFeaturedJobs] = useState<FeaturedJob[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check if user is logged in with access token
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-      navigate('/login');
-      return;
-    }
-
-    // Get user info from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const fetchData = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
+        setLoading(true);
+        const [jobsResponse, blogsResponse] = await Promise.all([
+          axios.get('/api/jobs/?is_active=true&limit=3'),
+          axios.get('/api/blogs/?is_published=true&limit=3')
+        ]);
         
-        // Make sure this dashboard is only accessible to students
-        if (parsedUser.role !== 'Student') {
-          navigate('/login');
-          return;
-        }
-        
-        setUser(parsedUser);
+        setFeaturedJobs(jobsResponse.data.results || []);
+        setBlogs(blogsResponse.data.results || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
         setLoading(false);
-      } catch (e) {
-        console.error('Error parsing user from localStorage:', e);
-        navigate('/login');
       }
-    } else {
-      // Try to fetch user info if not in localStorage
-      const fetchUserInfo = async () => {
-        try {
-          const response = await axios.get('http://localhost:8000/api/users/me/', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
-          
-          if (response.data.role !== 'Student') {
-            navigate('/login');
-            return;
-          }
-          
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-          setLoading(false);
-        } catch (err) {
-          console.error('Error fetching user details:', err);
-          navigate('/login');
-        }
-      };
-      fetchUserInfo();
-    }
-  }, [navigate]);
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('user_email');
-    navigate('/login');
+    fetchData();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-2xl text-gray-600">Loading...</div>
-      </div>
-    );
-  }
-
-  // User display name
-  const displayName = user ? 
-    `${user.first_name} ${user.last_name}` : 
-    'Student';
-
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-800">AdminBridge</h1>
+    <>
+      <StudentHeader />
+      <Layout showSidebar={false} showHeader={false}>
+        {/* Hero Section */}
+        <section className="bg-[#153147] text-white py-24 -mt-1">
+          <div className="container mx-auto px-6">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="inline-flex items-center bg-white/10 rounded-full px-4 py-2 mb-6">
+                <Sparkles className="h-5 w-5 text-yellow-300 mr-2" />
+                <span className="text-[#EDEAE4]">Welcome to AdminBridge Student Portal</span>
+              </div>
+              <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-[#F9F8F7] to-[#EDEAE4] bg-clip-text text-transparent">
+                Your Gateway to Professional Growth
+              </h1>
+              <p className="text-xl text-[#ADB8BB] mb-12 max-w-2xl mx-auto">
+                Discover opportunities, share knowledge, and connect with a community of professionals all in one place.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Link to="/student/jobs" className="flex items-center">
+                  <Button 
+                    size="lg"
+                    className="bg-[#F9F8F7] text-[#153147] hover:bg-[#EDEAE4] hover:scale-105 transform transition-all duration-200 px-8 py-6 text-lg rounded-full"
+                  >
+                    Browse Jobs
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/student/blogs">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    className="bg-transparent border-2 border-[#EDEAE4] text-[#EDEAE4] hover:bg-[#EDEAE4] hover:text-[#153147] hover:scale-105 transform transition-all duration-200 px-8 py-6 text-lg rounded-full flex items-center gap-2"
+                  >
+                    Read Articles
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-gray-700 mr-4">Welcome, {displayName}</span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-300"
-              >
-                Logout
-              </button>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+              {features.map((feature, index) => (
+                <div 
+                  key={index}
+                  className="text-center p-8 rounded-2xl bg-gradient-to-b from-[#F9F8F7] to-white border border-[#EDEAE4] hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-[#153147] text-white mb-6">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-[#153147] mb-4">{feature.title}</h3>
+                  <p className="text-[#232A2F]">{feature.description}</p>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white overflow-hidden shadow rounded-lg p-6">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-4">Student Dashboard</h1>
-            
-            <DefaultPasswordAlert />
-            
-            <div className="bg-teal-50 p-4 rounded-md mb-6">
-              <p className="text-teal-800">
-                <span className="font-medium">Role:</span> Student
-              </p>
-              {user && (
-                <>
-                  <p className="text-teal-800 mt-2">
-                    <span className="font-medium">Name:</span> {user.first_name} {user.last_name}
-                  </p>
-                  <p className="text-teal-800 mt-2">
-                    <span className="font-medium">Email:</span> {user.email}
-                  </p>
-                </>
+        {/* Featured Jobs Section */}
+        <section className="py-20">
+          <div className="container mx-auto px-6">
+            <div className="flex justify-between items-center mb-12">
+              <div>
+                <h2 className="text-4xl font-bold text-[#153147]">Featured Jobs</h2>
+                <p className="text-[#ADB8BB] mt-2">Explore our latest opportunities</p>
+              </div>
+              <Link to="/student/jobs" className="flex items-center gap-2">
+                <Button 
+                  variant="outline"
+                  className="border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white"
+                >
+                  View All Jobs
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                <div className="col-span-3 text-center py-12">Loading featured jobs...</div>
+              ) : featuredJobs.length === 0 ? (
+                <div className="col-span-3 text-center py-12">No featured jobs available at this time</div>
+              ) : (
+                featuredJobs.map((job) => (
+                  <Link 
+                    key={job.id}
+                    to={`/student/jobs/${job.id}`}
+                    className="bg-white rounded-xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-[#EDEAE4] group transform hover:-translate-y-1"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-semibold text-[#153147] group-hover:text-[#232A2F] transition-colors">
+                          {job.title}
+                        </h3>
+                        <p className="text-[#ADB8BB] mt-1">{job.branch?.name}</p>
+                      </div>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        {job.job_type}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-[#232A2F]">
+                      <MapPin className="h-4 w-4 text-[#ADB8BB]" />
+                      <span>{job.branch?.city}, {job.branch?.country}</span>
+                    </div>
+                  </Link>
+                ))
               )}
             </div>
-            
-            <p className="text-gray-600">
-              Welcome to your Student dashboard. From here, you can view your profile, upcoming appointments, and course information.
-            </p>
+          </div>
+        </section>
 
-            {/* Placeholder for future functionality */}
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">My Profile</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View and update your profile information.
-                  </p>
-                </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
-                  <div className="text-sm">
-                    <a href="#" className="font-medium text-teal-600 hover:text-teal-500">View profile</a>
-                  </div>
-                </div>
+        {/* Latest Articles Section */}
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-6">
+            <div className="flex justify-between items-center mb-12">
+              <div>
+                <h2 className="text-4xl font-bold text-[#153147]">Latest Articles</h2>
+                <p className="text-[#ADB8BB] mt-2">Stay updated with industry insights</p>
               </div>
+              <Link to="/student/blogs" className="flex items-center gap-2">
+                <Button 
+                  variant="outline"
+                  className="border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white"
+                >
+                  View All Articles
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">My Appointments</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View your upcoming counsellor appointments.
-                  </p>
-                </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
-                  <div className="text-sm">
-                    <a href="#" className="font-medium text-teal-600 hover:text-teal-500">View appointments</a>
-                  </div>
-                </div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {loading ? (
+                <div className="col-span-3 text-center py-12">Loading latest articles...</div>
+              ) : blogs.length === 0 ? (
+                <div className="col-span-3 text-center py-12">No articles available at this time</div>
+              ) : (
+                blogs.map((blog) => (
+                  <Link 
+                    key={blog.id}
+                    to={`/student/blogs/${blog.id}`}
+                    className="bg-[#F9F8F7] rounded-xl p-8 hover:shadow-xl transition-all duration-300 group transform hover:-translate-y-1"
+                  >
+                    <div className="mb-4">
+                      <h3 className="text-xl font-semibold text-[#153147] group-hover:text-[#232A2F] transition-colors">
+                        {blog.title}
+                      </h3>
+                    </div>
 
-              <div className="bg-white overflow-hidden shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <h3 className="text-lg font-medium text-gray-900">Course Information</h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    View information about your courses.
-                  </p>
-                </div>
-                <div className="bg-gray-50 px-4 py-4 sm:px-6">
-                  <div className="text-sm">
-                    <a href="#" className="font-medium text-teal-600 hover:text-teal-500">View courses</a>
-                  </div>
-                </div>
-              </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-[#232A2F]">
+                        <User className="h-4 w-4 text-[#ADB8BB]" />
+                        <span>{blog.author?.first_name} {blog.author?.last_name}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[#232A2F]">
+                        <Calendar className="h-4 w-4 text-[#ADB8BB]" />
+                        <span>{formatDate(blog.published_date || blog.created_at)}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
-        </div>
-      </main>
-    </div>
+        </section>
+      </Layout>
+    </>
   );
 };
 
-export default StudentDashboard; 
+export default Dashboard; 

@@ -5,6 +5,7 @@ from rest_framework import viewsets, permissions, status, generics
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 # from guardian.shortcuts import assign_perm, get_objects_for_user  # Temporarily commented out
+from rest_framework.views import APIView
 
 from .models import (
     User, Branch, Employee, Student, Lead,
@@ -13,12 +14,13 @@ from .models import (
 from .serializers import (
     UserSerializer, BranchSerializer, EmployeeSerializer, 
     StudentSerializer, LeadSerializer, JobSerializer,
-    JobResponseSerializer, BlogSerializer
+    JobResponseSerializer, BlogSerializer, StudentDetailSerializer,
+    StudentUpdateSerializer
 )
 from .permissions import (
     IsSuperAdmin, IsBranchManager, IsCounsellor, IsReceptionist,
     BelongsToBranch, BranchManagerPermission, CounsellorPermission,
-    ReceptionistPermission
+    ReceptionistPermission, IsStudent
 )
 
 # Create your views here.
@@ -631,3 +633,53 @@ class BlogViewSet(viewsets.ModelViewSet):
             
         # Default - show only published blogs
         return Blog.objects.filter(is_published=True)
+
+# Student Portal Endpoints
+class StudentProfileView(APIView):
+    """View for student to see and update their own profile"""
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+    
+    def get(self, request):
+        try:
+            student = Student.objects.get(user=request.user)
+            serializer = StudentDetailSerializer(student)
+            return Response(serializer.data)
+        except Student.DoesNotExist:
+            return Response({"detail": "Student profile not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    def patch(self, request):
+        try:
+            student = Student.objects.get(user=request.user)
+            serializer = StudentUpdateSerializer(student, data=request.data, partial=True)
+            
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Student.DoesNotExist:
+            return Response({"detail": "Student profile not found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class StudentJobResponseView(APIView):
+    """View for student to apply to jobs"""
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+    
+    def post(self, request):
+        serializer = JobResponseSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentJobResponseListView(APIView):
+    """View for student to view their job applications"""
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+    
+    def get(self, request):
+        student = Student.objects.get(user=request.user)
+        # Get job responses by student email
+        responses = JobResponse.objects.filter(email=request.user.email).order_by('-created_at')
+        serializer = JobResponseSerializer(responses, many=True)
+        return Response(serializer.data)
