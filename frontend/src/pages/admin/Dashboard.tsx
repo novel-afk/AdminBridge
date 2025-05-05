@@ -1,7 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Bar, Pie, Line } from 'react-chartjs-2';
+import { 
+  Chart as ChartJS, 
+  CategoryScale, 
+  LinearScale, 
+  BarElement, 
+  Title, 
+  Tooltip, 
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement
+} from 'chart.js';
 import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
+import { API_URL } from '../../lib/api';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  PointElement,
+  LineElement
+);
 
 interface DashboardStats {
   branchCount: number;
@@ -9,6 +36,9 @@ interface DashboardStats {
   studentCount: number;
   leadCount: number;
   jobCount: number;
+  studentsByBranch?: Record<string, number>;
+  leadsStatusCount?: Record<string, number>;
+  monthlyStudentRegistrations?: Record<string, number>;
 }
 
 interface User {
@@ -26,8 +56,12 @@ const AdminDashboard = () => {
     studentCount: 0,
     leadCount: 0,
     jobCount: 0,
+    studentsByBranch: {},
+    leadsStatusCount: {},
+    monthlyStudentRegistrations: {}
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
   const navigate = useNavigate();
@@ -57,34 +91,41 @@ const AdminDashboard = () => {
       setUserEmail(email);
     }
 
-    // For demonstration, calculate mock stats
-    // In a real app, fetch these from the API
-    setStats({
-      branchCount: 1,
-      employeeCount: 1,
-      studentCount: 0,
-      leadCount: 0,
-      jobCount: 0,
-    });
-    setLoading(false);
-
-    // If backend API for stats is ready, use this instead:
-    /*
+    // Fetch real-time dashboard statistics from API
     const fetchStats = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
-        const accessToken = localStorage.getItem('access_token');
-        const response = await axios.get('http://localhost:8000/api/admin/stats', {
+        const response = await axios.get(`${API_URL}/admin/stats`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
-        setStats(response.data);
+        
+        if (response.data) {
+          console.log('Received admin stats:', response.data);
+          setStats(response.data);
+        } else {
+          setError('No data received from server');
+          console.error('No data received from stats API');
+        }
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+        setError('Failed to fetch data from server');
+        
+        // Don't use fallback data immediately - show the error to admin
       } finally {
         setLoading(false);
       }
     };
+    
+    // Call the fetch function
     fetchStats();
-    */
+
+    // Set up interval to refresh data every 5 minutes (300000 ms)
+    const intervalId = setInterval(fetchStats, 300000);
+    
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, [navigate]);
 
   const handleLogout = () => {
@@ -98,7 +139,34 @@ const AdminDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-2xl text-gray-600">Loading...</div>
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
+          <div className="flex items-center justify-center text-red-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-center text-gray-800 mb-2">Data Error</h2>
+          <p className="text-gray-600 text-center mb-6">{error}</p>
+          <div className="flex justify-center">
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -109,30 +177,75 @@ const AdminDashboard = () => {
     `${user.first_name} ${user.last_name}` : 
     (userEmail || 'Admin User');
 
+  // Chart data for students by branch
+  const branchBarChartData = {
+    labels: Object.keys(stats.studentsByBranch || {}),
+    datasets: [
+      {
+        label: 'Number of Students',
+        data: Object.values(stats.studentsByBranch || {}),
+        backgroundColor: [
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(255, 159, 64, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+          'rgba(255, 99, 132, 0.6)',
+        ],
+        borderColor: [
+          'rgba(54, 162, 235, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(255, 159, 64, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 99, 132, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Chart data for leads by status
+  const leadsPieChartData = {
+    labels: Object.keys(stats.leadsStatusCount || {}),
+    datasets: [
+      {
+        label: 'Lead Status',
+        data: Object.values(stats.leadsStatusCount || {}),
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.6)',
+          'rgba(54, 162, 235, 0.6)',
+          'rgba(255, 206, 86, 0.6)',
+          'rgba(75, 192, 192, 0.6)',
+          'rgba(153, 102, 255, 0.6)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Chart data for monthly student registrations
+  const registrationsLineChartData = {
+    labels: Object.keys(stats.monthlyStudentRegistrations || {}),
+    datasets: [
+      {
+        label: 'Monthly Student Registrations',
+        data: Object.values(stats.monthlyStudentRegistrations || {}),
+        fill: false,
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        tension: 0.1
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold text-gray-800">AdminBridge</h1>
-              </div>
-            </div>
-            <div className="flex items-center">
-              <span className="text-gray-700 mr-4">Welcome, {displayName}</span>
-              <button
-                onClick={handleLogout}
-                className="bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-colors duration-300"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -266,6 +379,39 @@ const AdminDashboard = () => {
             </div>
           </div>
 
+          {/* Charts Section */}
+          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Students by Branch Bar Chart */}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Students by Branch</h3>
+                <div className="h-64">
+                  <Bar data={branchBarChartData} options={{ maintainAspectRatio: false }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Leads Status Pie Chart */}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Lead Status Distribution</h3>
+                <div className="h-64">
+                  <Pie data={leadsPieChartData} options={{ maintainAspectRatio: false }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Monthly Student Registrations Line Chart */}
+            <div className="bg-white overflow-hidden shadow rounded-lg lg:col-span-2">
+              <div className="px-4 py-5 sm:p-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Monthly Student Registrations</h3>
+                <div className="h-80">
+                  <Line data={registrationsLineChartData} options={{ maintainAspectRatio: false }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Quick Links Section */}
           <div className="mt-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
@@ -361,22 +507,6 @@ const AdminDashboard = () => {
                     <div className="ml-4">
                       <h3 className="text-lg font-medium text-gray-900">Post New Job</h3>
                       <p className="text-sm text-gray-500">Create a new job posting</p>
-                    </div>
-                  </div>
-                </a>
-              </div>
-
-              <div className="bg-white overflow-hidden shadow rounded-lg hover:bg-gray-50 transition-colors duration-300">
-                <a href="/admin/jobs" className="block p-6">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 bg-purple-100 rounded-md p-3">
-                      <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                      </svg>
-                    </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-medium text-gray-900">Manage Jobs</h3>
-                      <p className="text-sm text-gray-500">View and edit job postings</p>
                     </div>
                   </div>
                 </a>

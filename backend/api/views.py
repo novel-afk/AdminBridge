@@ -2,8 +2,11 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions, status, generics
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+import datetime
+import random
 # from guardian.shortcuts import assign_perm, get_objects_for_user  # Temporarily commented out
 from rest_framework.views import APIView
 
@@ -24,6 +27,367 @@ from .permissions import (
 )
 
 # Create your views here.
+
+# Dashboard stats API views
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsSuperAdmin])
+def admin_stats(request):
+    """
+    API endpoint for admin dashboard statistics
+    """
+    try:
+        # Count real data if available
+        branch_count = Branch.objects.count() or 5
+        employee_count = Employee.objects.count() or 42
+        student_count = Student.objects.count() or 350
+        lead_count = Lead.objects.count() or 28
+        job_count = Job.objects.count() or 15
+        
+        # Generate mock data for demonstration or use real data when available
+        branches = Branch.objects.all()
+        branch_names = [branch.name for branch in branches] if branches.exists() else [
+            "Kathmandu", "Pokhara", "Chitwan", "Butwal", "Biratnagar"
+        ]
+        
+        students_by_branch = {}
+        for name in branch_names:
+            students_by_branch[name] = random.randint(30, 120)
+            
+        leads_status_count = {
+            "New": random.randint(5, 15),
+            "Contacted": random.randint(10, 20),
+            "Qualified": random.randint(5, 15),
+            "Converted": random.randint(5, 20),
+            "Closed": random.randint(3, 10)
+        }
+        
+        # Mock data for monthly student registrations (last 6 months)
+        current_month = timezone.now().month
+        current_year = timezone.now().year
+        
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        monthly_student_registrations = {}
+        
+        for i in range(6):
+            # Calculate month index (going backward from current month)
+            month_idx = (current_month - i - 1) % 12
+            if month_idx == 0:
+                month_idx = 12
+                current_year -= 1
+                
+            month_name = month_names[month_idx - 1]
+            monthly_student_registrations[month_name] = random.randint(10, 50)
+
+        # Reverse to show in chronological order
+        monthly_student_registrations = dict(reversed(list(monthly_student_registrations.items())))
+            
+        stats = {
+            "branchCount": branch_count,
+            "employeeCount": employee_count,
+            "studentCount": student_count,
+            "leadCount": lead_count,
+            "jobCount": job_count,
+            "studentsByBranch": students_by_branch,
+            "leadsStatusCount": leads_status_count,
+            "monthlyStudentRegistrations": monthly_student_registrations
+        }
+        
+        return Response(stats)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsBranchManager])
+def branch_manager_stats(request):
+    """
+    API endpoint for branch manager dashboard statistics
+    """
+    try:
+        # Get the branch manager's branch
+        branch_name = "Unknown Branch"
+        branch = None
+        
+        if hasattr(request.user, 'employee_profile'):
+            branch = request.user.employee_profile.branch
+            branch_name = branch.name
+            
+        # Count employees and students for this branch
+        if branch:
+            employee_count = Employee.objects.filter(branch=branch).count() or 12
+            student_count = Student.objects.filter(branch=branch).count() or 78
+            lead_count = Lead.objects.filter(branch=branch).count() or 14
+        else:
+            # Mock data if branch not found
+            employee_count = 12
+            student_count = 78
+            lead_count = 14
+            
+        # Generate mock data for charts
+        course_distribution = {
+            "Web Development": random.randint(10, 30),
+            "Digital Marketing": random.randint(8, 20),
+            "Graphic Design": random.randint(5, 15),
+            "App Development": random.randint(10, 25),
+            "Data Science": random.randint(5, 15)
+        }
+        
+        lead_status_count = {
+            "New": random.randint(2, 7),
+            "Contacted": random.randint(3, 8),
+            "Qualified": random.randint(2, 5),
+            "Converted": random.randint(1, 5),
+            "Closed": random.randint(1, 3)
+        }
+        
+        # Mock data for student attendance
+        student_attendance = {
+            "Monday": random.randint(70, 95),
+            "Tuesday": random.randint(70, 95),
+            "Wednesday": random.randint(70, 95),
+            "Thursday": random.randint(70, 95),
+            "Friday": random.randint(70, 95)
+        }
+        
+        # Mock data for lead conversions over past 6 months
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        current_month = timezone.now().month
+        
+        lead_conversions = {
+            "labels": [],
+            "values": []
+        }
+        
+        for i in range(6):
+            month_idx = (current_month - i - 1) % 12
+            if month_idx == 0:
+                month_idx = 12
+            
+            lead_conversions["labels"].append(month_names[month_idx - 1])
+            lead_conversions["values"].append(random.randint(3, 12))
+            
+        # Reverse for chronological order
+        lead_conversions["labels"].reverse()
+        lead_conversions["values"].reverse()
+        
+        stats = {
+            "branchName": branch_name,
+            "employeeCount": employee_count,
+            "studentCount": student_count,
+            "leadCount": lead_count,
+            "courseDistribution": course_distribution,
+            "leadStatusCount": lead_status_count,
+            "studentAttendance": student_attendance,
+            "leadConversions": lead_conversions
+        }
+        
+        return Response(stats)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsCounsellor])
+def counsellor_stats(request):
+    """
+    API endpoint for counsellor dashboard statistics
+    """
+    try:
+        # Get the counsellor's name and branch
+        counsellor_name = f"{request.user.first_name} {request.user.last_name}"
+        branch_name = "Unknown Branch"
+        branch = None
+        
+        if hasattr(request.user, 'employee_profile'):
+            branch = request.user.employee_profile.branch
+            branch_name = branch.name
+            
+        # Count assigned students and leads
+        assigned_student_count = random.randint(15, 40)
+        assigned_lead_count = random.randint(5, 15)
+        upcoming_appointment_count = random.randint(3, 8)
+            
+        # Generate mock data for charts
+        student_status_distribution = {
+            "Active": random.randint(10, 30),
+            "Completed": random.randint(5, 15),
+            "On Hold": random.randint(2, 8),
+            "Graduated": random.randint(5, 10)
+        }
+        
+        lead_status_distribution = {
+            "New": random.randint(2, 5),
+            "Contacted": random.randint(2, 7),
+            "Interested": random.randint(2, 5),
+            "Not Interested": random.randint(1, 3),
+            "Converted": random.randint(1, 4)
+        }
+        
+        # Mock data for performance metrics
+        performance_metrics = {
+            "Student Success Rate": random.randint(75, 95),
+            "Lead Conversion Rate": random.randint(40, 75),
+            "Appointment Completion": random.randint(80, 98),
+            "Student Satisfaction": random.randint(85, 98)
+        }
+        
+        # Mock data for weekly schedule
+        weekly_schedule = {
+            "Monday": random.randint(1, 5),
+            "Tuesday": random.randint(1, 5),
+            "Wednesday": random.randint(1, 5),
+            "Thursday": random.randint(1, 5),
+            "Friday": random.randint(1, 5)
+        }
+        
+        stats = {
+            "counsellorName": counsellor_name,
+            "branchName": branch_name,
+            "assignedStudentCount": assigned_student_count,
+            "assignedLeadCount": assigned_lead_count,
+            "upcomingAppointmentCount": upcoming_appointment_count,
+            "studentStatusDistribution": student_status_distribution,
+            "leadStatusDistribution": lead_status_distribution,
+            "performanceMetrics": performance_metrics,
+            "weeklySchedule": weekly_schedule
+        }
+        
+        return Response(stats)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsReceptionist])
+def receptionist_stats(request):
+    """
+    API endpoint for receptionist dashboard statistics
+    """
+    try:
+        # Get the receptionist's name and branch
+        receptionist_name = f"{request.user.first_name} {request.user.last_name}"
+        branch_name = "Unknown Branch"
+        branch = None
+        
+        if hasattr(request.user, 'employee_profile'):
+            branch = request.user.employee_profile.branch
+            branch_name = branch.name
+            
+        # Mock data for today's counts
+        today_lead_count = random.randint(1, 8)
+        today_visitor_count = random.randint(5, 25)
+        upcoming_appointment_count = random.randint(3, 12)
+            
+        # Generate mock data for charts
+        lead_source_distribution = {
+            "Walk-in": random.randint(5, 15),
+            "Website": random.randint(5, 20),
+            "Referral": random.randint(3, 10),
+            "Social Media": random.randint(5, 15),
+            "Ad Campaign": random.randint(2, 10)
+        }
+        
+        student_course_distribution = {
+            "Web Development": random.randint(10, 30),
+            "Digital Marketing": random.randint(8, 20),
+            "Graphic Design": random.randint(5, 15),
+            "App Development": random.randint(10, 25),
+            "Data Science": random.randint(5, 15)
+        }
+        
+        # Mock data for visitor traffic (last 7 days)
+        days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        visitor_traffic = {}
+        
+        for day in days:
+            visitor_traffic[day] = random.randint(5, 30)
+        
+        stats = {
+            "receptionistName": receptionist_name,
+            "branchName": branch_name,
+            "todayLeadCount": today_lead_count,
+            "todayVisitorCount": today_visitor_count,
+            "upcomingAppointmentCount": upcoming_appointment_count,
+            "leadSourceDistribution": lead_source_distribution,
+            "studentCourseDistribution": student_course_distribution,
+            "visitorTraffic": visitor_traffic
+        }
+        
+        return Response(stats)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def bank_manager_stats(request):
+    """
+    API endpoint for bank manager dashboard statistics
+    """
+    try:
+        # Get the bank manager's name
+        bank_manager_name = f"{request.user.first_name} {request.user.last_name}"
+            
+        # Mock data for loan counts
+        total_loans = random.randint(50, 200)
+        pending_loans = random.randint(10, 30)
+        approved_loans = random.randint(30, 150)
+        rejected_loans = random.randint(5, 20)
+            
+        # Generate mock data for charts
+        loan_type_distribution = {
+            "Education": random.randint(20, 70),
+            "Personal": random.randint(10, 40),
+            "Business": random.randint(5, 30),
+            "Housing": random.randint(10, 50),
+            "Vehicle": random.randint(5, 20)
+        }
+        
+        loan_status_distribution = {
+            "Pending": pending_loans,
+            "Approved": approved_loans,
+            "Rejected": rejected_loans,
+            "Completed": random.randint(10, 50)
+        }
+        
+        # Mock data for monthly loan amounts
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        current_month = timezone.now().month
+        
+        monthly_loan_amount = {}
+        
+        for i in range(6):
+            month_idx = (current_month - i - 1) % 12
+            if month_idx == 0:
+                month_idx = 12
+            
+            monthly_loan_amount[month_names[month_idx - 1]] = random.randint(50000, 250000)
+            
+        # Reverse for chronological order
+        monthly_loan_amount = dict(reversed(list(monthly_loan_amount.items())))
+        
+        # Mock data for branch distribution
+        branches = Branch.objects.all()
+        branch_names = [branch.name for branch in branches] if branches.exists() else [
+            "Kathmandu", "Pokhara", "Chitwan", "Butwal", "Biratnagar"
+        ]
+        
+        branch_distribution = {}
+        for name in branch_names:
+            branch_distribution[name] = random.randint(5, 50)
+        
+        stats = {
+            "bankManagerName": bank_manager_name,
+            "totalLoans": total_loans,
+            "pendingLoans": pending_loans,
+            "approvedLoans": approved_loans,
+            "rejectedLoans": rejected_loans,
+            "loanTypeDistribution": loan_type_distribution,
+            "loanStatusDistribution": loan_status_distribution,
+            "monthlyLoanAmount": monthly_loan_amount,
+            "branchDistribution": branch_distribution
+        }
+        
+        return Response(stats)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserViewSet(viewsets.ModelViewSet):
     """

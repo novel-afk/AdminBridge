@@ -4,7 +4,8 @@ from .views import (
     UserViewSet, BranchViewSet, EmployeeViewSet, StudentViewSet,
     LeadViewSet, JobViewSet, JobResponseViewSet, BlogViewSet,
     StudentProfileView, StudentJobResponseView, StudentJobResponseListView,
-    StudentAttendanceViewSet, EmployeeAttendanceViewSet
+    StudentAttendanceViewSet, EmployeeAttendanceViewSet,
+    admin_stats, branch_manager_stats, counsellor_stats, receptionist_stats, bank_manager_stats
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -29,4 +30,11 @@ urlpatterns = [
     path('student-profile/', StudentProfileView.as_view(), name='student-profile'),
     path('job-responses/', StudentJobResponseView.as_view(), name='job-responses'),
     path('my-job-applications/', StudentJobResponseListView.as_view(), name='my-job-applications'),
+    
+    # Dashboard stats endpoints
+    path('admin/stats/', admin_stats, name='admin-stats'),
+    path('branch-manager/stats/', branch_manager_stats, name='branch-manager-stats'),
+    path('counsellor/stats/', counsellor_stats, name='counsellor-stats'),
+    path('receptionist/stats/', receptionist_stats, name='receptionist-stats'),
+    path('bank-manager/stats/', bank_manager_stats, name='bank-manager-stats'),
 ] 

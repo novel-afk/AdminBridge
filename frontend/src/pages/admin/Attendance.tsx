@@ -124,7 +124,7 @@ const AttendancePage = () => {
     try {
       console.log('Fetching employees from API...');
       const employeesResponse = await axios.get(
-        `${API_BASE_URL}/api/employees/`,
+        `${API_BASE_URL}/employees/`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -261,7 +261,7 @@ const AttendancePage = () => {
     try {
       console.log('Fetching students from API...');
       const studentsResponse = await axios.get(
-        `${API_BASE_URL}/api/students/`,
+        `${API_BASE_URL}/students/`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -395,7 +395,7 @@ const AttendancePage = () => {
     try {
       // Fetch employee attendance for selected date
       const employeeAttendanceResponse = await axios.get(
-        `${API_BASE_URL}/api/employee-attendance/?date=${selectedDate}`,
+        `${API_BASE_URL}/employee-attendance/?date=${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -475,7 +475,7 @@ const AttendancePage = () => {
   const fetchStudentAttendanceData = async (token: string) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/api/student-attendance/?date=${selectedDate}`,
+        `${API_BASE_URL}/student-attendance/?date=${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -579,7 +579,7 @@ const AttendancePage = () => {
         // This is an existing record, update it
         console.log(`Updating existing record for employee ${employeeId}`);
         response = await axios.patch(
-          `${API_BASE_URL}/api/employee-attendance/${attendanceRecord.id}/`,
+          `${API_BASE_URL}/employee-attendance/${attendanceRecord.id}/`,
           { status: newStatus },
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -599,7 +599,7 @@ const AttendancePage = () => {
         };
         
         response = await axios.post(
-          `${API_BASE_URL}/api/employee-attendance/`,
+          `${API_BASE_URL}/employee-attendance/`,
           newRecord,
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -703,7 +703,7 @@ const AttendancePage = () => {
         // This is an existing record, update it
         console.log(`Updating existing record for student ${studentId}`);
         response = await axios.patch(
-          `${API_BASE_URL}/api/student-attendance/${attendanceRecord.id}/`,
+          `${API_BASE_URL}/student-attendance/${attendanceRecord.id}/`,
           { status: newStatus },
           {
             headers: { Authorization: `Bearer ${token}` }
@@ -723,7 +723,7 @@ const AttendancePage = () => {
         };
         
         response = await axios.post(
-          `${API_BASE_URL}/api/student-attendance/`,
+          `${API_BASE_URL}/student-attendance/`,
           newRecord,
           {
             headers: { Authorization: `Bearer ${token}` }
