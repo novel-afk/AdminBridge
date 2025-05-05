@@ -50,7 +50,7 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) =
     onNext();
   };
 
-  const roles = ['BranchManager', 'Counsellor', 'Receptionist', 'BankManager'];
+  const roles = ['BranchManager', 'Counsellor', 'Receptionist'];
 
   return (
     <form onSubmit={handleNext} className="space-y-6">
