@@ -37,6 +37,7 @@ interface Student {
     first_name: string;
     last_name: string;
     role: string;
+    name: string;
   };
   contact_number: string;
   address: string;
@@ -413,15 +414,15 @@ const StudentList = () => {
     return (
       <div className="flex flex-col h-full">
         <div className="flex-none pb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Students</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your students information</p>
+          <h1 className="text-2xl font-bold text-[#153147]">Students</h1>
+          <p className="text-sm text-[#ADB8BB] mt-1">Manage your students information</p>
         </div>
         
         <div className="flex-1 flex justify-center items-center">
-          <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+          <div className="border-white hover:border-white/80 rounded-lg shadow-md p-8 flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
-            <div className="text-xl text-gray-600">Loading students...</div>
-            <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+            <div className="text-xl text-[#153147]">Loading students...</div>
+            <p className="text-sm text-[#ADB8BB] mt-2">Please wait while we fetch the data</p>
           </div>
         </div>
       </div>
@@ -431,13 +432,12 @@ const StudentList = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-none pb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Students</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your students information</p>
+        <h1 className="text-2xl font-bold mb-6 text-[#153147]  px-4 py-2 rounded-md">Students</h1>
 
         <div className="flex justify-between items-center mt-8">
           <Button 
             onClick={() => setIsAddModalOpen(true)} 
-            className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            className="bg-[#153147] hover:bg-[#153147]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
             disabled={refreshing}
           >
             <PlusIcon className="h-5 w-5" />
@@ -490,7 +490,7 @@ const StudentList = () => {
                 placeholder="Search students..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
+                className="pl-10 w-[300px] bg-white rounded-md border-[#EDEAE4] focus:border-[#153147] focus:ring-1 focus:ring-[#153147] transition-all duration-200"
                 disabled={refreshing}
               />
             </div>
@@ -515,28 +515,28 @@ const StudentList = () => {
 
       <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
         {students.length === 0 ? (
-          <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+          <div className="h-full bg-white rounded-lg border border-[#EDEAE4] flex items-center justify-center">
             <div className="text-center p-8 max-w-md">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292V15M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              <p className="text-gray-600 mb-4 text-lg">No students found.</p>
-              <p className="text-gray-500 mb-6">Start by adding your first student to the system.</p>
+              <p className="text-[#232A2F] mb-4 text-lg">No students found.</p>
+              <p className="text-[#ADB8BB] mb-6">Start by adding your first student to the system.</p>
               <Button 
                 onClick={() => setIsAddModalOpen(true)} 
-                className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
+                className="bg-[#153147] hover:bg-[#153147]/90"
               >
                 Add Your First Student
               </Button>
             </div>
           </div>
         ) : (
-          <div className={`h-full bg-white rounded-lg border border-gray-200 overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 flex flex-col`}>
+          <div className="h-full bg-white rounded-lg border border-[#EDEAE4] shadow-lg hover:shadow-xl transition-shadow duration-200 flex flex-col overflow-hidden">
             <div className={`relative flex-1 overflow-hidden ${getTableHeight()}`}>
               <div className="absolute inset-0 overflow-auto">
                 <div className="inline-block min-w-full max-w-full">
                   <table className="w-full border-collapse table-auto">
-                    <thead className="bg-[#1e1b4b] sticky top-0 z-10 shadow-sm">
+                    <thead className="bg-[#153147] sticky top-0 z-10 shadow-sm">
                       <tr>
                         {columns.map((column) => (
                           <th
@@ -641,7 +641,7 @@ const StudentList = () => {
                               </button>
                               <button
                                 onClick={() => handleEdit(student)}
-                                className="text-green-600 hover:text-green-800 transition-colors p-1 hover:bg-green-50 rounded-full"
+                                className="text-[#153147] hover:text-[#153147]/80 transition-colors p-1 hover:bg-green-50 rounded-full"
                                 title="Edit"
                                 disabled={refreshing}
                               >

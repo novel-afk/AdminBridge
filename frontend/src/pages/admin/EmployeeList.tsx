@@ -402,13 +402,12 @@ const EmployeeList = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-none pb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your employees information</p>
+        <h1 className="text-2xl font-bold mb-6 text-[#153147] px-4 py-2 rounded-md">Employees</h1>
 
         <div className="flex justify-between items-center mt-8">
           <Button 
             onClick={() => setIsAddModalOpen(true)} 
-            className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
             disabled={refreshing}
           >
             <PlusIcon className="h-5 w-5" />
@@ -495,7 +494,7 @@ const EmployeeList = () => {
               <p className="text-gray-500 mb-6">Start by adding your first employee to the system.</p>
               <Button 
                 onClick={() => setIsAddModalOpen(true)} 
-                className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
+                className="bg-[#153147] hover:bg-[#1e1b4b]/90"
               >
                 Add Your First Employee
               </Button>
@@ -507,7 +506,7 @@ const EmployeeList = () => {
               <div className="absolute inset-0 overflow-auto">
                 <div className="inline-block min-w-full max-w-full">
                   <table className="w-full border-collapse table-auto">
-                    <thead className="bg-[#1e1b4b] sticky top-0 z-10 shadow-sm">
+                    <thead className="bg-[#153147] sticky top-0 z-10 shadow-sm">
                       <tr>
                         {columns.map((column) => (
                           <th

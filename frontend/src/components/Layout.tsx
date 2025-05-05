@@ -22,7 +22,7 @@ interface LayoutProps {
 // Student-specific layout that always shows StudentHeader
 export const StudentLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col w-full">
+    <div className="min-h-screen bg-[#153147] flex flex-col w-full">
       <main className="w-full flex-1 overflow-auto">{children}</main>
     </div>
   );
@@ -103,16 +103,16 @@ const Sidebar = () => {
   const menuItems = getMenuItems();
 
   return (
-    <div className="min-h-screen w-64 bg-gradient-to-br from-[#0A1A2F] via-[#0F2847] to-[#1A3A64] relative overflow-hidden">
+    <div className="min-h-screen w-64 bg-[#153147] relative overflow-hidden">
       {/* Animated gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-white/5 opacity-40"></div>
+      <div className="absolute inset-0 bg-[#153147] from-black/20 to-white/5 opacity-40"></div>
       
       <div className="relative flex flex-col items-center justify-center p-6">
         <div className="group w-16 h-16 flex items-center justify-center rounded-xl p-3 relative">
           {/* Gradient border effect */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#2A4A7F] via-[#1A3A64] to-white/20 opacity-20 rounded-xl 
+          <div className="absolute inset-0 bg-[#153147] from-[#2A4A7F] via-[#1A3A64] to-white/20 opacity-20 rounded-xl 
                         group-hover:opacity-30 transition-opacity duration-300"></div>
-          <div className="absolute inset-[1px] bg-gradient-to-br from-[#0A1A2F] to-[#0F2847] rounded-[10px]"></div>
+          <div className="absolute inset-[1px] bg-[#153147] from-[#0A1A2F] to-[#0F2847] rounded-[10px]"></div>
           {/* Use the logo from the public folder */}
           <img 
             src="/logo.png" 
@@ -244,7 +244,7 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex min-h-screen bg-gray-50">
       {shouldShowSidebar && (
-        <div className="fixed left-0 top-0 h-screen z-20">
+        <div className="fixed left-0 top-0 h-screen z-20 ">
           <Sidebar />
         </div>
       )}
