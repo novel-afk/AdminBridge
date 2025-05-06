@@ -9,13 +9,14 @@ from datetime import date
 
 
 class UserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    password = serializers.CharField(write_only=True, required=True)
     
     class Meta:
         model = User
         fields = ['id', 'email', 'first_name', 'last_name', 'role', 'password']
         extra_kwargs = {
-            'password': {'write_only': True}
+            'password': {'write_only': True},
+            'email': {'validators': []}
         }
         
     def create(self, validated_data):
@@ -40,11 +41,33 @@ class EmployeeSerializer(serializers.ModelSerializer):
     branch_name = serializers.CharField(source='branch.name', read_only=True)
     employee_id = serializers.CharField(read_only=True)
     joining_date = serializers.DateField(read_only=True)
-    profile_image = serializers.ImageField(required=False)
-    citizenship_document = serializers.FileField(required=False)
+    profile_image = serializers.ImageField(required=False, allow_null=True)
+    citizenship_document = serializers.FileField(required=False, allow_null=True)
     nationality = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    gender = serializers.CharField(required=False, default='Other')
+    gender = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     dob = serializers.DateField(required=False, allow_null=True)
+    
+    def validate(self, data):
+        # Get the user data and branch
+        user_data = data.get('user', {})
+        role = user_data.get('role')
+        branch = data.get('branch')
+        
+        # If this is a branch manager
+        if role == 'BranchManager' and branch:
+            # Check if there's already a branch manager for this branch
+            instance_id = self.instance.id if self.instance else None
+            existing_manager = Employee.objects.filter(
+                branch=branch,
+                user__role='BranchManager'
+            ).exclude(id=instance_id).first()
+            
+            if existing_manager:
+                raise serializers.ValidationError({
+                    'branch': f'Branch {branch.name} already has a manager: {existing_manager.user.get_full_name()}'
+                })
+        
+        return data
     
     class Meta:
         model = Employee
@@ -77,17 +100,17 @@ class EmployeeSerializer(serializers.ModelSerializer):
             user_data = validated_data.pop('user')
             user = instance.user
             
-            user.first_name = user_data.get('first_name', user.first_name)
-            user.last_name = user_data.get('last_name', user.last_name)
-            user.email = user_data.get('email', user.email)
+            # Update user fields directly in the database to bypass validation
+            User.objects.filter(id=user.id).update(
+                first_name=user_data.get('first_name', user.first_name),
+                last_name=user_data.get('last_name', user.last_name),
+                email=user_data.get('email', user.email),
+                role=user_data.get('role', user.role)
+            )
             
-            if 'role' in user_data:
-                user.role = user_data.get('role')
-                
             if 'password' in user_data:
                 user.set_password(user_data['password'])
-                
-            user.save()
+                user.save()
             
         return super().update(instance, validated_data)
 
@@ -97,8 +120,8 @@ class StudentSerializer(serializers.ModelSerializer):
     branch_name = serializers.CharField(source='branch.name', read_only=True)
     student_id = serializers.CharField(read_only=True)
     enrollment_date = serializers.DateField(read_only=True)
-    profile_image = serializers.ImageField(required=False)
-    resume = serializers.FileField(required=False)
+    profile_image = serializers.ImageField(required=False, allow_null=True)
+    resume = serializers.FileField(required=False, allow_null=True)
     
     class Meta:
         model = Student
@@ -111,7 +134,6 @@ class StudentSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         user_data = validated_data.pop('user')
-        user_data['role'] = 'Student'
         user = UserSerializer().create(user_data)
         
         # Generate unique student ID

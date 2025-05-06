@@ -1,7 +1,9 @@
 from django.http import HttpResponseForbidden
 from django.urls import resolve
 import re
+import json
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from .models import User, ActivityLog, Branch
 
 
 class RoleBasedAccessMiddleware:
@@ -205,7 +207,7 @@ class ActivityLogMiddleware:
                 model_name = request.path.split('/')[2].upper()
                 
                 # Create activity log
-                from api.models import ActivityLog
+                from .models import User, ActivityLog, Branch
                 
                 # Only log POST, PUT, and DELETE actions
                 if request.method not in ['POST', 'PUT', 'DELETE']:
@@ -244,14 +246,27 @@ class ActivityLogMiddleware:
                                     action_details = f"{request.user.get_full_name()} added student {name} in {branch_name}"
                             elif isinstance(data, dict):
                                 if entity_type == 'employees':
-                                    role = data.get('role', '')
-                                    branch_id = data.get('branch')
+                                    # Extract role and branch from employee_data if it exists
+                                    employee_data = data.get('employee_data')
+                                    if employee_data:
+                                        try:
+                                            employee_data = json.loads(employee_data)
+                                            branch_id = employee_data.get('branch')
+                                        except json.JSONDecodeError:
+                                            branch_id = None
+                                    else:
+                                        branch_id = None
+                                    
+                                    role = data.get('user.role', '')
+                                    first_name = data.get('user.first_name', '')
+                                    last_name = data.get('user.last_name', '')
+                                    
                                     try:
-                                        branch = Branch.objects.get(id=branch_id)
-                                        branch_name = branch.name
+                                        branch = Branch.objects.get(id=branch_id) if branch_id else None
+                                        branch_name = branch.name if branch else 'Unknown Branch'
                                     except Branch.DoesNotExist:
                                         branch_name = str(branch_id)
-                                    name = f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
+                                    name = f"{first_name} {last_name}".strip()
                                     action_details = f"{request.user.get_full_name()} added {role} {name} in {branch_name}"
                                 elif entity_type == 'branches':
                                     branch_name = data.get('name', '')

@@ -25,49 +25,6 @@ interface Column {
   render?: (student: Student) => ReactElement;
 }
 
-const columns: Column[] = [
-  { header: 'Student ID', accessor: 'student_id' },
-  { header: 'Name', accessor: 'fullName' },
-  { header: 'Email', accessor: 'email' },
-  { header: 'Phone', accessor: 'contact_number' },
-  { header: 'Gender', accessor: 'gender' },
-  { header: 'Nationality', accessor: 'nationality' },
-  { header: 'Institution', accessor: 'institution_name' },
-  { header: 'Language Test', accessor: 'language_test' },
-  {
-    header: 'Actions',
-    accessor: 'actions',
-    render: (student: Student) => (
-      <div className="flex gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleView(student)}
-          className="p-0"
-        >
-          <EyeIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleEdit(student)}
-          className="p-0"
-        >
-          <PencilIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleDeleteSingle(student)}
-          className="p-0 text-red-600 hover:text-red-800"
-        >
-          <TrashIcon className="h-4 w-4" />
-        </Button>
-      </div>
-    )
-  }
-];
-
 const API_BASE_URL = 'http://localhost:8000/api';
 
 const StudentList = (): ReactElement => {
@@ -143,7 +100,18 @@ const StudentList = (): ReactElement => {
       gender: student.gender || '',
       nationality: student.nationality || '',
       institution_name: student.institution_name || '',
-      language_test: student.language_test || ''
+      language_test: student.language_test || '',
+      // Add these mappings to match the ViewStudentModal component's expected props
+      name: `${student.user?.first_name || ''} ${student.user?.last_name || ''}`.trim(),
+      phone: student.contact_number || '',
+      emergencyContact: student.emergency_contact || '',
+      fatherName: student.father_name || '',
+      motherName: student.mother_name || '',
+      parentNumber: student.parent_number || '',
+      institute: student.institution_name || '',
+      language: student.language_test || '',
+      profilePicture: student.profile_image || null,
+      cv: student.resume || null
     };
   };
 
@@ -190,23 +158,36 @@ const StudentList = (): ReactElement => {
   }, [navigate]);
 
   const handleView = (student: Student) => {
-    navigate(`/branch-manager/students/view/${student.id}`);
+    // Format student data to match the ViewStudentModal component's expected props
+    const formattedStudent = formatStudentData(student);
+    setSelectedStudent(formattedStudent);
+    setIsViewModalOpen(true);
   };
 
   const handleEdit = (student: Student) => {
-    // Ensure branch ID is set when editing
-    if (branchId) {
-      setSelectedStudent({ ...student, branch: branchId });
-    } else {
-      setSelectedStudent(student);
-    }
+    setSelectedStudent(student);
     setIsEditModalOpen(true);
+  };
+
+  const handleEditSuccess = () => {
+    showConfirmation({
+      title: 'Student Updated Successfully',
+      message: 'The student information has been updated.',
+      type: 'success',
+      confirmText: 'OK',
+      onConfirm: () => {
+        setIsEditModalOpen(false);
+        setSelectedStudent(null);
+        // Refresh the student list
+        fetchStudents();
+      },
+    });
   };
 
   const handleDeleteSingle = (student: Student) => {
     showConfirmation({
       title: 'Delete Student',
-      message: `Are you sure you want to delete ${student.first_name}? This action cannot be undone.`,
+      message: `Are you sure you want to delete this student? This action cannot be undone.`,
       type: 'danger',
       confirmText: 'Delete',
       onConfirm: async () => {
@@ -216,7 +197,15 @@ const StudentList = (): ReactElement => {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
           
-          fetchStudents();
+          showConfirmation({
+            title: 'Student Deleted Successfully',
+            message: 'The student has been deleted.',
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: () => {
+              fetchStudents();
+            },
+          });
           
         } catch (err) {
           console.error('Error deleting student:', err);
@@ -233,6 +222,49 @@ const StudentList = (): ReactElement => {
     }
     setIsAddModalOpen(true);
   };
+
+  const columns: Column[] = [
+    { header: 'Student ID', accessor: 'student_id' },
+    { header: 'Name', accessor: 'fullName' },
+    { header: 'Email', accessor: 'email' },
+    { header: 'Phone', accessor: 'contact_number' },
+    { header: 'Gender', accessor: 'gender' },
+    { header: 'Nationality', accessor: 'nationality' },
+    { header: 'Institution', accessor: 'institution_name' },
+    { header: 'Language Test', accessor: 'language_test' },
+    {
+      header: 'Actions',
+      accessor: 'actions',
+      render: (student: Student) => (
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleView(student)}
+            className="p-0"
+          >
+            <EyeIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEdit(student)}
+            className="p-0"
+          >
+            <PencilIcon className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteSingle(student)}
+            className="p-0 text-red-600 hover:text-red-800"
+          >
+            <TrashIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      )
+    }
+  ];
 
   return (
     <div className="p-6">
@@ -270,7 +302,7 @@ const StudentList = (): ReactElement => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-[#153147]  rounded-lg shadow overflow-hidden">
         <DataTable
           columns={columns}
           data={students.filter(student => {
@@ -298,23 +330,19 @@ const StudentList = (): ReactElement => {
       <ViewStudentModal
         isOpen={isViewModalOpen}
         onClose={() => {
-          setIsViewModalOpen(false)
-          setSelectedStudent(null)
+          setIsViewModalOpen(false);
+          setSelectedStudent(null);
         }}
         student={selectedStudent}
       />
       <EditStudentModal
         isOpen={isEditModalOpen}
         onClose={() => {
-          setIsEditModalOpen(false)
-          setSelectedStudent(null)
-        }}
-        student={selectedStudent}
-        onSuccess={() => {
           setIsEditModalOpen(false);
           setSelectedStudent(null);
-          fetchStudents(true);
         }}
+        student={selectedStudent}
+        onSuccess={handleEditSuccess}
         hideBranch={true}
       />
       <AddStudentModal

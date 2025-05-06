@@ -30,9 +30,10 @@ interface EditStudentModalProps {
   onClose: () => void;
   onSuccess: () => void;
   student: Student | null;
+  hideBranch?: boolean;
 }
 
-const EditStudentModal = ({ isOpen, onClose, onSuccess, student }: EditStudentModalProps) => {
+const EditStudentModal = ({ isOpen, onClose, onSuccess, student, hideBranch = false }: EditStudentModalProps) => {
   const [formData, setFormData] = useState({
     user: {
       first_name: '',

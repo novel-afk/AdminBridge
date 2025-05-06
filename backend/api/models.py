@@ -101,6 +101,25 @@ class Employee(models.Model):
     employee_id = models.CharField(max_length=50, unique=True)
     joining_date = models.DateField(null=True, blank=True)
     
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        # Check if this employee is a branch manager
+        if self.user.role == 'BranchManager':
+            # Check if there's already a branch manager for this branch
+            existing_manager = Employee.objects.filter(
+                branch=self.branch,
+                user__role='BranchManager'
+            ).exclude(id=self.id).first()
+            
+            if existing_manager:
+                raise ValidationError({
+                    'branch': f'Branch {self.branch.name} already has a manager: {existing_manager.user.get_full_name()}'
+                })
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+    
     # New Required Fields (nullable for migration, but should be filled)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True, null=True)
     nationality = models.CharField(max_length=100, blank=True, null=True)
