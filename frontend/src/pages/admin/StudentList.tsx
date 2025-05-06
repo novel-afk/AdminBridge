@@ -11,7 +11,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Checkbox } from '../../components/ui/checkbox';
+import { Checkbox } from '@radix-ui/react-checkbox';
 import { Badge } from '../../components/ui/badge';
 import AddStudentModal from '../../components/AddStudentModal';
 import EditStudentModal from '../../components/EditStudentModal';
@@ -41,11 +41,11 @@ interface Student {
   };
   contact_number: string;
   address: string;
-  emergency_contact?: string;
-  mother_name?: string;
-  father_name?: string;
-  parent_number?: string;
-  comments?: string;
+  emergency_contact: string | undefined;
+  mother_name: string | undefined;
+  father_name: string | undefined;
+  parent_number: string | undefined;
+  comments: string | undefined;
   // Adding fields for the UI component matching
   name?: string;
   email?: string;

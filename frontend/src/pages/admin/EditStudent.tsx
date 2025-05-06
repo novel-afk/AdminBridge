@@ -200,125 +200,66 @@ const EditStudent = () => {
     setLoading(true);
     setError('');
     
-    // Basic validation
-    if (!formData.user.first_name || !formData.user.last_name || !formData.user.email) {
-      setError('Please fill in all required user fields');
-      setLoading(false);
-      return;
-    }
-    
-    if (!formData.branch || !formData.contact_number) {
-      setError('Please fill in all required student fields');
-      setLoading(false);
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      navigate('/login');
       return;
     }
     
     try {
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        navigate('/login');
-        return;
-      }
+      const formDataObj = new FormData();
       
-      // Create student data
-      const studentData = {
-        branch: parseInt(formData.branch),
-        contact_number: formData.contact_number,
-        address: formData.address,
-        emergency_contact: formData.emergency_contact || '',
-        nationality: formData.nationality || '',
-        gender: formData.gender,
-        age: formData.age ? parseInt(formData.age) : 18,
-        institution_name: formData.institution_name || '',
-        language_test: formData.language_test,
-        father_name: formData.father_name || '',
-        mother_name: formData.mother_name || '',
-        parent_number: formData.parent_number || '',
-        comments: formData.comments || '',
-        dob: dob || null
-      };
+      // Add user data
+      formDataObj.append('user.first_name', formData.user.first_name);
+      formDataObj.append('user.last_name', formData.user.last_name);
+      formDataObj.append('user.email', formData.user.email);
+      formDataObj.append('user.role', formData.user.role);
       
-      // Create user data
-      const userData = {
-        first_name: formData.user.first_name,
-        last_name: formData.user.last_name,
-        email: formData.user.email,
-        role: formData.user.role
-      };
+      // Add student data
+      formDataObj.append('branch', formData.branch);
+      formDataObj.append('contact_number', formData.contact_number);
+      formDataObj.append('address', formData.address);
+      formDataObj.append('emergency_contact', formData.emergency_contact || '');
+      formDataObj.append('nationality', formData.nationality || '');
+      formDataObj.append('gender', formData.gender || '');
+      formDataObj.append('age', formData.age || '');
+      formDataObj.append('institution_name', formData.institution_name || '');
+      formDataObj.append('language_test', formData.language_test || '');
+      formDataObj.append('father_name', formData.father_name || '');
+      formDataObj.append('mother_name', formData.mother_name || '');
+      formDataObj.append('parent_number', formData.parent_number || '');
+      formDataObj.append('comments', formData.comments || '');
       
-      // Create form data for multipart file upload
-      const formDataToSend = new FormData();
-      
-      // Add student data as JSON
-      formDataToSend.append('student_data', JSON.stringify(studentData));
-      
-      // Add user data fields directly to the form data for the backend
-      formDataToSend.append('user.first_name', userData.first_name);
-      formDataToSend.append('user.last_name', userData.last_name);
-      formDataToSend.append('user.email', userData.email);
-      formDataToSend.append('user.role', userData.role);
-      
-      // Add profile image if selected
+      // Add files if new ones are selected
       if (newProfileImage) {
-        formDataToSend.append('profile_image', newProfileImage);
+        formDataObj.append('profile_image', newProfileImage);
       }
       
-      // Add resume if selected
       if (newResume) {
-        formDataToSend.append('resume', newResume);
+        formDataObj.append('resume', newResume);
       }
       
-      // Log the form data to debug
-      console.log('Submitting data:', {
-        student_data: studentData,
-        user_data: userData,
-        has_new_profile_image: !!newProfileImage,
-        has_new_resume: !!newResume
-      });
+      // Add dob if set
+      if (dob) {
+        formDataObj.append('dob', dob);
+      }
       
-      // Send to API
-      await axios.patch(`http://localhost:8000/api/students/${id}/`, formDataToSend, {
-        headers: { 
-          Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      // Redirect to students list
-      navigate('/admin/students');
-    } catch (err: any) {
-      console.error('Error updating student:', err);
-      if (err.response?.data) {
-        console.log('Error details:', err.response.data);
-        
-        // Handle structured error responses
-        if (typeof err.response.data === 'object') {
-          const errorMessages: string[] = [];
-          
-          // Process nested errors (like user.email)
-          Object.entries(err.response.data).forEach(([key, value]) => {
-            if (typeof value === 'object') {
-              Object.entries(value as any).forEach(([nestedKey, nestedValue]) => {
-                errorMessages.push(`${key}.${nestedKey}: ${nestedValue}`);
-              });
-            } else {
-              errorMessages.push(`${key}: ${value}`);
-            }
-          });
-          
-          if (errorMessages.length > 0) {
-            setError(`Validation errors: ${errorMessages.join(', ')}`);
-            setLoading(false);
-            return;
+      // Make API request
+      await axios.patch(
+        `http://localhost:8000/api/students/${id}/`,
+        formDataObj,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/form-data'
           }
         }
-      }
-      
-      setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
-        'Failed to update student. Please try again.'
       );
+      
+      navigate('/admin/students');
+    } catch (error) {
+      console.error('Error updating student:', error);
+      setError('Failed to update student. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -356,7 +297,7 @@ const EditStudent = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label htmlFor="user.first_name" className="block text-gray-700 text-sm font-medium mb-2">
-                  First Name *
+                  CourseName
                 </label>
                 <input
                   type="text"
@@ -365,13 +306,13 @@ const EditStudent = () => {
                   value={formData.user.first_name}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
               
               <div>
                 <label htmlFor="user.last_name" className="block text-gray-700 text-sm font-medium mb-2">
-                  Last Name *
+                  Last Name
                 </label>
                 <input
                   type="text"
@@ -380,7 +321,7 @@ const EditStudent = () => {
                   value={formData.user.last_name}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
             </div>
@@ -388,7 +329,7 @@ const EditStudent = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label htmlFor="user.email" className="block text-gray-700 text-sm font-medium mb-2">
-                  Email Address *
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -397,13 +338,13 @@ const EditStudent = () => {
                   value={formData.user.email}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
               
               <div>
                 <label htmlFor="contact_number" className="block text-gray-700 text-sm font-medium mb-2">
-                  Contact Number *
+                  Contact Number
                 </label>
                 <input
                   type="text"
@@ -412,7 +353,7 @@ const EditStudent = () => {
                   value={formData.contact_number}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
             </div>
@@ -510,7 +451,7 @@ const EditStudent = () => {
               
               <div>
                 <label htmlFor="resume" className="block text-gray-700 text-sm font-medium mb-2">
-                  Resume/CV
+                  Rolesume/CV
                 </label>
                 <input
                   type="file"
@@ -538,7 +479,7 @@ const EditStudent = () => {
             
             <div className="mb-6">
               <label htmlFor="address" className="block text-gray-700 text-sm font-medium mb-2">
-                Address *
+                Address
               </label>
               <textarea
                 id="address"
@@ -547,7 +488,6 @@ const EditStudent = () => {
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
               ></textarea>
             </div>
             
@@ -658,7 +598,7 @@ const EditStudent = () => {
             
             <div className="mb-6">
               <label htmlFor="branch" className="block text-gray-700 text-sm font-medium mb-2">
-                Branch *
+                Branch
               </label>
               <select
                 id="branch"

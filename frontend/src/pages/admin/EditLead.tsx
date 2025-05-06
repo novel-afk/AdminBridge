@@ -34,7 +34,6 @@ const EditLead = () => {
   const [showLanguageScore, setShowLanguageScore] = useState(false);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(false);
-  const [fetchingData, setFetchingData] = useState(true);
   const [error, setError] = useState('');
 
   // Country options
@@ -86,7 +85,7 @@ const EditLead = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setFetchingData(true);
+        setLoading(true);
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
           navigate('/login');
@@ -132,7 +131,7 @@ const EditLead = () => {
         console.error('Error fetching data:', err);
         setError('Failed to load lead data. Please try again later.');
       } finally {
-        setFetchingData(false);
+        setLoading(false);
       }
     };
     
@@ -157,79 +156,51 @@ const EditLead = () => {
     setLoading(true);
     setError('');
 
-    // Basic validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.nationality || !formData.branch) {
-      setError('Please fill in all required fields');
-      setLoading(false);
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      navigate('/login');
       return;
     }
 
     try {
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        navigate('/login');
-        return;
-      }
-      
       // Prepare data for API
       const leadData = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         nationality: formData.nationality,
-        branch: parseInt(formData.branch),
-        lead_source: formData.lead_source,
-        notes: formData.notes || null,
-        // Optional fields
-        interested_country: formData.interested_country || null,
-        interested_degree: formData.interested_degree || null,
-        language_test: formData.language_test,
+        branch: formData.branch,
+        interested_country: formData.interested_country || '',
+        interested_degree: formData.interested_degree || '',
+        language_test: formData.language_test || '',
         language_score: formData.language_score ? parseFloat(formData.language_score) : null,
-        referred_by: formData.referred_by || null,
-        courses_studied: formData.courses_studied || null,
-        interested_course: formData.interested_course || null,
+        referred_by: formData.referred_by || '',
+        courses_studied: formData.courses_studied || '',
+        interested_course: formData.interested_course || '',
         gpa: formData.gpa ? parseFloat(formData.gpa) : null,
+        lead_source: formData.lead_source || 'Website',
+        notes: formData.notes || '',
       };
       
-      // Send to API - use PATCH to update only changed fields
-      await axios.patch(`http://localhost:8000/api/leads/${id}/`, leadData, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      
-      // Redirect to leads list
-      navigate('/admin/leads');
-    } catch (err: any) {
-      console.error('Error updating lead:', err);
-      if (err.response?.data) {
-        console.log('Error details:', err.response.data);
-        
-        // Handle structured error responses
-        if (typeof err.response.data === 'object') {
-          const errorMessages: string[] = [];
-          
-          Object.entries(err.response.data).forEach(([key, value]) => {
-            errorMessages.push(`${key}: ${value}`);
-          });
-          
-          if (errorMessages.length > 0) {
-            setError(`Validation errors: ${errorMessages.join(', ')}`);
-            setLoading(false);
-            return;
-          }
+      // Send to API
+      await axios.patch(
+        `http://localhost:8000/api/leads/${id}/`, 
+        leadData,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` }
         }
-      }
-      
-      setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
-        'Failed to update lead. Please try again.'
       );
+      
+      navigate('/admin/leads');
+    } catch (error) {
+      console.error('Error updating lead:', error);
+      setError('Failed to update lead. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  if (fetchingData) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
         <div className="bg-white p-8 rounded-lg shadow-md">
@@ -261,7 +232,7 @@ const EditLead = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-2">
-                  Full Name *
+                  RoleName
                 </label>
                 <input
                   type="text"
@@ -270,13 +241,13 @@ const EditLead = () => {
                   value={formData.name}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
 
               <div>
                 <label htmlFor="email" className="block text-gray-700 text-sm font-medium mb-2">
-                  Email Address *
+                  Email Address
                 </label>
                 <input
                   type="email"
@@ -285,7 +256,7 @@ const EditLead = () => {
                   value={formData.email}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
             </div>
@@ -293,7 +264,7 @@ const EditLead = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label htmlFor="phone" className="block text-gray-700 text-sm font-medium mb-2">
-                  Contact Number *
+                  Contact Number
                 </label>
                 <input
                   type="text"
@@ -302,7 +273,7 @@ const EditLead = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
 
@@ -317,7 +288,7 @@ const EditLead = () => {
                   value={formData.nationality}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 />
               </div>
             </div>
@@ -468,7 +439,7 @@ const EditLead = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label htmlFor="branch" className="block text-gray-700 text-sm font-medium mb-2">
-                  Branch *
+                  Branch
                 </label>
                 <select
                   id="branch"
@@ -476,7 +447,7 @@ const EditLead = () => {
                   value={formData.branch}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
+
                 >
                   <option value="">Select Branch</option>
                   {branches.map(branch => (
