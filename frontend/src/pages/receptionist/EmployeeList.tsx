@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { PhoneIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 
 interface Employee {
   id: number;
@@ -39,7 +40,12 @@ const ReceptionistEmployeeList = () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        setEmployees(response.data);
+        // Filter out SuperAdmin employees
+        const filteredEmployees = response.data.filter(
+          (employee) => employee.user.role !== 'SuperAdmin'
+        );
+
+        setEmployees(filteredEmployees);
         setLoading(false);
       } catch (err: any) {
         console.error('Error fetching employees:', err);
@@ -130,7 +136,7 @@ const ReceptionistEmployeeList = () => {
                   Joining Date
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                  Contact
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -164,20 +170,13 @@ const ReceptionistEmployeeList = () => {
                     {formatDate(employee.joining_date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                    <a
-                      href={`tel:${employee.contact_number}`}
+                    <Link
+                      to={`/receptionist/employees/view/${employee.id}`}
                       className="text-blue-600 hover:text-blue-900"
-                      title="Call"
+                      title="View Details"
                     >
-                      <PhoneIcon className="w-5 h-5" />
-                    </a>
-                    <a
-                      href={`mailto:${employee.user.email}`}
-                      className="text-green-600 hover:text-green-900"
-                      title="Email"
-                    >
-                      <EnvelopeIcon className="w-5 h-5" />
-                    </a>
+                      <EyeIcon className="w-5 h-5" />
+                    </Link>
                   </td>
                 </tr>
               ))}

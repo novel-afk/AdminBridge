@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ExclamationCircleIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import { useAuth } from '../lib/AuthContext';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -18,6 +19,7 @@ const FormField = ({ label, error, children, required }) => (
 );
 
 const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -40,6 +42,9 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   const [errors, setErrors] = useState({});
   const [branches, setBranches] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Check if the current user is an admin
+  const isAdmin = user?.role === 'SuperAdmin';
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -49,6 +54,14 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         setBranches(response.data);
+        
+        // If user has a branch and is not admin, auto-select their branch
+        if (user?.branch && !isAdmin) {
+          setFormData(prev => ({ ...prev, branch: user.branch.toString() }));
+        } else if (response.data.length > 0) {
+          // For admin users, select the first branch as default
+          setFormData(prev => ({ ...prev, branch: response.data[0].id.toString() }));
+        }
       } catch (error) {
         console.error('Error fetching branches:', error);
       }
@@ -57,7 +70,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     if (isOpen) {
       fetchBranches();
     }
-  }, [isOpen]);
+  }, [isOpen, user, isAdmin]);
 
   const validateStep1 = () => {
     const newErrors = {};
@@ -201,6 +214,10 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   };
   
   const renderPersonalInfoForm = () => {
+    // Find the branch name based on branch ID
+    const selectedBranchName = user?.branch ? 
+      branches.find(b => b.id.toString() === user.branch.toString())?.name || '' : '';
+      
     return (
       <>
         <h2 className="text-lg font-semibold text-gray-800 pb-2 border-b border-gray-200 mb-4">
@@ -249,17 +266,28 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           </FormField>
           
           <FormField label="Branch" error={errors.branch} required>
-            <select
-              required
-              value={formData.branch}
-              onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-              className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-            >
-              <option value="">Select Branch</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>{branch.name}</option>
-              ))}
-            </select>
+            {isAdmin ? (
+              // Admin can select any branch
+              <select
+                required
+                value={formData.branch}
+                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+              >
+                <option value="">Select Branch</option>
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
+              </select>
+            ) : (
+              // Non-admin users can only see their branch
+              <input
+                type="text"
+                value={selectedBranchName}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                disabled
+              />
+            )}
           </FormField>
           
           <FormField label="Lead Source" error={errors.lead_source}>

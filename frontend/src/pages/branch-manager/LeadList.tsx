@@ -283,26 +283,30 @@ const LeadList = () => {
 
   const handleAddSuccess = () => {
     setIsAddModalOpen(false);
+    // Fetch leads immediately to refresh the list
+    fetchLeads(true);
     showConfirmation({
       title: 'Lead Created',
       message: 'The lead has been created successfully.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        fetchLeads(true);
+        // No need to fetch again
       }
     });
   };
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
+    // Fetch leads immediately to refresh the list
+    fetchLeads(true);
     showConfirmation({
       title: 'Lead Updated',
       message: 'The lead has been updated successfully.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        fetchLeads(true);
+        // No need to fetch again
       }
     });
   };

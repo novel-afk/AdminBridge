@@ -44,6 +44,8 @@ import AttendancePage from './pages/admin/Attendance';
 import Profile from './pages/Profile';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import ViewLead from './pages/admin/ViewLead';
+import ViewEmployee from './pages/admin/ViewEmployee';
 
 // Student pages
 import StudentJobs from './pages/student/Jobs';
@@ -170,6 +172,7 @@ function App() {
             
             {/* Counsellor can view employees in their branch */}
             <Route path="/counsellor/employees" element={<CounsellorEmployeeList />} />
+            <Route path="/counsellor/employees/view/:id" element={<ViewEmployee />} />
           </Route>
           
           {/* Receptionist Routes */}
@@ -187,9 +190,11 @@ function App() {
             {/* Receptionist can create and view leads in their branch */}
             <Route path="/receptionist/leads" element={<ReceptionistLeadList />} />
             <Route path="/receptionist/add-lead" element={<ReceptionistAddLead />} />
+            <Route path="/receptionist/leads/view/:id" element={<ViewLead />} />
             
             {/* Receptionist can view employees in their branch */}
             <Route path="/receptionist/employees" element={<ReceptionistEmployeeList />} />
+            <Route path="/receptionist/employees/view/:id" element={<ViewEmployee />} />
           </Route>
           
           {/* Student Routes */}

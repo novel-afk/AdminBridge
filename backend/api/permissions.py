@@ -190,7 +190,8 @@ class ReceptionistPermission(permissions.BasePermission):
     """
     Complex permission for Receptionists:
     - Can create/view leads in their branch
-    - Can view students and employees in their branch
+    - Can create/view students in their branch
+    - Can view employees in their branch
     """
     def has_permission(self, request, view):
         if not request.user.is_authenticated or request.user.role != 'Receptionist':
@@ -201,6 +202,10 @@ class ReceptionistPermission(permissions.BasePermission):
         
         # For Lead, allow create
         if model_name == 'Lead' and request.method == 'POST':
+            return True
+            
+        # For Student, allow create
+        if model_name == 'Student' and request.method == 'POST':
             return True
             
         # For Lead, Student, Employee allow view
@@ -224,6 +229,9 @@ class ReceptionistPermission(permissions.BasePermission):
             if request.method not in permissions.SAFE_METHODS:
                 # For Lead, allow update on objects created by the receptionist
                 if model_name == 'Lead' and obj.created_by == request.user:
+                    return True
+                # For Student, allow update if in receptionist's branch
+                if model_name == 'Student' and obj.branch == receptionist_branch:
                     return True
                 return False
             return obj.branch == receptionist_branch

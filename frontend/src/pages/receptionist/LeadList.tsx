@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { UserPlusIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../lib/AuthContext';
 
 interface Lead {
@@ -154,13 +154,13 @@ const ReceptionistLeadList = () => {
                     {lead.lead_source}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                    <a
-                      href={`tel:${lead.phone}`}
-                      className="text-green-600 hover:text-green-900"
-                      title="Call"
+                    <Link
+                      to={`/receptionist/leads/view/${lead.id}`}
+                      className="text-blue-600 hover:text-blue-900"
+                      title="View Details"
                     >
-                      <PhoneIcon className="w-5 h-5" />
-                    </a>
+                      <EyeIcon className="w-5 h-5" />
+                    </Link>
                   </td>
                 </tr>
               ))}

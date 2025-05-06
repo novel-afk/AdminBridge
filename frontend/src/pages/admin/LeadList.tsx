@@ -388,30 +388,34 @@ const LeadList = () => {
 
   const handleAddSuccess = () => {
     console.log("Lead added successfully!");
+    // Close modal first
+    setIsAddModalOpen(false);
+    // Refresh the lead list immediately
+    fetchLeads(true);
     showConfirmation({
       title: 'Lead Added Successfully',
       message: 'The new lead has been added to the system.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsAddModalOpen(false);
-        // Refresh the lead list
-        fetchLeads(true);
+        // No need to fetch again
       },
     });
   };
 
   const handleEditSuccess = () => {
+    // Close modal first
+    setIsEditModalOpen(false);
+    setSelectedLead(null);
+    // Refresh the lead list immediately
+    fetchLeads(true);
     showConfirmation({
       title: 'Lead Updated Successfully',
       message: 'The lead information has been updated.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsEditModalOpen(false);
-        setSelectedLead(null);
-        // Refresh the lead list
-        fetchLeads();
+        // No need to fetch again
       },
     });
   };

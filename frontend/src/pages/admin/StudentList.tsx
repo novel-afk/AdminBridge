@@ -382,30 +382,34 @@ const StudentList = () => {
 
   const handleAddSuccess = () => {
     console.log("Student added successfully!");
+    // Close modal first
+    setIsAddModalOpen(false);
+    // Refresh the student list immediately
+    fetchStudents(true);
     showConfirmation({
       title: 'Student Added Successfully',
       message: 'The new student has been added to the system.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsAddModalOpen(false);
-        // Refresh the student list
-        fetchStudents(true);
+        // No need to fetch again
       },
     });
   };
 
   const handleEditSuccess = () => {
+    // Close modal first
+    setIsEditModalOpen(false);
+    setSelectedStudent(null);
+    // Refresh the student list immediately
+    fetchStudents();
     showConfirmation({
       title: 'Student Updated Successfully',
       message: 'The student information has been updated.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsEditModalOpen(false);
-        setSelectedStudent(null);
-        // Refresh the student list
-        fetchStudents();
+        // No need to fetch again
       },
     });
   };

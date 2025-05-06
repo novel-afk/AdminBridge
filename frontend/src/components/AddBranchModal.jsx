@@ -4,8 +4,10 @@ import { Button } from "./ui/button"
 import { Input } from "./ui/input"
 import { Label } from "./ui/label"
 import axios from "axios"
+import { useAuth } from "../lib/AuthContext"
 
 export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     city: "",
@@ -15,6 +17,9 @@ export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
 
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Check if user is admin
+  const isAdmin = user?.role === 'SuperAdmin';
 
   const validateForm = () => {
     const newErrors = {}
@@ -23,6 +28,11 @@ export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
     if (!formData.city.trim()) newErrors.city = "City is required"
     if (!formData.country.trim()) newErrors.country = "Country is required"
     if (!formData.address.trim()) newErrors.address = "Address is required"
+    
+    // Add error if user is not admin
+    if (!isAdmin) {
+      newErrors.submit = "Only administrators can create branches"
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0

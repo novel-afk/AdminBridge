@@ -289,52 +289,103 @@ const EmployeeList = () => {
   };
 
   const handleDeleteSelected = () => {
+    // Filter out SuperAdmin users from selected employees
+    const nonSuperAdminSelectedIds = selectedEmployees.filter(id => {
+      const employee = employees.find(emp => emp.id === id);
+      return employee && employee.user.role !== 'SuperAdmin';
+    });
+    
+    if (nonSuperAdminSelectedIds.length === 0) {
+      showConfirmation({
+        title: 'Cannot Delete Selected Employees',
+        message: 'No employees can be deleted. SuperAdmin users cannot be deleted.',
+        type: 'warning',
+        confirmText: 'OK',
+        onConfirm: () => {},
+      });
+      return;
+    }
+
     showConfirmation({
       title: 'Delete Selected Employees',
-      message: `Are you sure you want to delete ${selectedEmployees.length} selected employee(s)? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${nonSuperAdminSelectedIds.length} selected employee(s)? This action cannot be undone.`,
       type: 'danger',
       confirmText: 'Delete',
       onConfirm: async () => {
-        const accessToken = localStorage.getItem('access_token');
         try {
-          // Delete each selected employee
-          for (const id of selectedEmployees) {
-            await axios.delete(`${API_BASE_URL}/employees/${id}/`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-          }
+          setRefreshing(true);
           
-          // Clear selection and refresh data
+          const accessToken = localStorage.getItem('access_token');
+          if (!accessToken) return;
+          
+          const deletePromises = nonSuperAdminSelectedIds.map(id => 
+            axios.delete(`${API_BASE_URL}/employees/${id}/`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            })
+          );
+          
+          await Promise.all(deletePromises);
+          
           setSelectedEmployees([]);
           fetchEmployees();
+          
+          showConfirmation({
+            title: 'Employees Deleted Successfully',
+            message: `${nonSuperAdminSelectedIds.length} employee(s) have been deleted.`,
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: () => {},
+          });
           
         } catch (err) {
           console.error('Error deleting employees:', err);
           setError('Failed to delete employees. Please try again.');
+          setRefreshing(false);
         }
       },
     });
   };
 
   const handleDeleteSingle = (employee: Employee) => {
+    // Check if user is SuperAdmin
+    if (employee.user.role === 'SuperAdmin') {
+      showConfirmation({
+        title: 'Cannot Delete SuperAdmin',
+        message: 'SuperAdmin users cannot be deleted.',
+        type: 'warning',
+        confirmText: 'OK',
+        onConfirm: () => {},
+      });
+      return;
+    }
+    
     showConfirmation({
       title: 'Delete Employee',
-      message: `Are you sure you want to delete ${employee.name || employee.user.first_name + ' ' + employee.user.last_name}? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${employee.user.first_name} ${employee.user.last_name}? This action cannot be undone.`,
       type: 'danger',
       confirmText: 'Delete',
       onConfirm: async () => {
-        const accessToken = localStorage.getItem('access_token');
         try {
+          setRefreshing(true);
+          
+          const accessToken = localStorage.getItem('access_token');
+          
           await axios.delete(`${API_BASE_URL}/employees/${employee.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
           
-          // Refresh data after deletion
+          // Remove from selected if in selected
+          if (selectedEmployees.includes(employee.id)) {
+            setSelectedEmployees(prev => prev.filter(id => id !== employee.id));
+          }
+          
+          // Refresh employee data
           fetchEmployees();
           
         } catch (err) {
           console.error('Error deleting employee:', err);
           setError('Failed to delete employee. Please try again.');
+          setRefreshing(false);
         }
       },
     });
@@ -352,30 +403,34 @@ const EmployeeList = () => {
 
   const handleAddSuccess = () => {
     console.log("Employee added successfully!");
+    // Close modal first
+    setIsAddModalOpen(false);
+    // Refresh the employee list immediately
+    fetchEmployees(true);
     showConfirmation({
       title: 'Employee Added Successfully',
       message: 'The new employee has been added to the system.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsAddModalOpen(false);
-        // Refresh the employee list
-        fetchEmployees(true);
+        // No need to fetch again
       },
     });
   };
 
   const handleEditSuccess = () => {
+    // Close modal first
+    setIsEditModalOpen(false);
+    setSelectedEmployee(null);
+    // Refresh the employee list immediately
+    fetchEmployees();
     showConfirmation({
       title: 'Employee Updated Successfully',
       message: 'The employee information has been updated.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsEditModalOpen(false);
-        setSelectedEmployee(null);
-        // Refresh the employee list
-        fetchEmployees();
+        // No need to fetch again
       },
     });
   };
@@ -526,107 +581,69 @@ const EmployeeList = () => {
                               column.key === "branch" ? "min-w-[120px]" :
                               column.key === "actions" ? "min-w-[100px] w-24" : ""
                             }`}
-                            style={{ position: 'sticky', top: 0 }}
                           >
-                            {column.key === "select" ? (
-                              <Checkbox
-                                checked={paginatedEmployees.length > 0 && selectedEmployees.length === paginatedEmployees.length}
-                                onCheckedChange={handleSelectAll}
-                                aria-label="Select all"
-                              />
-                            ) : (
-                              column.label
-                            )}
+                            {column.label}
                           </th>
                         ))}
                       </tr>
                     </thead>
-                    <tbody className={`divide-y divide-gray-100`}>
+                    <tbody className="divide-y divide-gray-200">
                       {paginatedEmployees.map((employee, index) => (
                         <tr 
                           key={employee.id} 
-                          className="hover:bg-gray-50 transition-all duration-200 ease-in-out group relative even:bg-gray-50/30"
+                          className={selectedEmployees.includes(employee.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}
                         >
-                          <td className="px-6 py-4 whitespace-nowrap first:pl-4 group-hover:bg-gray-50 transition-colors duration-200">
-                            <Checkbox
-                              checked={selectedEmployees.includes(employee.id)}
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Checkbox 
+                              checked={selectedEmployees.includes(employee.id)} 
                               onCheckedChange={() => handleSelectEmployee(employee.id)}
-                              aria-label={`Select ${employee.user.first_name}`}
                             />
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {startIndex + index + 1}
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-900 font-medium group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[200px]" title={`${employee.user.first_name} ${employee.user.last_name}`}>
-                            {employee.user.first_name} {employee.user.last_name}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {employee.name}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap group-hover:bg-gray-50 transition-colors duration-200">
-                            <Badge 
-                              variant="outline"
-                              className="bg-blue-50 text-blue-800 border-blue-200 group-hover:bg-blue-100 px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200"
-                            >
-                              {employee.user.role}
-                            </Badge>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <Badge className="capitalize">{employee.user.role.toLowerCase()}</Badge>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap group-hover:bg-gray-50 transition-colors duration-200">
-                            <Badge 
-                              variant={employee.gender === "Male" ? "default" : "secondary"}
-                              className={`${
-                                employee.gender === "Male" 
-                                  ? "bg-blue-100 text-blue-800 group-hover:bg-blue-200" 
-                                  : "bg-purple-100 text-purple-800 group-hover:bg-purple-200"
-                              } px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200`}
-                            >
-                              {employee.gender || "Not specified"}
-                            </Badge>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[150px]" title={employee.nationality || "Not specified"}>
-                            {employee.nationality || "Not specified"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
-                            {employee.contact_number}
-                          </td>
-                          <td className="px-6 py-4 text-sm group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[200px]" title={employee.user.email}>
-                            <a href={`mailto:${employee.user.email}`} className="text-blue-600 hover:text-blue-800 transition-colors truncate inline-block max-w-full">
-                              {employee.user.email}
-                            </a>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[180px]" title={employee.emergency_contact || "-"}>
-                            {employee.emergency_contact || "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
-                            {employee.salary ? `$${employee.salary}` : "-"}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[180px]" title={employee.branch_name}>
-                            {employee.branch_name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 last:pr-4 group-hover:bg-gray-50 transition-colors duration-200">
-                            <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
-                              <button
-                                onClick={() => handleView(employee)}
-                                className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded-full"
-                                title="View"
-                                disabled={refreshing}
-                              >
-                                <EyeIcon className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={() => handleEdit(employee)}
-                                className="text-green-600 hover:text-green-800 transition-colors p-1 hover:bg-green-50 rounded-full"
-                                title="Edit"
-                                disabled={refreshing}
-                              >
-                                <PencilIcon className="h-5 w-5" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteSingle(employee)}
-                                className="text-red-600 hover:text-red-800 transition-colors p-1 hover:bg-red-50 rounded-full"
-                                title="Delete"
-                                disabled={refreshing}
-                              >
-                                <TrashIcon className="h-5 w-5" />
-                              </button>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <div>
+                              {employee.email && <div><span className="font-medium">Email:</span> {employee.email}</div>}
+                              {employee.phone && <div><span className="font-medium">Phone:</span> {employee.phone}</div>}
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {employee.nationality || '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <Button 
+                              onClick={() => handleView(employee)} 
+                              variant="ghost" 
+                              size="sm" 
+                              className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
+                            >
+                              <EyeIcon className="h-4 w-4 mr-1" /> View
+                            </Button>
+                            <Button 
+                              onClick={() => handleEdit(employee)} 
+                              variant="ghost" 
+                              size="sm" 
+                              className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
+                            >
+                              <PencilIcon className="h-4 w-4 mr-1" /> Edit
+                            </Button>
+                            {employee.user.role !== 'SuperAdmin' && (
+                              <Button 
+                                onClick={() => handleDeleteSingle(employee)} 
+                                variant="ghost" 
+                                size="sm" 
+                                className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-red-600"
+                              >
+                                <TrashIcon className="h-4 w-4 mr-1" /> Delete
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       ))}
@@ -635,112 +652,43 @@ const EmployeeList = () => {
                 </div>
               </div>
             </div>
-            {totalPages > 1 && (
-              <div className="flex-shrink-0 border-t border-gray-200 px-6 py-4 flex items-center justify-between shadow-md bg-white">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-gray-200 hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-                  {totalPages > 5 && currentPage > 3 && (
-                    <>
-                      <button
-                        onClick={() => setCurrentPage(1)}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-200 hover:bg-gray-50"
-                      >
-                        1
-                      </button>
-                      <span className="text-gray-500">...</span>
-                    </>
-                  )}
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return pageNum;
-                  }).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium border ${
-                        currentPage === page
-                          ? 'bg-[#1e1b4b] text-white border-[#1e1b4b]'
-                          : 'text-gray-600 hover:text-gray-800 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  {totalPages > 5 && currentPage < totalPages - 2 && (
-                    <>
-                      <span className="text-gray-500">...</span>
-                      <button
-                        onClick={() => setCurrentPage(totalPages)}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-200 hover:bg-gray-50"
-                      >
-                        {totalPages}
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-gray-200 hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                </div>
-                <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">
-                  Showing {Math.min(filteredEmployees.length, startIndex + 1)}-
-                  {Math.min(startIndex + itemsPerPage, filteredEmployees.length)} of {filteredEmployees.length} employees
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
-      
-      <AddEmployeeModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-      />
-      
-      <EditEmployeeModal 
-        isOpen={isEditModalOpen} 
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedEmployee(null);
-        }}
-        onSuccess={handleEditSuccess}
-        employee={selectedEmployee}
-      />
-      
-      <ViewEmployeeModal
-        isOpen={isViewModalOpen}
-        onClose={() => {
-          setIsViewModalOpen(false);
-          setSelectedEmployee(null);
-        }}
-        employee={selectedEmployee}
-      />
-      
+
+      {/* Modals */}
+      {isAddModalOpen && (
+        <AddEmployeeModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+        />
+      )}
+
+      {isEditModalOpen && selectedEmployee && (
+        <EditEmployeeModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={handleEditSuccess}
+          employee={selectedEmployee}
+        />
+      )}
+
+      {isViewModalOpen && selectedEmployee && (
+        <ViewEmployeeModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          employee={selectedEmployee}
+        />
+      )}
+
+      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
-        onClose={() => setConfirmationModal({ ...confirmationModal, isOpen: false })}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
         title={confirmationModal.title}
         message={confirmationModal.message}
-        onConfirm={confirmationModal.onConfirm}
         type={confirmationModal.type}
         confirmText={confirmationModal.confirmText}
       />
@@ -748,4 +696,4 @@ const EmployeeList = () => {
   );
 };
 
-export default EmployeeList; 
+export default EmployeeList;

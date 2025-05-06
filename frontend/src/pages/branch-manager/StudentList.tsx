@@ -170,17 +170,18 @@ const StudentList = (): ReactElement => {
   };
 
   const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    setSelectedStudent(null);
+    // Refresh the student list immediately
+    fetchStudents(true);
     showConfirmation({
       title: 'Student Updated Successfully',
       message: 'The student information has been updated.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        setIsEditModalOpen(false);
-        setSelectedStudent(null);
-        // Refresh the student list
-        fetchStudents();
-      },
+        // No need to fetch again
+      }
     });
   };
 
@@ -221,6 +222,21 @@ const StudentList = (): ReactElement => {
       setSelectedStudent({ branch: branchId } as Student);
     }
     setIsAddModalOpen(true);
+  };
+
+  const handleAddSuccess = () => {
+    setIsAddModalOpen(false);
+    // Fetch students immediately to refresh the list
+    fetchStudents(true);
+    showConfirmation({
+      title: 'Student Added Successfully',
+      message: 'The new student has been added to the system.',
+      type: 'success',
+      confirmText: 'OK',
+      onConfirm: () => {
+        // No need to fetch again
+      }
+    });
   };
 
   const columns: Column[] = [
@@ -348,10 +364,7 @@ const StudentList = (): ReactElement => {
       <AddStudentModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => {
-          setIsAddModalOpen(false);
-          fetchStudents(true);
-        }}
+        onSuccess={handleAddSuccess}
         hideBranch={true}
         initialData={selectedStudent}
       />

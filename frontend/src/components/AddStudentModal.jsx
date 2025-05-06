@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../lib/AuthContext';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -45,11 +46,15 @@ const FileUpload = ({ id, label, accept, value, onChange, error }) => (
   </FormField>
 );
 
-const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) => {
+const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, userBranch, isAdmin }) => {
   const handleNext = (e) => {
     e.preventDefault();
     onNext();
   };
+
+  // Find the branch name based on branch ID
+  const selectedBranchName = userBranch ? 
+    branches.find(b => b.id.toString() === userBranch.toString())?.name || '' : '';
 
   return (
     <form onSubmit={handleNext} className="space-y-6">
@@ -110,17 +115,28 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) =
         </FormField>
 
         <FormField label="Branch" error={errors.branch} required>
-          <select
-            required
-            value={formData.branch}
-            onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-            className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-          >
-            <option value="">Select Branch</option>
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>{branch.name}</option>
-            ))}
-          </select>
+          {isAdmin ? (
+            // Admin can select any branch
+            <select
+              required
+              value={formData.branch}
+              onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+              className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            >
+              <option value="">Select Branch</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
+          ) : (
+            // Non-admin users can only see their branch
+            <input
+              type="text"
+              value={selectedBranchName}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+              disabled
+            />
+          )}
         </FormField>
 
         <FormField label="Phone Number" error={errors.phone} required>
@@ -281,6 +297,7 @@ const EducationForm = ({ formData, setFormData, onBack, onSubmit, errors, isSubm
 };
 
 const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -304,6 +321,9 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
     degree: null,
   });
 
+  // Check if the current user is an admin
+  const isAdmin = user?.role === 'SuperAdmin';
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -312,6 +332,14 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         setBranches(response.data);
+        
+        // If user has a branch and is not admin, auto-select their branch
+        if (user?.branch && !isAdmin) {
+          setFormData(prev => ({ ...prev, branch: user.branch.toString() }));
+        } else if (response.data.length > 0) {
+          // For admin users, select the first branch as default
+          setFormData(prev => ({ ...prev, branch: response.data[0].id.toString() }));
+        }
       } catch (error) {
         console.error('Error fetching branches:', error);
       }
@@ -320,7 +348,7 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
     if (isOpen) {
       fetchBranches();
     }
-  }, [isOpen]);
+  }, [isOpen, user, isAdmin]);
 
   const validatePersonalInfo = () => {
     const newErrors = {};
@@ -566,6 +594,8 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
               onNext={handleNext}
               errors={errors}
               branches={branches}
+              userBranch={user?.branch}
+              isAdmin={isAdmin}
             />
           ) : (
             <EducationForm

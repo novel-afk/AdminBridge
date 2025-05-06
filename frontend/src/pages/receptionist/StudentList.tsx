@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, PlusIcon } from '@heroicons/react/24/outline';
+import AddStudentModal from '../../components/AddStudentModal';
 
 interface Student {
   id: number;
@@ -22,32 +23,40 @@ const ReceptionistStudentList = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  const fetchStudents = async () => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        setError('You are not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get('http://localhost:8000/api/students/', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      setStudents(response.data);
+      setLoading(false);
+    } catch (err: any) {
+      console.error('Error fetching students:', err);
+      setError(err.response?.data?.detail || 'Failed to fetch students');
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) {
-          setError('You are not authenticated');
-          setLoading(false);
-          return;
-        }
-
-        const response = await axios.get('http://localhost:8000/api/students/', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-
-        setStudents(response.data);
-        setLoading(false);
-      } catch (err: any) {
-        console.error('Error fetching students:', err);
-        setError(err.response?.data?.detail || 'Failed to fetch students');
-        setLoading(false);
-      }
-    };
-
     fetchStudents();
   }, []);
+
+  const handleAddSuccess = () => {
+    // Close the modal
+    setIsAddModalOpen(false);
+    // Refresh the student list
+    fetchStudents();
+  };
 
   if (loading) {
     return (
@@ -68,9 +77,18 @@ const ReceptionistStudentList = () => {
 
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <div className="p-6 border-b">
-        <h1 className="text-2xl font-semibold text-gray-800">Branch Students</h1>
-        <p className="text-gray-500 mt-1">View students enrolled in your branch</p>
+      <div className="p-6 border-b flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-800">Branch Students</h1>
+          <p className="text-gray-500 mt-1">View students enrolled in your branch</p>
+        </div>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-300"
+        >
+          <PlusIcon className="w-5 h-5 mr-2" />
+          Add Student
+        </button>
       </div>
 
       {students.length === 0 ? (
@@ -120,7 +138,7 @@ const ReceptionistStudentList = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.contact_number}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex ">
                     <Link 
                       to={`/receptionist/students/view/${student.id}`} 
                       className="text-blue-600 hover:text-blue-900"
@@ -135,6 +153,14 @@ const ReceptionistStudentList = () => {
           </table>
         </div>
       )}
+
+      {/* Add Student Modal */}
+      <AddStudentModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
+        hideBranch={true}
+      />
     </div>
   );
 };

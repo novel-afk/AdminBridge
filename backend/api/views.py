@@ -726,7 +726,7 @@ class StudentViewSet(viewsets.ModelViewSet):
     
     def get_permissions(self):
         if self.action == 'create':
-            permission_classes = [IsSuperAdmin | BranchManagerPermission | CounsellorPermission]
+            permission_classes = [IsSuperAdmin | BranchManagerPermission | CounsellorPermission | ReceptionistPermission]
         elif self.action in ['update', 'partial_update']:
             permission_classes = [IsSuperAdmin | BranchManagerPermission | CounsellorPermission]
         elif self.action == 'destroy':

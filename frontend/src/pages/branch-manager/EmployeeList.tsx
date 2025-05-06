@@ -144,7 +144,9 @@ const EmployeeList = () => {
       }
       
       // Format the employee data
-      const formattedEmployees = employeeData.map(formatEmployeeData);
+      const formattedEmployees = employeeData
+        .filter(employee => employee.user.role !== 'SuperAdmin')
+        .map(formatEmployeeData);
           
       setEmployees(formattedEmployees);
       setLoading(false);
@@ -325,26 +327,30 @@ const EmployeeList = () => {
 
   const handleAddSuccess = () => {
     setIsAddModalOpen(false);
+    // Fetch employees immediately to refresh the list
+    fetchEmployees(true);
     showConfirmation({
       title: 'Employee Created',
       message: 'The employee has been created successfully.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        fetchEmployees(true);
+        // No need to fetch again
       }
     });
   };
 
   const handleEditSuccess = () => {
     setIsEditModalOpen(false);
+    // Fetch employees immediately to refresh the list
+    fetchEmployees(true);
     showConfirmation({
       title: 'Employee Updated',
       message: 'The employee has been updated successfully.',
       type: 'success',
       confirmText: 'OK',
       onConfirm: () => {
-        fetchEmployees(true);
+        // No need to fetch again
       }
     });
   };
