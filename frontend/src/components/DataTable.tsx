@@ -3,7 +3,7 @@ import React from 'react';
 interface Column {
   header: string;
   accessor: string;
-  render?: (value: any) => React.ReactNode;
+  render?: (row: any) => React.ReactNode;
 }
 
 interface DataTableProps {
@@ -51,7 +51,7 @@ export const DataTable: React.FC<DataTableProps> = ({ columns, data, isLoading, 
                   className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
                 >
                   {column.render
-                    ? column.render(row[column.accessor])
+                    ? column.render(row)
                     : row[column.accessor]}
                 </td>
               ))}

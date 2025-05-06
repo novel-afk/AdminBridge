@@ -156,13 +156,7 @@ const CounsellorLeadList = () => {
                     {lead.lead_source}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                    <Link 
-                      to={`/counsellor/edit-lead/${lead.id}`} 
-                      className="text-indigo-600 hover:text-indigo-900"
-                      title="Edit"
-                    >
-                      <PencilSquareIcon className="w-5 h-5" />
-                    </Link>
+                   
                     <a
                       href={`tel:${lead.phone}`}
                       className="text-green-600 hover:text-green-900"
