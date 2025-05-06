@@ -32,6 +32,7 @@ const AddLead = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: string}>({});
   const navigate = useNavigate();
 
   // Country options
@@ -123,16 +124,65 @@ const AddLead = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error for this field when user starts typing again
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: {[key: string]: string} = {};
+    let isValid = true;
+
+    // Required fields
+    if (!formData.name.trim()) {
+      errors.name = 'Full name is required';
+      isValid = false;
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = 'Email address is required';
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email address';
+      isValid = false;
+    }
+
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    } else if (!/^\+?[0-9]{8,15}$/.test(formData.phone.trim())) {
+      errors.phone = 'Please enter a valid phone number (8-15 digits)';
+      isValid = false;
+    }
+
+    if (!formData.nationality.trim()) {
+      errors.nationality = 'Nationality is required';
+      isValid = false;
+    }
+
+    if (!formData.branch) {
+      errors.branch = 'Branch is required';
+      isValid = false;
+    }
+
+    // Update field errors
+    setFieldErrors(errors);
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setFieldErrors({});
 
-    // Basic validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.nationality || !formData.branch) {
-      setError('Please fill in all required fields');
+    // Validate form
+    if (!validateForm()) {
       setLoading(false);
       return;
     }
@@ -178,18 +228,28 @@ const AddLead = () => {
         if (err.response.data.detail) {
           setError(err.response.data.detail);
         } else if (typeof err.response.data === 'object') {
-          // Handle nested validation errors
-          let errorMessage = '';
+          // Handle field-level validation errors
+          const newFieldErrors: {[key: string]: string} = {};
+          
           Object.entries(err.response.data).forEach(([key, value]) => {
-            if (key === 'user.email' || key === 'email') {
-              errorMessage = 'Email already exists. Please use a different email.';
+            const errorMsg = Array.isArray(value) ? value[0] : value;
+            
+            // Special handling for common errors
+            if ((key === 'email' || key === 'user.email') && String(errorMsg).includes('already exists')) {
+              newFieldErrors.email = 'This email is already registered';
+            } else if (key === 'phone' && String(errorMsg).includes('already exists')) {
+              newFieldErrors.phone = 'This phone number is already registered';
             } else {
-              const msg = Array.isArray(value) ? value[0] : value;
-              errorMessage = errorMessage || msg;
+              newFieldErrors[key] = String(errorMsg);
             }
           });
           
-          setError(errorMessage || 'Failed to create lead. Please try again.');
+          if (Object.keys(newFieldErrors).length > 0) {
+            setFieldErrors(newFieldErrors);
+            setError('Please correct the errors below');
+          } else {
+            setError('Failed to create lead. Please try again.');
+          }
         }
       } else {
         setError('Failed to create lead. Please try again later.');
@@ -228,9 +288,12 @@ const AddLead = () => {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${fieldErrors.name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   required
                 />
+                {fieldErrors.name && (
+                  <p className="mt-1 text-xs text-red-500">{fieldErrors.name}</p>
+                )}
               </div>
 
               <div>
@@ -243,9 +306,12 @@ const AddLead = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${fieldErrors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   required
                 />
+                {fieldErrors.email && (
+                  <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
+                )}
               </div>
             </div>
 
@@ -260,9 +326,12 @@ const AddLead = () => {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${fieldErrors.phone ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   required
                 />
+                {fieldErrors.phone && (
+                  <p className="mt-1 text-xs text-red-500">{fieldErrors.phone}</p>
+                )}
               </div>
 
               <div>
@@ -275,9 +344,12 @@ const AddLead = () => {
                   name="nationality"
                   value={formData.nationality}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${fieldErrors.nationality ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   required
                 />
+                {fieldErrors.nationality && (
+                  <p className="mt-1 text-xs text-red-500">{fieldErrors.nationality}</p>
+                )}
               </div>
             </div>
 
@@ -434,7 +506,7 @@ const AddLead = () => {
                   name="branch"
                   value={formData.branch}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border ${fieldErrors.branch ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   required
                 >
                   <option value="">Select Branch</option>
@@ -444,6 +516,9 @@ const AddLead = () => {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.branch && (
+                  <p className="mt-1 text-xs text-red-500">{fieldErrors.branch}</p>
+                )}
               </div>
 
               <div>
