@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface Branch {
   id: number;
@@ -94,7 +95,7 @@ const EditEmployee = () => {
           const docNameParts = employeeData.citizenship_document.split('/');
           setCitizenshipDocName(docNameParts[docNameParts.length - 1]);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching employee data:', error);
         setError('Failed to fetch employee data');
       } finally {
@@ -213,18 +214,25 @@ const EditEmployee = () => {
         const errorData = err.response.data;
         let errorMessage = '';
         
+        // Show toast for branch manager validation error
+        if (errorData.branch) {
+          toast.error(errorData.branch);
+        }
+        
         // Process nested errors (like user.email)
         Object.entries(errorData).forEach(([key, value]: [string, any]) => {
           if (typeof value === 'object') {
             Object.entries(value).forEach(([nestedKey, nestedValue]) => {
               errorMessage += `${nestedKey}: ${nestedValue}\n`;
             });
-          } else {
+          } else if (key !== 'branch') { // Skip branch error as it's shown in toast
             errorMessage += `${key}: ${value}\n`;
           }
         });
         
-        setError(errorMessage || 'Failed to update employee');
+        if (errorMessage) {
+          setError(errorMessage);
+        }
       } else {
         setError('Failed to update employee. Please try again.');
       }

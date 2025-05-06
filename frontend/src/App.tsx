@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/AuthContext';
-import { Toaster } from 'react-hot-toast';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/Dashboard';
@@ -58,23 +59,18 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster position="top-center" toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#1e1b4b',
-            color: '#fff',
-          },
-          success: {
-            style: {
-              background: '#059669',
-            },
-          },
-          error: {
-            style: {
-              background: '#dc2626',
-            },
-          },
-        }} />
+        <ToastContainer
+          position="top-center"
+          autoClose={4000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
