@@ -55,8 +55,6 @@ const columns = [
   { key: "interestedCourse", label: "Course" },
   { key: "language", label: "Language Test" },
   { key: "source", label: "Lead Source" },
-  { key: "createdBy", label: "Created By" },
-  { key: "assignedTo", label: "Assigned To" },
   { key: "createdAt", label: "Created At" },
   { key: "actions", label: "Actions" },
 ];
@@ -282,8 +280,6 @@ const LeadList = () => {
           "Courses Studied",
           "GPA",
           "Branch", 
-          "Assigned To",
-          "Created At",
           "Notes"
         ];
         
@@ -307,8 +303,6 @@ const LeadList = () => {
             `"${lead.courses_studied || ''}"`,
             lead.gpa || '',
             `"${lead.branch_name || ''}"`,
-            `"${lead.assigned_to_name || ''}"`,
-            `"${lead.created_at || ''}"`,
             `"${lead.notes?.replace(/"/g, '""') || ''}"`,
           ];
           csvRows.push(row.join(','));
@@ -546,8 +540,7 @@ const LeadList = () => {
                               column.key === "interestedCourse" ? "min-w-[120px]" :
                               column.key === "language" ? "min-w-[130px]" :
                               column.key === "source" ? "min-w-[120px]" :
-                              column.key === "createdBy" ? "min-w-[160px]" :
-                              column.key === "assignedTo" ? "min-w-[160px]" :
+                              
                               column.key === "createdAt" ? "min-w-[150px]" :
                               column.key === "actions" ? "min-w-[100px] w-24" : ""
                             }`}
@@ -641,12 +634,8 @@ const LeadList = () => {
                               {lead.lead_source}
                             </Badge>
                           </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[160px]" title={lead.created_by_name}>
-                            {lead.created_by_name}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[160px]" title={lead.assigned_to_name}>
-                            {lead.assigned_to_name}
-                          </td>
+                          
+                          
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {formatDate(lead.created_at)}
                           </td>
