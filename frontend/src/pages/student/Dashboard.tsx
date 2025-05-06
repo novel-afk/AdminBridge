@@ -194,24 +194,24 @@ const Dashboard: React.FC = () => {
   return (
     <StudentLayout>
       {/* Hero Section */}
-      <section className="bg-[#153147] text-white py-24 -mt-1">
+      <section className="bg-white text-gray-800 py-24 -mt-1">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center bg-white/10 rounded-full px-4 py-2 mb-6">
-              <Sparkles className="h-5 w-5 text-yellow-300 mr-2" />
-              <span className="text-[#EDEAE4]">Welcome to AdminBridge Student Portal</span>
+            <div className="inline-flex items-center bg-white/70 rounded-full px-4 py-2 mb-6 shadow-sm">
+              <Sparkles className="h-5 w-5 text-blue-500 mr-2" />
+              <span className="text-gray-700">Welcome to AdminBridge Student Portal</span>
             </div>
-            <h1 className="text-6xl font-bold mb-6 bg-gradient-to-r from-[#F9F8F7] to-[#EDEAE4] bg-clip-text text-transparent">
+            <h1 className="text-6xl font-bold mb-6 text-[#153147]">
               Your Gateway to Professional Growth
             </h1>
-            <p className="text-xl text-[#ADB8BB] mb-12 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
               Discover opportunities, share knowledge, and connect with a community of professionals all in one place.
             </p>
             <div className="flex gap-4 justify-center">
               <Link to="/student/jobs" className="flex items-center">
                 <Button 
                   size="lg"
-                  className="bg-[#F9F8F7] text-[#153147] hover:bg-[#EDEAE4] hover:scale-105 transform transition-all duration-200 px-8 py-6 text-lg rounded-full"
+                  className="bg-white border-2 border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white hover:scale-105 transform transition-all duration-200 px-8 py-6 text-lg rounded-full"
                 >
                   Browse Jobs
                   <ChevronRight className="ml-2 h-5 w-5" />
@@ -221,7 +221,7 @@ const Dashboard: React.FC = () => {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="bg-transparent border-2 border-[#EDEAE4] text-[#EDEAE4] hover:bg-[#EDEAE4] hover:text-[#153147] hover:scale-105 transform transition-all duration-200 px-8 py-6 text-lg rounded-full flex items-center gap-2"
+                  className="bg-transparent border-2 border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white hover:scale-105 transform transition-all duration-200 px-8 py-6 text-lg rounded-full flex items-center gap-2"
                 >
                   Read Articles
                   <ChevronRight className="h-5 w-5" />
@@ -253,20 +253,16 @@ const Dashboard: React.FC = () => {
       </section>
 
       {/* Featured Jobs Section */}
-      <section className="py-20">
+      <section className="py-16 bg-white border-t border-b border-gray-200">
         <div className="container mx-auto px-6">
-          <div className="flex justify-between items-center mb-12">
+          <div className="flex justify-between items-center mb-10">
             <div>
+              <div className="text-[#153147] font-medium mb-2">Explore our latest opportunities</div>
               <h2 className="text-4xl font-bold text-[#153147]">Featured Jobs</h2>
-              <p className="text-[#ADB8BB] mt-2">Explore our latest opportunities</p>
             </div>
-            <Link to="/student/jobs" className="flex items-center gap-2">
-              <Button 
-                variant="outline"
-                className="border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white"
-              >
-                View All Jobs
-                <ArrowRight className="h-4 w-4" />
+            <Link to="/student/jobs">
+              <Button variant="outline" className="border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white">
+                View All Jobs <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           </div>
@@ -288,12 +284,12 @@ const Dashboard: React.FC = () => {
       </section>
 
       {/* Latest Articles Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white border-b border-gray-200">
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center mb-12">
             <div>
               <h2 className="text-4xl font-bold text-[#153147]">Latest Articles</h2>
-              <p className="text-[#ADB8BB] mt-2">Stay updated with industry insights</p>
+              <p className="text-[#153147] mt-2">Stay updated with industry insights</p>
             </div>
             <Link to="/student/blogs" className="flex items-center gap-2">
               <Button 

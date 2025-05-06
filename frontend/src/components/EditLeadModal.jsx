@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ExclamationCircleIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import { useAuth } from '../lib/AuthContext';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -18,6 +19,9 @@ const FormField = ({ label, error, children, required }) => (
 );
 
 const EditLeadModal = ({ isOpen, onClose, onSuccess, lead }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'SuperAdmin';
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -291,17 +295,34 @@ const EditLeadModal = ({ isOpen, onClose, onSuccess, lead }) => {
           </FormField>
           
           <FormField label="Branch" error={errors.branch} required>
-            <select
-              required
-              value={formData.branch}
-              onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-              className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-            >
-              <option value="">Select Branch</option>
-              {branches.map((branch) => (
-                <option key={branch.id} value={branch.id}>{branch.name}</option>
-              ))}
-            </select>
+            {isAdmin ? (
+              <select
+                value={formData.branch}
+                onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b]"
+                required
+              >
+                <option value="">Select Branch</option>
+                {branches.map((branch) => (
+                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                ))}
+              </select>
+            ) : (
+              <div>
+                <input
+                  type="text"
+                  value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                  disabled
+                />
+                <input 
+                  type="hidden" 
+                  name="branch" 
+                  value={formData.branch} 
+                />
+                <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+              </div>
+            )}
           </FormField>
           
           <FormField label="Lead Source" error={errors.lead_source}>

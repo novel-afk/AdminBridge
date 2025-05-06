@@ -93,7 +93,7 @@ const Jobs: React.FC = () => {
       <div className="container mx-auto px-6 py-12">
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold text-[#153147] mb-2">Job Listings</h1>
-          <p className="text-[#ADB8BB] mb-6">Explore available positions</p>
+          <p className="text-gray-600 mb-6">Explore available positions</p>
           
           <div className="relative mb-8">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -150,7 +150,7 @@ const Jobs: React.FC = () => {
                     <div className="flex justify-end">
                       <Button
                         variant="default"
-                        className="bg-[#153147] hover:bg-[#0e2336]"
+                        className="bg-[#153147] hover:bg-[#0e2336] text-white"
                         onClick={() => window.location.href = `/student/jobs/${job.id}`}
                       >
                         Apply now

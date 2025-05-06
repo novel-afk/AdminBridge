@@ -59,7 +59,7 @@ const JobApplications: React.FC = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Jobs
             </Button>
-            <h1 className="text-2xl font-bold text-gray-800">Application Status</h1>
+            <h1 className="text-2xl font-bold text-[#153147]">Application Status</h1>
           </div>
           
           <p className="text-gray-600 mb-6">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../lib/AuthContext';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -56,12 +57,23 @@ const FileUpload = ({ id, label, accept, value, onChange, error, existingFile })
 );
 
 const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'SuperAdmin';
+  
+  // Find the branch name based on branch ID
+  const selectedBranchName = branches.find(b => b.id.toString() === formData.branch.toString())?.name || '';
+  
+  // Check if editing a SuperAdmin (for protection)
+  const isEditingSuperAdmin = formData.role === 'SuperAdmin';
+
   const handleNext = (e) => {
     e.preventDefault();
     onNext();
   };
 
-  const roles = ['BranchManager', 'Counsellor', 'Receptionist', 'BankManager'];
+  const roles = user?.role === 'SuperAdmin' 
+    ? ['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist']
+    : ['Counsellor', 'Receptionist'];
 
   return (
     <form onSubmit={handleNext} className="space-y-6">
@@ -93,6 +105,7 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) =
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value })}
             className={`w-full px-4 py-2.5 border ${errors.role ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            disabled={isEditingSuperAdmin && user?.role !== 'SuperAdmin'}
           >
             <option value="">Select Role</option>
             {roles.map((role) => (
@@ -136,17 +149,36 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) =
         </FormField>
 
         <FormField label="Branch" error={errors.branch} required>
-          <select
-            required
-            value={formData.branch}
-            onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-            className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-          >
-            <option value="">Select Branch</option>
-            {branches.map((branch) => (
-              <option key={branch.id} value={branch.id}>{branch.name}</option>
-            ))}
-          </select>
+          {isAdmin ? (
+            // SuperAdmin can select any branch
+            <select
+              required
+              value={formData.branch}
+              onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+              className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            >
+              <option value="">Select Branch</option>
+              {branches.map((branch) => (
+                <option key={branch.id} value={branch.id}>{branch.name}</option>
+              ))}
+            </select>
+          ) : (
+            // Non-admin users can only see their branch as disabled input
+            <div>
+              <input
+                type="text"
+                value={selectedBranchName}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                disabled
+              />
+              <input 
+                type="hidden" 
+                name="branch" 
+                value={formData.branch} 
+              />
+              <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+            </div>
+          )}
         </FormField>
 
         <FormField label="Phone Number" error={errors.phone} required>
@@ -304,6 +336,18 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
     existingCitizenshipDocument: null,
   });
 
+  // Extract data from employee prop when component mounts
+  const { user } = useAuth();
+  const [selectedBranch, setSelectedBranch] = useState(userBranch);
+  
+  // Define available roles based on current user's role
+  const roles = user?.role === 'SuperAdmin' 
+    ? ['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist'] 
+    : ['Counsellor', 'Receptionist'];
+    
+  // Check if editing a SuperAdmin (for protection)
+  const isEditingSuperAdmin = employee?.user?.role === 'SuperAdmin';
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -398,143 +442,8 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
   };
 
   const handleSubmit = async () => {
-    if (validateEmploymentDetails()) {
-      setIsSubmitting(true);
-      setErrors({});
-      
-      // Create the employee data object in the format the backend expects
-      const employeeData = {
-        branch: formData.branch,
-        gender: formData.gender,
-        nationality: formData.nationality,
-        contact_number: formData.phone,
-        address: formData.address,
-        emergency_contact: formData.emergencyContact || '',
-        salary: formData.salary,
-        dob: formData.dob || null
-      };
-      
-      // Get access token
-      const accessToken = localStorage.getItem('access_token');
-      
-      if (!accessToken) {
-        setErrors({ submit: 'You must be logged in to perform this action' });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Create FormData object for file uploads
-      const formDataToSend = new FormData();
-      
-      // Add the employee data as JSON
-      formDataToSend.append('employee_data', JSON.stringify(employeeData));
-      
-      // Add user data fields
-      formDataToSend.append('user.first_name', formData.firstName);
-      formDataToSend.append('user.last_name', formData.lastName);
-      formDataToSend.append('user.email', formData.email);
-      formDataToSend.append('user.role', formData.role);
-      
-      // Add files if they exist
-      if (formData.profilePicture) {
-        formDataToSend.append('profile_image', formData.profilePicture);
-      }
-      
-      if (formData.citizenshipDocument) {
-        formDataToSend.append('citizenship_document', formData.citizenshipDocument);
-      }
-      
-      try {
-        // Log form data for debugging
-        console.log("Sending employee data for update:", employeeData);
-        
-        // Make API call to update employee
-        const response = await axios.put(
-          `http://localhost:8000/api/employees/${employee.id}/`,
-          formDataToSend,
-          {
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-        
-        console.log('Employee updated successfully:', response.data);
-        
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          onClose();
-        }
-      } catch (error) {
-        console.error('Error updating employee:', error);
-        
-        // Handle different types of API errors
-        let errorMessage = 'Failed to update employee. Please try again.';
-        
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Error response data:', error.response.data);
-          
-          const newErrors = {};
-          
-          if (error.response.data.detail) {
-            newErrors.submit = error.response.data.detail;
-            toast.error(error.response.data.detail);
-          } else if (typeof error.response.data === 'object') {
-            // Map backend field errors to form fields
-            const processErrors = (obj, prefix = '') => {
-              Object.entries(obj).forEach(([key, value]) => {
-                // If value is an object and not an array, recurse
-                if (value && typeof value === 'object' && !Array.isArray(value)) {
-                  processErrors(value, `${prefix}${key}.`);
-                  return;
-                }
-                
-                const errorMessage = Array.isArray(value) ? value.join(', ') : value;
-                const fullKey = `${prefix}${key}`;
-                
-                // Map user.email errors to email field
-                if (fullKey === 'user.email' || key === 'email') {
-                  newErrors.email = errorMessage;
-                  toast.error('Email already exists');
-                }
-                // Map phone_number errors to phoneNumber field
-                else if (key === 'phone_number') {
-                  newErrors.phoneNumber = errorMessage;
-                  toast.error('Phone number already exists');
-                }
-                // Keep other field errors as is
-                else {
-                  newErrors[key] = errorMessage;
-                }
-              });
-            };
-            
-            processErrors(error.response.data);
-            
-            // If we have field-specific errors but no submit error, add a general error
-            if (Object.keys(newErrors).length > 0 && !newErrors.submit) {
-              newErrors.submit = 'Please correct the errors below.';
-            }
-          }
-          
-          // If no specific errors were mapped, use the generic error message
-          if (Object.keys(newErrors).length === 0) {
-            newErrors.submit = errorMessage;
-            toast.error(errorMessage);
-          }
-          
-          setErrors(newErrors);
-        } else if (error.request) {
-          // The request was made but no response was received
-          setErrors({ submit: 'No response received from server. Please check your connection.' });
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
+    if (validatePersonalInfo()) {
+      setStep(2);
     }
   };
 

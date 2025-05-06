@@ -226,7 +226,7 @@ const Profile: React.FC = () => {
         
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Profile Header */}
-          <div className="p-8 bg-[#153147] text-white">
+          <div className="p-8 bg-white text-[#153147]">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="relative">
                 {editing ? (
@@ -290,14 +290,14 @@ const Profile: React.FC = () => {
                   <div className="flex gap-2">
                     <Button 
                       variant="outline" 
-                      className="border-white text-white hover:bg-white hover:text-[#153147]"
+                      className="border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white"
                       onClick={() => setEditing(false)}
                       disabled={saving}
                     >
                       Cancel
                     </Button>
                     <Button 
-                      className="bg-white text-[#153147] hover:bg-gray-100"
+                      className="bg-[#153147] text-white hover:bg-[#0e2336]"
                       onClick={handleSave}
                       disabled={saving}
                     >
@@ -306,7 +306,7 @@ const Profile: React.FC = () => {
                   </div>
                 ) : (
                   <Button 
-                    className="bg-white text-[#153147] hover:bg-gray-100"
+                    className="bg-[#153147] text-white hover:bg-[#0e2336]"
                     onClick={() => setEditing(true)}
                   >
                     Edit Profile

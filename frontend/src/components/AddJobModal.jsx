@@ -38,6 +38,7 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Reset form when modal is opened/closed
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
       setErrors({});
       setServerError('');
       fetchBranches();
+      checkAdmin();
     }
   }, [isOpen]);
 
@@ -83,6 +85,14 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
     } catch (err) {
       console.error('Error fetching branches:', err);
       setServerError('Failed to load branches. Please try again.');
+    }
+  };
+
+  const checkAdmin = () => {
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
+      setIsAdmin(decodedToken.is_superadmin);
     }
   };
 
@@ -312,22 +322,41 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
                   <Label htmlFor="branch" className="block text-sm font-medium text-gray-700">
                     Branch <span className="text-red-500">*</span>
                   </Label>
-                  <Select
-                    name="branch"
-                    value={formData.branch}
-                    onValueChange={(value) => handleSelectChange('branch', value)}
-                  >
-                    <SelectTrigger id="branch" className={`mt-1 ${errors.branch ? "border-red-300" : ""}`}>
-                      <SelectValue placeholder="Select branch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id.toString()}>
-                          {branch.name} - {branch.city}, {branch.country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {isAdmin ? (
+                    // SuperAdmin can select any branch
+                    <Select
+                      name="branch"
+                      value={formData.branch}
+                      onValueChange={(value) => handleSelectChange('branch', value)}
+                    >
+                      <SelectTrigger id="branch" className={`mt-1 ${errors.branch ? "border-red-300" : ""}`}>
+                        <SelectValue placeholder="Select branch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name} - {branch.city}, {branch.country}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    // Non-admin users can only see their branch as disabled input
+                    <div>
+                      <Input
+                        type="text"
+                        value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
+                        className="mt-1 bg-gray-100"
+                        disabled
+                      />
+                      <input 
+                        type="hidden" 
+                        name="branch" 
+                        value={formData.branch} 
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+                    </div>
+                  )}
                   {errors.branch && <p className="mt-1 text-sm text-red-600">{errors.branch}</p>}
                 </div>
 

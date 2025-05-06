@@ -9,7 +9,7 @@ import {
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import Header from './Header';
-import StudentHeader from './StudentHeader';
+import StudentHeader from './student/StudentHeader';
 import { useAuth } from '../lib/AuthContext';
 import { User } from '../lib/AuthContext';
 
@@ -22,8 +22,9 @@ interface LayoutProps {
 // Student-specific layout that always shows StudentHeader
 export const StudentLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-[#153147] flex flex-col w-full">
-      <main className="w-full flex-1 overflow-auto">{children}</main>
+    <div className="min-h-screen bg-white flex flex-col w-full">
+      {/* <StudentHeader /> */}
+      <main className="w-full flex-1 overflow-auto pt-16 px-4 pb-6">{children}</main>
     </div>
   );
 };
@@ -235,7 +236,7 @@ const Layout: React.FC<LayoutProps> = ({
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <StudentHeader />
-        <main className="w-full flex-1 overflow-auto">{children}</main>
+        <main className="w-full flex-1 overflow-auto pt-16 px-4 pb-6">{children}</main>
       </div>
     );
   }
@@ -250,7 +251,7 @@ const Layout: React.FC<LayoutProps> = ({
       )}
       <div className={`flex-1 ${shouldShowSidebar ? 'ml-64' : ''} flex flex-col h-screen`}>
         {showHeader && !isStudent && <Header />}
-        <main className={`flex-1 ${showHeader && !isStudent ? 'p-8' : ''} overflow-auto`}>{children}</main>
+        <main className={`flex-1 ${showHeader && !isStudent ? 'pt-16 px-4 pb-6' : ''} overflow-auto`}>{children}</main>
       </div>
     </div>
   );

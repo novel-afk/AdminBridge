@@ -47,16 +47,18 @@ const FileUpload = ({ id, label, accept, value, onChange, error }) => (
 );
 
 const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, userBranch, isAdmin }) => {
+  const { user } = useAuth();
+  const selectedBranchName = userBranch?.name || '';
+  
+  // Define available roles based on current user's role
+  const roles = user?.role === 'SuperAdmin' 
+    ? ['SuperAdmin', 'BranchManager', 'Counsellor', 'Receptionist'] 
+    : ['Counsellor', 'Receptionist'];
+
   const handleNext = (e) => {
     e.preventDefault();
     onNext();
   };
-
-  const roles = ['BranchManager', 'Counsellor', 'Receptionist'];
-
-  // Find the branch name based on branch ID
-  const selectedBranchName = userBranch ? 
-    branches.find(b => b.id.toString() === userBranch.toString())?.name || '' : '';
 
   return (
     <form onSubmit={handleNext} className="space-y-6">
@@ -121,7 +123,7 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
 
         <FormField label="Branch" error={errors.branch} required>
           {isAdmin ? (
-            // Admin can select any branch
+            // SuperAdmin can select any branch
             <select
               required
               value={formData.branch}
@@ -134,13 +136,21 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
               ))}
             </select>
           ) : (
-            // Non-admin users can only see their branch
-            <input
-              type="text"
-              value={selectedBranchName}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-              disabled
-            />
+            // Non-admin users can only see their branch as disabled input
+            <div>
+              <input
+                type="text"
+                value={selectedBranchName}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                disabled
+              />
+              <input 
+                type="hidden" 
+                value={formData.branch} 
+                name="branch" 
+              />
+              <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+            </div>
           )}
         </FormField>
 

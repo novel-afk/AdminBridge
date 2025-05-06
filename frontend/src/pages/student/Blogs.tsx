@@ -143,10 +143,10 @@ const Blogs: React.FC = () => {
     <StudentLayout>
       <div className="bg-gray-50 min-h-screen">
         {/* Hero section */}
-        <div className="bg-gradient-to-r from-[#153147] to-[#0e2336] py-16">
+        <div className="bg-gradient-to-b from-blue-50 to-indigo-50 py-16">
           <div className="container mx-auto px-6">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Our Blog</h1>
-            <p className="text-xl text-gray-200 mb-8 max-w-2xl">
+            <h1 className="text-4xl md:text-5xl font-bold text-[#153147] mb-4">Our Blog</h1>
+            <p className="text-xl text-gray-700 mb-8 max-w-2xl">
               Stay updated with the latest insights, tips, and news from our team
             </p>
             
@@ -200,12 +200,12 @@ const Blogs: React.FC = () => {
                     </div>
                     <div className="md:w-3/5 p-8">
                       <div className="flex flex-wrap gap-2 mb-4">
-                        <Badge className="bg-[#153147] hover:bg-[#0e2336] text-white">Featured</Badge>
+                        <Badge className="bg-white text-[#153147] border-[#153147]">Featured</Badge>
                         {getRandomTags(filteredBlogs[0]?.id || 0).map((tag, index) => (
                           <Badge 
                             key={index} 
                             variant="outline" 
-                            className="bg-[#153147]/5 text-[#153147] border-[#153147]/20"
+                            className="bg-white text-[#153147] border-[#153147]"
                           >
                             {tag}
                           </Badge>
@@ -220,7 +220,7 @@ const Blogs: React.FC = () => {
                       
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
                         <div className="flex items-center gap-2">
-                          <div className="w-10 h-10 rounded-full bg-[#153147] flex items-center justify-center text-white font-semibold">
+                          <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
                             {filteredBlogs[0]?.author?.first_name?.[0] || ''}
                             {filteredBlogs[0]?.author?.last_name?.[0] || ''}
                           </div>
@@ -273,7 +273,7 @@ const Blogs: React.FC = () => {
                           <Badge 
                             key={index} 
                             variant="outline" 
-                            className="bg-[#153147]/5 text-[#153147] border-[#153147]/20 text-xs"
+                            className="bg-white text-[#153147] border-[#153147] text-xs"
                           >
                             {tag}
                           </Badge>
@@ -288,7 +288,7 @@ const Blogs: React.FC = () => {
                       
                       <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-[#153147] flex items-center justify-center text-white text-xs font-semibold">
+                          <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
                             {blog?.author?.first_name?.[0] || ''}
                             {blog?.author?.last_name?.[0] || ''}
                           </div>

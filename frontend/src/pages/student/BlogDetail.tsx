@@ -136,7 +136,7 @@ const BlogDetail: React.FC = () => {
               <p className="text-gray-600 mb-8">This article may have been removed or is no longer available.</p>
               <Button 
                 onClick={() => navigate('/student/blogs')}
-                className="bg-[#153147] hover:bg-[#0e2336]"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Blog
@@ -147,7 +147,7 @@ const BlogDetail: React.FC = () => {
           <>
             {/* Hero section with image */}
             <div className="w-full h-80 md:h-96 relative">
-              <div className="absolute inset-0 bg-gradient-to-b from-[#153147]/80 to-[#153147]/30 z-10"></div>
+              <div className="absolute inset-0 bg-white/0 z-10"></div>
               <img 
                 src={getImageUrl(blog)} 
                 alt={blog.title}
@@ -156,7 +156,7 @@ const BlogDetail: React.FC = () => {
               <div className="absolute top-0 left-0 p-6 z-20">
                 <Button 
                   variant="outline"
-                  className="bg-white/20 backdrop-blur-sm border-white/40 text-white hover:bg-white/30"
+                  className="bg-[#153147] hover:bg-[#0e2336] text-white"
                   onClick={() => navigate('/student/blogs')}
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
@@ -172,7 +172,7 @@ const BlogDetail: React.FC = () => {
                     <Badge 
                       key={index} 
                       variant="outline" 
-                      className="bg-[#153147]/5 text-[#153147] border-[#153147]/20"
+                      className="bg-white text-[#153147] border-[#153147]"
                     >
                       {tag}
                     </Badge>

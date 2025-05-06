@@ -39,59 +39,39 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Function to handle rendering when modal is opened
   useEffect(() => {
-    if (job && isOpen) {
+    if (isOpen && job) {
       setIsLoading(true);
-      // Reset any stale state first
+      fetchBranches();
+      checkAdmin();
+      
+      // Populate form with job data
       setFormData({
-        title: '',
-        description: '',
-        requirements: '',
-        branch: '',
-        location: '',
-        job_type: 'Full-Time',
-        salary_range: '',
-        required_experience: '',
-        is_active: true,
+        title: job.title || '',
+        description: job.description || '',
+        requirements: job.requirements || '',
+        job_type: job.job_type || '',
+        location: job.location || '',
+        salary_range: job.salary_range || '',
+        required_experience: job.required_experience || '',
+        is_active: job.is_active,
+        branch: job.branch ? job.branch.toString() : '',
       });
       
-      // Then fetch branches first to ensure they're loaded
-      fetchBranches().then(() => {
-        // Once branches are loaded, populate form data
-        const { location, requiredExperience } = extractDetailsFromDescription(job.description || '');
-        
-        // Ensure values are correctly formatted
-        const branchValue = job.branch ? job.branch.toString() : '';
-        const jobType = job.job_type || 'Full-Time';
-        
-        console.log("Setting form data with:", {
-          branch: branchValue,
-          job_type: jobType
-        });
-        
-        // Now set the form data
-        setFormData({
-          title: job.title || '',
-          description: extractMainDescription(job.description || ''),
-          requirements: job.requirements || '',
-          branch: branchValue,
-          location: location || '',
-          job_type: jobType,
-          salary_range: job.salary_range || '',
-          required_experience: requiredExperience || '',
-          is_active: job.is_active !== undefined ? job.is_active : true,
-        });
-        
-        // Mark loading as complete
-        setTimeout(() => setIsLoading(false), 100); // Small timeout to ensure state updates
-      });
-      
-      setErrors({});
-      setServerError('');
+      setIsLoading(false);
     }
-  }, [job, isOpen]);
+  }, [isOpen, job]);
+
+  const checkAdmin = () => {
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
+      setIsAdmin(decodedToken.is_superadmin);
+    }
+  };
 
   // Extract additional details from the description
   const extractDetailsFromDescription = (description) => {
@@ -411,20 +391,39 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
                   <Label htmlFor="branch" className="block text-sm font-medium text-gray-700">
                     Branch <span className="text-red-500">*</span>
                   </Label>
-                  <select
-                    id="branch"
-                    name="branch"
-                    value={formData.branch}
-                    onChange={(e) => handleChange(e)}
-                    className={`w-full mt-1 px-3 py-2 bg-white border ${errors.branch ? "border-red-300" : "border-gray-300"} rounded-md shadow-sm focus:outline-none focus:ring-[#1e1b4b] focus:border-[#1e1b4b]`}
-                  >
-                    <option value="" disabled>Select branch</option>
-                    {branches.map((branch) => (
-                      <option key={branch.id} value={branch.id.toString()}>
-                        {branch.name} - {branch.city}, {branch.country}
-                      </option>
-                    ))}
-                  </select>
+                  {isAdmin ? (
+                    // SuperAdmin can select any branch
+                    <select
+                      id="branch"
+                      name="branch"
+                      value={formData.branch}
+                      onChange={(e) => handleChange(e)}
+                      className={`w-full mt-1 px-3 py-2 bg-white border ${errors.branch ? "border-red-300" : "border-gray-300"} rounded-md shadow-sm focus:outline-none focus:ring-[#1e1b4b] focus:border-[#1e1b4b]`}
+                    >
+                      <option value="" disabled>Select branch</option>
+                      {branches.map((branch) => (
+                        <option key={branch.id} value={branch.id.toString()}>
+                          {branch.name} - {branch.city}, {branch.country}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    // Non-admin users can only see their branch as disabled input
+                    <div>
+                      <input
+                        type="text"
+                        value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
+                        className="w-full mt-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md"
+                        disabled
+                      />
+                      <input 
+                        type="hidden" 
+                        name="branch" 
+                        value={formData.branch} 
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+                    </div>
+                  )}
                   {errors.branch && <p className="mt-1 text-sm text-red-600">{errors.branch}</p>}
                 </div>
 

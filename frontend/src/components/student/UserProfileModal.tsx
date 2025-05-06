@@ -113,7 +113,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, ap
           {/* User Info */}
           <div className="flex items-start gap-6 p-6 bg-[#F9F8F7] rounded-lg">
             <div className="relative">
-              <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-white bg-[#153147] flex items-center justify-center text-white text-2xl font-bold">
+              <div className="w-20 h-20 rounded-full overflow-hidden ring-4 ring-white bg-white flex items-center justify-center text-[#153147] text-2xl font-bold">
                 {user?.first_name?.charAt(0) || user?.email?.charAt(0) || 'U'}
               </div>
               <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
@@ -150,7 +150,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, ap
               <div className="p-6 bg-white border border-gray-200 rounded-lg text-center">
                 <p className="text-gray-500">You haven't applied to any jobs yet.</p>
                 <Button 
-                  className="mt-4 bg-[#153147] hover:bg-[#0e2336]"
+                  className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white"
                   onClick={onClose}
                 >
                   Browse Available Jobs
@@ -179,6 +179,10 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, ap
               </div>
             )}
           </div>
+
+          <button type="submit" className="mt-4 bg-[#153147] hover:bg-[#0e2336] text-white font-medium rounded-md px-5 py-2 shadow-sm">
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
         </div>
       </div>
     </div>

@@ -116,7 +116,7 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
 
         <FormField label="Branch" error={errors.branch} required>
           {isAdmin ? (
-            // Admin can select any branch
+            // SuperAdmin can select any branch
             <select
               required
               value={formData.branch}
@@ -129,13 +129,21 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
               ))}
             </select>
           ) : (
-            // Non-admin users can only see their branch
-            <input
-              type="text"
-              value={selectedBranchName}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-              disabled
-            />
+            // Non-admin users can only see their branch as disabled input
+            <div>
+              <input
+                type="text"
+                value={selectedBranchName}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                disabled
+              />
+              <input 
+                type="hidden" 
+                name="branch" 
+                value={formData.branch} 
+              />
+              <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+            </div>
           )}
         </FormField>
 

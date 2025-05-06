@@ -369,13 +369,17 @@ const CounsellorAddStudent = () => {
                 </label>
                 {user?.branch ? (
                   // If counsellor has a branch, display it as read-only
-                  <input
-                    type="text"
-                    id="branch_display"
-                    value={selectedBranchName}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                    disabled
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      id="branch_display"
+                      value={selectedBranchName}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      disabled
+                    />
+                    <input type="hidden" name="branch" value={formData.branch} />
+                    <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+                  </div>
                 ) : (
                   // Otherwise show dropdown with all branches
                   <select

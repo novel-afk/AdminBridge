@@ -162,7 +162,7 @@ const JobDetail: React.FC = () => {
               <div className="flex justify-center">
                 <Button 
                   size="lg"
-                  className="bg-[#153147] hover:bg-[#0e2336] px-8"
+                  className="bg-[#153147] hover:bg-[#0e2336] text-white px-8"
                   onClick={() => setShowApplyForm(true)}
                 >
                   Apply for this position

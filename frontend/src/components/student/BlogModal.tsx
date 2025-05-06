@@ -112,7 +112,7 @@ const BlogModal: React.FC<BlogModalProps> = ({ blog, isOpen, onClose }) => {
       <div className="relative w-full max-w-6xl mx-auto my-8 bg-white shadow-2xl animate-fadeInScale">
         {/* Hero section with image */}
         <div className="w-full h-80 md:h-96 relative">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#153147]/80 to-[#153147]/30 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-transparent z-10"></div>
           <img 
             src={getImageUrl(blog)} 
             alt={blog.title}
@@ -146,7 +146,7 @@ const BlogModal: React.FC<BlogModalProps> = ({ blog, isOpen, onClose }) => {
                 <Badge 
                   key={index} 
                   variant="outline" 
-                  className="bg-[#153147]/5 text-[#153147] border-[#153147]/20"
+                  className="bg-white text-[#153147] border-[#153147]"
                 >
                   {tag}
                 </Badge>

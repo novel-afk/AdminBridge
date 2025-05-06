@@ -267,12 +267,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           
           <FormField label="Branch" error={errors.branch} required>
             {isAdmin ? (
-              // Admin can select any branch
+              // SuperAdmin can select any branch
               <select
-                required
                 value={formData.branch}
                 onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                className={`w-full px-4 py-2.5 border ${errors.branch ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b]"
+                required
               >
                 <option value="">Select Branch</option>
                 {branches.map((branch) => (
@@ -280,13 +280,21 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
                 ))}
               </select>
             ) : (
-              // Non-admin users can only see their branch
-              <input
-                type="text"
-                value={selectedBranchName}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-                disabled
-              />
+              // Non-admin users can only see their branch as disabled input
+              <div>
+                <input
+                  type="text"
+                  value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                  disabled
+                />
+                <input 
+                  type="hidden" 
+                  value={formData.branch} 
+                  name="branch" 
+                />
+                <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+              </div>
             )}
           </FormField>
           

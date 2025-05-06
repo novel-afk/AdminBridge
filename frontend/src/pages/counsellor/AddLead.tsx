@@ -36,6 +36,10 @@ const CounsellorAddLead = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Calculate the selected branch name based on user branch ID
+  const selectedBranchName = user?.branch ? 
+    branches.find(b => b.id.toString() === user.branch.toString())?.name || '' : '';
+
   // Country options
   const countryOptions = [
     { value: '', label: 'Select Country' },
@@ -212,9 +216,6 @@ const CounsellorAddLead = () => {
     }
   };
 
-  // Find the branch name based on the branch ID
-  const selectedBranchName = branches.find(b => b.id.toString() === formData.branch)?.name || '';
-
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto">
@@ -294,19 +295,23 @@ const CounsellorAddLead = () => {
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label htmlFor="branch" className="block text-gray-700 text-sm font-medium mb-2">
                   Branch *
                 </label>
                 {user?.branch ? (
                   // If counsellor has a branch, display it as read-only
-                  <input
-                    type="text"
-                    id="branch_display"
-                    value={selectedBranchName}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                    disabled
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      id="branch_display"
+                      value={selectedBranchName}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      disabled
+                    />
+                    <input type="hidden" name="branch" value={formData.branch} />
+                    <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+                  </div>
                 ) : (
                   // Otherwise show dropdown with all branches
                   <select
@@ -325,8 +330,6 @@ const CounsellorAddLead = () => {
                     ))}
                   </select>
                 )}
-                {/* Keep hidden input to retain value for form submission */}
-                <input type="hidden" name="branch" value={formData.branch} />
               </div>
 
               <div>
