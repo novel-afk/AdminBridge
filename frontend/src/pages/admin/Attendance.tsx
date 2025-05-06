@@ -172,7 +172,7 @@ const AttendancePage = () => {
       console.error('Error fetching employee data:', err);
       const errorDetail = err.response?.data?.detail || 'Unknown error';
       const errorStatus = err.response?.status || 'No status code';
-      setError(`Failed to load employee data: ${errorDetail} (Status: ${errorStatus})`);
+      // setError(`Failed to load employee data: ${errorDetail} (Status: ${errorStatus})`);
       
       // If unauthorized (401), redirect to login
       if (err.response?.status === 401) {
@@ -312,7 +312,6 @@ const AttendancePage = () => {
       const errorStatus = err.response?.status || 'No status code';
       
       if (!error) { // Only set if we don't already have an employee error
-        setError(`Failed to load student data: ${errorDetail} (Status: ${errorStatus})`);
       }
       
       // If unauthorized (401), redirect to login

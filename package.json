@@ -1,6 +1,13 @@
 {
+  "name": "admin-bridge",
+  "version": "1.0.0",
+  "description": "AdminBridge Application",
+  "scripts": {
+    "install-deps": "npm install && cd backend && npm install",
+    "test-email": "node backend/test_email.js"
+  },
   "dependencies": {
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.507.0"
+    "node-cron": "^3.0.3",
+    "nodemailer": "^7.0.2"
   }
 }

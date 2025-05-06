@@ -670,10 +670,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             
             self.perform_create(serializer)
             
-            # Send email notification for new employee
-            if user_data['role'] in ['BranchManager', 'Counsellor', 'Receptionist']:
+            # Send email notification for new employee - always try to send for all employee roles
+            try:
                 from utils.email_sender import send_employee_credentials_email
+                print(f"Attempting to send email notification to {user_data['email']}")
                 send_employee_credentials_email(user_data, employee_data)
+                print(f"Email notification successfully queued for {user_data['email']}")
+            except Exception as e:
+                print(f"Error sending email notification: {str(e)}")
+                # Continue with the response even if email fails
                 
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)

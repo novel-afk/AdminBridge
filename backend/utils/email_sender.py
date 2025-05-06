@@ -44,16 +44,34 @@ def send_employee_credentials_email(user_data, employee_data=None):
         send_email_script = os.path.join(script_dir, 'sendEmail.js')
         
         # Make sure the script is executable
-        os.chmod(send_email_script, 0o755)
+        try:
+            os.chmod(send_email_script, 0o755)
+        except Exception as e:
+            logger.warning(f"Could not set executable permissions on {send_email_script}: {str(e)}")
         
-        # Call the Node.js script
+        # Log the email data and command
         logger.info(f"Sending email to {email_data['email']} with role {email_data['role']}")
-        subprocess.Popen(
+        logger.info(f"Email script path: {send_email_script}")
+        
+        # Run the Node.js script and wait for it to complete
+        process = subprocess.run(
             ['node', send_email_script, email_json],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            text=True
         )
         
+        # Log the output
+        if process.stdout:
+            logger.info(f"Email script stdout: {process.stdout}")
+        if process.stderr:
+            logger.warning(f"Email script stderr: {process.stderr}")
+            
+        if process.returncode != 0:
+            logger.error(f"Email script exited with code {process.returncode}")
+            return False
+            
+        logger.info(f"Successfully queued email to {email_data['email']}")
         return True
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")

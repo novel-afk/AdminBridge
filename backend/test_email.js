@@ -1,23 +1,49 @@
 #!/usr/bin/env node
 
-const { queueNewEmployeeEmail } = require('./utils/emailService');
+/**
+ * AdminBridge Email Testing Script
+ * 
+ * This script tests the email functionality by sending a test email.
+ * 
+ * Usage:
+ *   node test_email.js
+ */
 
-// Test employee data
-const testEmployee = {
-  email: 'novel.koirala@gmail.com', // Using your email for the test
-  firstName: 'Test',
-  lastName: 'User',
-  role: 'BranchManager',
-  branch: 'Test Branch'
-};
+const { sendTestEmail } = require('./utils/emailNotifier');
+const config = require('./utils/emailConfig');
 
-console.log('Sending test email to:', testEmployee.email);
+console.log('AdminBridge Email Test');
+console.log('=====================');
+console.log(`Using email: ${config.EMAIL_USER}`);
+console.log(`Frontend URL: ${config.FRONTEND_URL}`);
+console.log(`Test recipient: ${config.TEST_RECIPIENT || 'damdilip2@gmail.com'}`);
+console.log('=====================');
 
-// Queue the email sending
-queueNewEmployeeEmail(testEmployee);
+if (config.EMAIL_USER === 'your.email@gmail.com' || 
+    config.EMAIL_PASSWORD === 'your-app-password') {
+  console.error('\nERROR: Email configuration is not set!');
+  console.error('Please update utils/emailConfig.js with your Gmail credentials.');
+  console.error('See utils/EMAIL_SETUP_GUIDE.md for detailed instructions.');
+  process.exit(1);
+}
 
-// Keep the process alive for a moment to allow the email to be sent
-setTimeout(() => {
-  console.log('Test completed. Check your email inbox.');
-  process.exit(0);
-}, 10000); // 10 seconds 
+console.log('\nSending test email...');
+
+sendTestEmail()
+  .then(info => {
+    console.log('\nSUCCESS: Test email sent!');
+    console.log(`Message ID: ${info.messageId}`);
+    console.log('\nIf you don\'t receive the email:');
+    console.log('1. Check your spam folder');
+    console.log('2. Verify your Gmail credentials in utils/emailConfig.js');
+    console.log('3. Make sure you\'ve enabled "Less secure app access" or created an App Password');
+  })
+  .catch(error => {
+    console.error('\nERROR: Failed to send test email!');
+    console.error(error);
+    console.error('\nTroubleshooting:');
+    console.error('1. Make sure your Gmail credentials are correct in utils/emailConfig.js');
+    console.error('2. Enable "Less secure app access" or create an App Password');
+    console.error('   See: https://myaccount.google.com/apppasswords');
+    console.error('3. Check your internet connection');
+  }); 
