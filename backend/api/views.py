@@ -613,6 +613,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             print("User data:", user_data)
             print("Employee data:", employee_data)
             
+            # For non-SuperAdmin users, automatically assign the branch ID of the current user
+            if request.user.role != 'SuperAdmin':
+                if hasattr(request.user, 'employee_profile') and request.user.employee_profile.branch:
+                    employee_data['branch'] = request.user.employee_profile.branch.id
+            
             # Create a new serializer context with all the data needed
             serializer_data = {
                 'user': user_data,
@@ -676,6 +681,11 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             # Debug print statements
             print("Update - User data:", user_data)
             print("Update - Employee data:", employee_data)
+            
+            # For non-SuperAdmin users, ensure branch ID matches their own branch
+            if request.user.role != 'SuperAdmin':
+                if hasattr(request.user, 'employee_profile') and request.user.employee_profile.branch:
+                    employee_data['branch'] = request.user.employee_profile.branch.id
             
             # Create a serializer context with all the data needed
             serializer_data = {
@@ -760,6 +770,11 @@ class StudentViewSet(viewsets.ModelViewSet):
             import json
             student_data = json.loads(request.data['student_data'])
             
+            # For non-SuperAdmin users, automatically assign the branch ID of the current user
+            if request.user.role != 'SuperAdmin':
+                if hasattr(request.user, 'employee_profile') and request.user.employee_profile.branch:
+                    student_data['branch'] = request.user.employee_profile.branch.id
+            
             # Prepare user data
             user_data = {
                 'first_name': request.data.get('user.first_name'),
@@ -820,6 +835,11 @@ class StudentViewSet(viewsets.ModelViewSet):
         if 'student_data' in request.data:
             import json
             student_data = json.loads(request.data['student_data'])
+            
+            # For non-SuperAdmin users, ensure branch ID matches their own branch
+            if request.user.role != 'SuperAdmin':
+                if hasattr(request.user, 'employee_profile') and request.user.employee_profile.branch:
+                    student_data['branch'] = request.user.employee_profile.branch.id
             
             # Get the current instance
             instance = self.get_object()
@@ -914,8 +934,28 @@ class LeadViewSet(viewsets.ModelViewSet):
             user_branch = user.employee_profile.branch
             return Lead.objects.filter(branch=user_branch)
             
-        # Other roles can't see leads
+        # Students and others can't see leads
         return Lead.objects.none()
+    
+    def perform_create(self, serializer):
+        # For non-SuperAdmin users, automatically set the branch to the user's branch
+        if self.request.user.role != 'SuperAdmin':
+            if hasattr(self.request.user, 'employee_profile') and self.request.user.employee_profile.branch:
+                serializer.save(created_by=self.request.user, branch=self.request.user.employee_profile.branch)
+                return
+        
+        # For SuperAdmin or fallback
+        serializer.save(created_by=self.request.user)
+    
+    def perform_update(self, serializer):
+        # For non-SuperAdmin users, ensure the branch remains the user's branch
+        if self.request.user.role != 'SuperAdmin':
+            if hasattr(self.request.user, 'employee_profile') and self.request.user.employee_profile.branch:
+                serializer.save(branch=self.request.user.employee_profile.branch)
+                return
+        
+        # For SuperAdmin or fallback
+        serializer.save()
 
 class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all()
