@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { UserPlusIcon, PencilSquareIcon, PhoneIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, PencilSquareIcon, PhoneIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../lib/AuthContext';
 import { leadAPI } from '../../lib/api';
+import AddLeadModal from '../../components/counsellor/AddLeadModal';
 
 interface Lead {
   id: number;
@@ -22,39 +23,45 @@ const CounsellorLeadList = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchLeads = async () => {
-      try {
-        const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) {
-          setError('You are not authenticated');
-          setLoading(false);
-          return;
-        }
-
-        // Only fetch leads from the counsellor's branch
-        const response = await axios.get('http://localhost:8000/api/leads/', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-
-        // Filter leads by branch
-        const filteredLeads = user?.branch 
-          ? response.data.filter((lead: Lead) => lead.branch === user.branch)
-          : response.data;
-
-        setLeads(filteredLeads);
+  const fetchLeads = async () => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        setError('You are not authenticated');
         setLoading(false);
-      } catch (err: any) {
-        console.error('Error fetching leads:', err);
-        setError(err.response?.data?.detail || 'Failed to fetch leads');
-        setLoading(false);
+        return;
       }
-    };
 
+      // Only fetch leads from the counsellor's branch
+      const response = await axios.get('http://localhost:8000/api/leads/', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      // Filter leads by branch
+      const filteredLeads = user?.branch 
+        ? response.data.filter((lead: Lead) => lead.branch === user.branch)
+        : response.data;
+
+      setLeads(filteredLeads);
+      setLoading(false);
+    } catch (err: any) {
+      console.error('Error fetching leads:', err);
+      setError(err.response?.data?.detail || 'Failed to fetch leads');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLeads();
   }, [user]);
+
+  const handleAddSuccess = () => {
+    // Refresh the lead list after adding a new lead
+    fetchLeads();
+  };
 
   if (loading) {
     return (
@@ -87,18 +94,31 @@ const CounsellorLeadList = () => {
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
       <div className="flex justify-between items-center p-6 border-b">
         <h1 className="text-2xl font-semibold text-gray-800">Lead Management</h1>
-        <Link 
-          to="/counsellor/add-lead" 
-          className="bg-[#153147] hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
+        <button 
+          onClick={() => setIsAddModalOpen(true)} 
+          className="bg-[#153147] hover:bg-[#153147]/90 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
         >
-          <UserPlusIcon className="w-5 h-5 mr-2" />
+          <PlusIcon className="w-5 h-5 mr-2" />
           Add Lead
-        </Link>
+        </button>
       </div>
 
       {leads.length === 0 ? (
         <div className="p-6 text-center text-gray-500">
-          No leads found in your branch
+          <div className="py-8">
+            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+              <UserPlusIcon className="h-8 w-8 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No leads found</h3>
+            <p className="text-gray-500 mb-6">No leads have been added to your branch yet.</p>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#153147] hover:bg-[#153147]/90"
+            >
+              <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
+              Add Your First Lead
+            </button>
+          </div>
         </div>
       ) : (
         <div className="overflow-x-auto">
@@ -171,6 +191,13 @@ const CounsellorLeadList = () => {
           </table>
         </div>
       )}
+
+      {/* Add Lead Modal */}
+      <AddLeadModal 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 };
