@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
+import toast from 'react-hot-toast';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -97,13 +98,23 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors }) => {
           error={errors.profilePicture}
         />
 
-        <FormField label="Nationality" error={errors.nationality} required>
+        <FormField label="Nationality" error={errors.nationality || (errors['nationality.0'] && errors['nationality.0'])} required>
           <input
             type="text"
             required
             value={formData.nationality}
             onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-            className={`w-full px-4 py-2.5 border ${errors.nationality ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            className={`w-full px-4 py-2.5 border ${errors.nationality || errors['nationality.0'] ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+          />
+        </FormField>
+
+        <FormField label="Address" error={errors.address || (errors['address.0'] && errors['address.0'])} required>
+          <input
+            type="text"
+            required
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            className={`w-full px-4 py-2.5 border ${errors.address || errors['address.0'] ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
           />
         </FormField>
 
@@ -127,12 +138,13 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors }) => {
           />
         </FormField>
 
-        <FormField label="Emergency Contact" error={errors.emergencyContact}>
+        <FormField label="Emergency Contact" error={errors.emergencyContact} required>
           <input
             type="tel"
+            required
             value={formData.emergencyContact}
             onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
+            className={`w-full px-4 py-2.5 border ${errors.emergencyContact ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
           />
         </FormField>
 
@@ -156,20 +168,21 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors }) => {
           />
         </FormField>
 
-        <FormField label="Parent Number" error={errors.parentNumber}>
+        <FormField label="Parent Contact Number" error={errors.parentNumber} required>
           <input
             type="tel"
+            required
             value={formData.parentNumber}
             onChange={(e) => setFormData({ ...formData, parentNumber: e.target.value })}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
+            className={`w-full px-4 py-2.5 border ${errors.parentNumber ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
           />
         </FormField>
       </div>
 
-      <div className="flex justify-end mt-8">
+      <div className="flex justify-end space-x-4 mt-8">
         <button
           type="submit"
-          className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:ring-offset-2 shadow-sm"
+          className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors"
         >
           Next
         </button>
@@ -216,29 +229,35 @@ const EducationForm = ({ formData, setFormData, onBack, onSubmit, errors, isSubm
 
         <FileUpload
           id="cv"
-          label="CV/Resume"
+          label="CV"
           accept=".pdf,.doc,.docx"
           value={formData.cv}
           onChange={(e) => setFormData({ ...formData, cv: e.target.files[0] })}
           error={errors.cv}
         />
 
-       
+        <FileUpload
+          id="degree"
+          label="Degree"
+          accept=".pdf,.doc,.docx"
+          value={formData.degree}
+          onChange={(e) => setFormData({ ...formData, degree: e.target.files[0] })}
+          error={errors.degree}
+        />
       </div>
 
-      <div className="flex justify-between mt-8">
+      <div className="flex justify-between space-x-4 mt-8">
         <button
           type="button"
           onClick={onBack}
-          disabled={isSubmitting}
-          className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-sm disabled:opacity-50"
+          className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
         >
           Back
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:ring-offset-2 shadow-sm disabled:opacity-50 flex items-center"
+          className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? (
             <>
@@ -266,6 +285,7 @@ const EditStudentModal = ({ isOpen, onClose, student, onSuccess }) => {
     age: '',
     gender: '',
     nationality: '',
+    address: '',
     phone: '',
     email: '',
     emergencyContact: '',
@@ -294,6 +314,7 @@ const EditStudentModal = ({ isOpen, onClose, student, onSuccess }) => {
     if (!formData.age) newErrors.age = 'Age is required';
     if (!formData.gender) newErrors.gender = 'Gender is required';
     if (!formData.nationality) newErrors.nationality = 'Nationality is required';
+    if (!formData.address) newErrors.address = 'Address is required';
     if (!formData.phone) newErrors.phone = 'Phone number is required';
     if (!formData.email) newErrors.email = 'Email is required';
     if (!formData.fatherName) newErrors.fatherName = 'Father name is required';
@@ -332,7 +353,75 @@ const EditStudentModal = ({ isOpen, onClose, student, onSuccess }) => {
         }
       } catch (error) {
         console.error('Error updating student:', error);
-        setErrors({ submit: 'Failed to update student. Please try again.' });
+        const newErrors = {};
+        
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Error response data:', error.response.data);
+          
+          if (error.response.data.detail) {
+            newErrors.submit = error.response.data.detail;
+            toast.error(error.response.data.detail);
+          } else if (typeof error.response.data === 'object') {
+            // Map backend field errors to form fields
+            const processErrors = (obj, prefix = '') => {
+              Object.entries(obj).forEach(([key, value]) => {
+                // If value is an object and not an array, recurse
+                if (value && typeof value === 'object' && !Array.isArray(value)) {
+                  processErrors(value, `${prefix}${key}.`);
+                  return;
+                }
+                
+                const errorMessage = Array.isArray(value) ? value.join(', ') : value;
+                const fullKey = `${prefix}${key}`;
+                
+                // Map user.email errors to email field
+                if (fullKey === 'user.email' || key === 'email') {
+                  newErrors.email = errorMessage;
+                  toast.error('Email already exists');
+                }
+                // Map phone_number errors to phoneNumber field
+                else if (key === 'phone_number') {
+                  newErrors.phoneNumber = errorMessage;
+                  toast.error('Phone number already exists');
+                }
+                // Handle array validation errors (e.g., nationality.0, address.0)
+                else if (key.includes('.0')) {
+                  const baseField = key.split('.')[0];
+                  newErrors[key] = errorMessage;
+                  toast.error(`${baseField.charAt(0).toUpperCase() + baseField.slice(1)} is required`);
+                }
+                // Keep other field errors as is
+                else {
+                  newErrors[key] = errorMessage;
+                }
+              });
+            };
+            
+            processErrors(error.response.data);
+            
+            // If we have field-specific errors but no submit error, add a general error
+            if (Object.keys(newErrors).length > 0 && !newErrors.submit) {
+              newErrors.submit = 'Please correct the errors below.';
+            }
+          }
+          
+          // If no specific errors were mapped, use the generic error message
+          if (Object.keys(newErrors).length === 0) {
+            newErrors.submit = 'An error occurred. Please try again.';
+            toast.error('An error occurred. Please try again.');
+          }
+        } else if (error.request) {
+          // The request was made but no response was received
+          newErrors.submit = 'No response received from server. Please check your connection.';
+          toast.error('No response received from server. Please check your connection.');
+        } else {
+          newErrors.submit = 'An unknown error occurred. Please try again.';
+          toast.error('An unknown error occurred. Please try again.');
+        }
+        
+        setErrors(newErrors);
       } finally {
         setIsSubmitting(false);
       }
@@ -384,4 +473,4 @@ const EditStudentModal = ({ isOpen, onClose, student, onSuccess }) => {
   );
 };
 
-export default EditStudentModal; 
+export default EditStudentModal;

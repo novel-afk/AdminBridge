@@ -333,6 +333,38 @@ export const blogAPI = {
     api.get(`/blogs/?branch=${branchId}`),
 };
 
+export interface ActivityLog {
+  id: number;
+  user: number;
+  user_name: string;
+  user_role: string;
+  action_type: string;
+  action_model: string;
+  action_details: string;
+  ip_address: string;
+  created_at: string;
+}
+
+// Activity Log API
+export const activityLogAPI = {
+  getAll: (params?: { 
+    role?: string;
+    action_type?: string;
+    start_date?: string;
+    end_date?: string;
+    page?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.role) queryParams.append('role', params.role);
+    if (params?.action_type) queryParams.append('action_type', params.action_type);
+    if (params?.start_date) queryParams.append('start_date', params.start_date);
+    if (params?.end_date) queryParams.append('end_date', params.end_date);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    
+    return api.get(`/activity-logs/?${queryParams.toString()}`);
+  }
+};
+
 // Student Profile API
 export const studentProfileAPI = {
   getProfile: () => api.get('/student-profile/'),

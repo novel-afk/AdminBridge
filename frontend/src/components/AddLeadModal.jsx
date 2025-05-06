@@ -149,31 +149,30 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
       
       if (onSuccess) {
         onSuccess();
-      } else {
-        onClose();
       }
+      onClose();
     } catch (error) {
       console.error('Error creating lead:', error);
-      
-      let errorMessage = 'Failed to save lead. Please try again.';
+      const newErrors = {};
       
       if (error.response) {
-        console.error('Error response data:', error.response.data);
-        
         if (error.response.data.detail) {
-          errorMessage = error.response.data.detail;
+          newErrors.submit = error.response.data.detail;
         } else if (typeof error.response.data === 'object') {
-          const errorDetails = Object.entries(error.response.data)
-            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-            .join('; ');
-          
-          errorMessage = errorDetails || errorMessage;
+          Object.entries(error.response.data).forEach(([key, value]) => {
+            if (key === 'user.email' || key === 'email') {
+              newErrors.email = 'Email already exists';
+              newErrors.submit = 'Email already exists. Please use a different email.';
+            } else {
+              newErrors[key] = Array.isArray(value) ? value[0] : value;
+            }
+          });
         }
-      } else if (error.request) {
-        errorMessage = 'No response received from server. Please check your connection.';
+      } else {
+        newErrors.submit = 'Failed to create lead. Please try again.';
       }
       
-      setErrors({ submit: errorMessage });
+      setErrors(newErrors);
     } finally {
       setIsSubmitting(false);
     }

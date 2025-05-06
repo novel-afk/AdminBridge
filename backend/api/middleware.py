@@ -142,3 +142,150 @@ class DefaultPasswordFlagMiddleware:
                 print(f"Error in DefaultPasswordFlagMiddleware: {e}")
                 
         return response 
+
+
+class ActivityLogMiddleware:
+    """Middleware to log user activities"""
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        
+        # Define which URLs and methods to log
+        self.logged_patterns = [
+            # User management
+            (r'^/api/users/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+            # Authentication
+            (r'^/api/token/', {
+                'POST': 'LOGIN',
+                'DELETE': 'LOGOUT'
+            }),
+            # Students
+            (r'^/api/students/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+            # Employees
+            (r'^/api/employees/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+            # Branches
+            (r'^/api/branches/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+        ]
+    
+    def __call__(self, request):
+        # Get response first
+        response = self.get_response(request)
+        
+        # Only log if user is authenticated
+        if not request.user.is_authenticated:
+            return response
+            
+        # Check if this request should be logged
+        for pattern, methods in self.logged_patterns:
+            if re.match(pattern, request.path):
+                # Get the action type based on HTTP method
+                action_type = methods.get(request.method, 'OTHER')
+                
+                # Get the model name from the URL
+                model_name = request.path.split('/')[2].upper()
+                
+                # Create activity log
+                from api.models import ActivityLog
+                
+                # Only log POST, PUT, and DELETE actions
+                if request.method not in ['POST', 'PUT', 'DELETE']:
+                    return self.get_response(request)
+                
+                # Extract entity type from path
+                path_parts = request.path.split('/')
+                if len(path_parts) > 2:
+                    entity_type = path_parts[2]  # e.g., 'students', 'employees', etc.
+                    
+                    if request.method == 'POST':
+                        # Handle creation
+                        try:
+                            import json
+                            if hasattr(request, '_body'):
+                                data = json.loads(request._body.decode('utf-8'))
+                            elif hasattr(request, 'POST'):
+                                data = request.POST.dict()
+                            else:
+                                data = {}
+                                
+                            if 'student_data' in data:
+                                student_data = json.loads(data['student_data'])
+                                if entity_type == 'students':
+                                    from .models import Branch
+                                    branch_id = student_data.get('branch')
+                                    try:
+                                        branch = Branch.objects.get(id=branch_id)
+                                        branch_name = branch.name
+                                    except Branch.DoesNotExist:
+                                        branch_name = str(branch_id)
+                                    # Get name from user data
+                                    first_name = request.POST.get('user.first_name', '')
+                                    last_name = request.POST.get('user.last_name', '')
+                                    name = f"{first_name} {last_name}".strip()
+                                    action_details = f"{request.user.get_full_name()} added student {name} in {branch_name}"
+                            elif isinstance(data, dict):
+                                if entity_type == 'employees':
+                                    role = data.get('role', '')
+                                    branch_id = data.get('branch')
+                                    try:
+                                        branch = Branch.objects.get(id=branch_id)
+                                        branch_name = branch.name
+                                    except Branch.DoesNotExist:
+                                        branch_name = str(branch_id)
+                                    name = f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
+                                    action_details = f"{request.user.get_full_name()} added {role} {name} in {branch_name}"
+                                elif entity_type == 'branches':
+                                    branch_name = data.get('name', '')
+                                    action_details = f"{request.user.get_full_name()} added branch {branch_name}"
+                        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+                            return self.get_response(request)
+                            
+                    elif request.method == 'PUT':
+                        # Handle updates
+                        entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
+                        if entity_type == 'students':
+                            action_details = f"{request.user.get_full_name()} updated student details"
+                        elif entity_type == 'employees':
+                            action_details = f"{request.user.get_full_name()} updated employee details"
+                        elif entity_type == 'branches':
+                            action_details = f"{request.user.get_full_name()} updated branch details"
+                            
+                    elif request.method == 'DELETE':
+                        # Handle deletions
+                        entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
+                        if entity_type == 'students':
+                            action_details = f"{request.user.get_full_name()} removed a student"
+                        elif entity_type == 'employees':
+                            action_details = f"{request.user.get_full_name()} removed an employee"
+                        elif entity_type == 'branches':
+                            action_details = f"{request.user.get_full_name()} removed a branch"
+                
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action_type=action_type,
+                    action_model=model_name,
+                    action_details=action_details,
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                break
+        
+        return response

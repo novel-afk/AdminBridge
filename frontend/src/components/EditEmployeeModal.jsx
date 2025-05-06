@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -477,22 +478,60 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
           // that falls out of the range of 2xx
           console.error('Error response data:', error.response.data);
           
+          const newErrors = {};
+          
           if (error.response.data.detail) {
-            errorMessage = error.response.data.detail;
+            newErrors.submit = error.response.data.detail;
+            toast.error(error.response.data.detail);
           } else if (typeof error.response.data === 'object') {
-            // Extract error messages from response data
-            const errorDetails = Object.entries(error.response.data)
-              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-              .join('; ');
+            // Map backend field errors to form fields
+            const processErrors = (obj, prefix = '') => {
+              Object.entries(obj).forEach(([key, value]) => {
+                // If value is an object and not an array, recurse
+                if (value && typeof value === 'object' && !Array.isArray(value)) {
+                  processErrors(value, `${prefix}${key}.`);
+                  return;
+                }
+                
+                const errorMessage = Array.isArray(value) ? value.join(', ') : value;
+                const fullKey = `${prefix}${key}`;
+                
+                // Map user.email errors to email field
+                if (fullKey === 'user.email' || key === 'email') {
+                  newErrors.email = errorMessage;
+                  toast.error('Email already exists');
+                }
+                // Map phone_number errors to phoneNumber field
+                else if (key === 'phone_number') {
+                  newErrors.phoneNumber = errorMessage;
+                  toast.error('Phone number already exists');
+                }
+                // Keep other field errors as is
+                else {
+                  newErrors[key] = errorMessage;
+                }
+              });
+            };
             
-            errorMessage = errorDetails || errorMessage;
+            processErrors(error.response.data);
+            
+            // If we have field-specific errors but no submit error, add a general error
+            if (Object.keys(newErrors).length > 0 && !newErrors.submit) {
+              newErrors.submit = 'Please correct the errors below.';
+            }
           }
+          
+          // If no specific errors were mapped, use the generic error message
+          if (Object.keys(newErrors).length === 0) {
+            newErrors.submit = errorMessage;
+            toast.error(errorMessage);
+          }
+          
+          setErrors(newErrors);
         } else if (error.request) {
           // The request was made but no response was received
-          errorMessage = 'No response received from server. Please check your connection.';
+          setErrors({ submit: 'No response received from server. Please check your connection.' });
         }
-        
-        setErrors({ submit: errorMessage });
       } finally {
         setIsSubmitting(false);
       }

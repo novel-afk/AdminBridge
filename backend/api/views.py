@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.response import Response
 from rest_framework import viewsets, permissions, status, generics
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -12,13 +13,13 @@ from rest_framework.views import APIView
 
 from .models import (
     User, Branch, Employee, Student, Lead,
-    Job, JobResponse, Blog, StudentAttendance, EmployeeAttendance
+    Job, JobResponse, Blog, StudentAttendance, EmployeeAttendance, ActivityLog
 )
 from .serializers import (
-    UserSerializer, BranchSerializer, EmployeeSerializer, 
-    StudentSerializer, LeadSerializer, JobSerializer,
-    JobResponseSerializer, BlogSerializer, StudentDetailSerializer,
-    StudentUpdateSerializer, StudentAttendanceSerializer, EmployeeAttendanceSerializer
+    UserSerializer, BranchSerializer, EmployeeSerializer, StudentSerializer,
+    LeadSerializer, JobSerializer, JobResponseSerializer, BlogSerializer,
+    StudentDetailSerializer, StudentUpdateSerializer, StudentAttendanceSerializer, 
+    EmployeeAttendanceSerializer, ActivityLogSerializer
 )
 from .permissions import (
     IsSuperAdmin, IsBranchManager, IsCounsellor, IsReceptionist,
@@ -1186,5 +1187,59 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
             )
         
         queryset = self.get_queryset().filter(student__student_id=student_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class ActivityLogPagination(PageNumberPagination):
+    """Custom pagination class for activity logs"""
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for viewing activity logs"""
+    queryset = ActivityLog.objects.all()
+    serializer_class = ActivityLogSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSuperAdmin]
+    pagination_class = ActivityLogPagination
+    
+    def get_queryset(self):
+        # Only SuperAdmin can see all logs
+        if self.request.user.role == 'SuperAdmin':
+            # Clean old logs (older than 1 day)
+            from django.utils import timezone
+            from datetime import timedelta
+            cutoff_date = timezone.now() - timedelta(days=1)
+            ActivityLog.objects.filter(created_at__lt=cutoff_date).delete()
+            
+            # Get remaining logs
+            queryset = ActivityLog.objects.all().order_by('-created_at')
+            
+            # Filter by user role if specified
+            role = self.request.query_params.get('role', None)
+            if role:
+                queryset = queryset.filter(user__role=role)
+                
+            # Filter by action type if specified
+            action_type = self.request.query_params.get('action_type', None)
+            if action_type:
+                queryset = queryset.filter(action_type=action_type)
+                
+            # Filter by date range if specified
+            start_date = self.request.query_params.get('start_date', None)
+            end_date = self.request.query_params.get('end_date', None)
+            if start_date and end_date:
+                queryset = queryset.filter(created_at__date__range=[start_date, end_date])
+                
+            return queryset
+        
+        # Others can't see any logs
+        return ActivityLog.objects.none()
+    
+    @action(detail=False, methods=['get'])
+    def all(self, request):
+        """Get all activity logs without pagination"""
+        queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)

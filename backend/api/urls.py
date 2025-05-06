@@ -4,7 +4,7 @@ from .views import (
     UserViewSet, BranchViewSet, EmployeeViewSet, StudentViewSet,
     LeadViewSet, JobViewSet, JobResponseViewSet, BlogViewSet,
     StudentProfileView, StudentJobResponseView, StudentJobResponseListView,
-    StudentAttendanceViewSet, EmployeeAttendanceViewSet,
+    StudentAttendanceViewSet, EmployeeAttendanceViewSet, ActivityLogViewSet,
     admin_stats, branch_manager_stats, counsellor_stats, receptionist_stats, bank_manager_stats
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -20,6 +20,7 @@ router.register(r'job-responses', JobResponseViewSet)
 router.register(r'blogs', BlogViewSet)
 router.register(r'employee-attendance', EmployeeAttendanceViewSet)
 router.register(r'student-attendance', StudentAttendanceViewSet)
+router.register(r'activity-logs', ActivityLogViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

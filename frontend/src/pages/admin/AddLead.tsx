@@ -164,39 +164,36 @@ const AddLead = () => {
         gpa: formData.gpa ? parseFloat(formData.gpa) : null,
       };
       
-      // Send to API
-      await axios.post('http://localhost:8000/api/leads/', leadData, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
+      await axios.post(
+        'http://localhost:8000/api/leads/',
+        leadData,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
       
-      // Redirect to leads list
       navigate('/admin/leads');
     } catch (err: any) {
-      console.error('Error adding lead:', err);
-      if (err.response?.data) {
-        console.log('Error details:', err.response.data);
-        
-        // Handle structured error responses
-        if (typeof err.response.data === 'object') {
-          const errorMessages: string[] = [];
-          
+      console.error('Error creating lead:', err);
+      
+      if (err.response) {
+        if (err.response.data.detail) {
+          setError(err.response.data.detail);
+        } else if (typeof err.response.data === 'object') {
+          // Handle nested validation errors
+          let errorMessage = '';
           Object.entries(err.response.data).forEach(([key, value]) => {
-            errorMessages.push(`${key}: ${value}`);
+            if (key === 'user.email' || key === 'email') {
+              errorMessage = 'Email already exists. Please use a different email.';
+            } else {
+              const msg = Array.isArray(value) ? value[0] : value;
+              errorMessage = errorMessage || msg;
+            }
           });
           
-          if (errorMessages.length > 0) {
-            setError(`Validation errors: ${errorMessages.join(', ')}`);
-            setLoading(false);
-            return;
-          }
+          setError(errorMessage || 'Failed to create lead. Please try again.');
         }
+      } else {
+        setError('Failed to create lead. Please try again later.');
       }
-      
-      setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
-        'Failed to add lead. Please try again.'
-      );
     } finally {
       setLoading(false);
     }

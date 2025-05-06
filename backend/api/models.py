@@ -361,3 +361,29 @@ class StudentAttendance(models.Model):
     
     def __str__(self):
         return f"{self.student.user.first_name} {self.student.user.last_name} - {self.date} - {self.status}"
+
+
+class ActivityLog(models.Model):
+    """Activity log model to track user actions"""
+    ACTION_TYPES = (
+        ('CREATE', 'Create'),
+        ('UPDATE', 'Update'),
+        ('DELETE', 'Delete'),
+        ('LOGIN', 'Login'),
+        ('LOGOUT', 'Logout'),
+        ('VIEW', 'View'),
+        ('OTHER', 'Other'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
+    action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
+    action_model = models.CharField(max_length=50, help_text='The model/table being acted upon')
+    action_details = models.TextField(help_text='Details of the action performed')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.first_name} {self.user.last_name} - {self.action_type} - {self.created_at}"

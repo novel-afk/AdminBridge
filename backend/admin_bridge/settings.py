@@ -67,6 +67,7 @@ MIDDLEWARE = [
     "api.middleware.RoleBasedAccessMiddleware",
     "api.middleware.BranchAccessMiddleware",
     "api.middleware.DefaultPasswordFlagMiddleware",
+    "api.middleware.ActivityLogMiddleware",
 ]
 
 ROOT_URLCONF = "admin_bridge.urls"
