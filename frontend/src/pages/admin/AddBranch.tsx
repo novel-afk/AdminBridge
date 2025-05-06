@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const AddBranch = () => {
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
     country: '',
     city: '',
@@ -40,8 +41,16 @@ const AddBranch = () => {
         return;
       }
       
+      // Prepare data for API - exclude the ID field for new branch creation
+      const apiData = {
+        name: formData.name,
+        country: formData.country,
+        city: formData.city,
+        address: formData.address
+      };
+      
       // Send data to API
-      await axios.post('http://localhost:8000/api/branches/', formData, {
+      await axios.post('http://localhost:8000/api/branches/', apiData, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       
@@ -75,6 +84,9 @@ const AddBranch = () => {
 
         <div className="bg-white rounded-lg shadow p-6">
           <form onSubmit={handleSubmit}>
+            {/* Hidden field for branch ID */}
+            <input type="hidden" name="id" value={formData.id} />
+            
             <div className="mb-4">
               <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-2">
                 Branch Name *

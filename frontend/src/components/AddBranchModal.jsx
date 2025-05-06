@@ -9,6 +9,7 @@ import { useAuth } from "../lib/AuthContext"
 export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     city: "",
     country: "",
@@ -50,7 +51,7 @@ export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
         throw new Error("You must be logged in to perform this action")
       }
 
-      // Prepare data for the API
+      // Prepare data for the API - exclude id for new branch creation
       const apiData = {
         name: formData.name,
         city: formData.city,
@@ -82,6 +83,7 @@ export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
 
   const handleClose = () => {
     setFormData({
+      id: "",
       name: "",
       city: "",
       country: "",
@@ -106,6 +108,9 @@ export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Hidden field for branch ID */}
+          <input type="hidden" name="id" value={formData.id} />
+          
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Branch Name</Label>

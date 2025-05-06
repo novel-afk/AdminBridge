@@ -56,7 +56,7 @@ const FileUpload = ({ id, label, accept, value, onChange, error, existingFile })
   </FormField>
 );
 
-const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches }) => {
+const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, userBranch }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'SuperAdmin';
   
@@ -338,7 +338,8 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
 
   // Extract data from employee prop when component mounts
   const { user } = useAuth();
-  const [selectedBranch, setSelectedBranch] = useState(userBranch);
+  const userBranch = user?.branch || employee?.branch;
+  const isAdmin = user?.role === 'SuperAdmin';
   
   // Define available roles based on current user's role
   const roles = user?.role === 'SuperAdmin' 
@@ -377,7 +378,7 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
         nationality: employee.nationality || '',
         phone: employee.contact_number || '',
         email: employee.user.email || '',
-        branch: employee.branch || '',
+        branch: employee.branch || (user?.role !== 'SuperAdmin' && user?.branch ? user.branch : ''),
         emergencyContact: employee.emergency_contact || '',
         dob: employee.dob ? new Date(employee.dob).toISOString().split('T')[0] : '',
         salary: employee.salary || '',
@@ -388,7 +389,7 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
         existingCitizenshipDocument: employee.citizenship_document,
       });
     }
-  }, [employee]);
+  }, [employee, user]);
 
   const validatePersonalInfo = () => {
     const newErrors = {};
@@ -442,8 +443,71 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
   };
 
   const handleSubmit = async () => {
-    if (validatePersonalInfo()) {
-      setStep(2);
+    if (validateEmploymentDetails()) {
+      setIsSubmitting(true);
+      setErrors({});
+      
+      try {
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) throw new Error('Authentication required');
+        
+        // Create form data for submission
+        const submitData = new FormData();
+        
+        // Create employee_data object
+        const employeeData = {
+          branch: formData.branch,
+          contact_number: formData.phone,
+          address: formData.address,
+          emergency_contact: formData.emergencyContact || '',
+          nationality: formData.nationality,
+          gender: formData.gender,
+          dob: formData.dob || '',
+          salary: formData.salary || ''
+        };
+        
+        // Add employee data as JSON string
+        submitData.append('employee_data', JSON.stringify(employeeData));
+        
+        // Add user fields directly
+        submitData.append('user.first_name', formData.firstName);
+        submitData.append('user.last_name', formData.lastName);
+        submitData.append('user.email', formData.email);
+        submitData.append('user.role', formData.role);
+        
+        // Only append files if they exist
+        if (formData.profilePicture) {
+          submitData.append('profile_image', formData.profilePicture);
+        }
+        
+        if (formData.citizenshipDocument) {
+          submitData.append('citizenship_document', formData.citizenshipDocument);
+        }
+        
+        // Send data to API
+        await axios.put(`http://localhost:8000/api/employees/${employee.id}/`, submitData, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        // Success callback
+        onSuccess();
+        onClose();
+        toast.success('Employee updated successfully!');
+        
+      } catch (error) {
+        console.error('Error updating employee:', error);
+        setErrors({
+          submit: error.response?.data?.detail || 
+                 error.response?.data?.message || 
+                 'Failed to update employee. Please try again.'
+        });
+        toast.error('Failed to update employee. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -476,6 +540,7 @@ const EditEmployeeModal = ({ isOpen, onClose, onSuccess, employee }) => {
               onNext={handleNext}
               errors={errors}
               branches={branches}
+              userBranch={userBranch}
             />
           ) : (
             <EmploymentDetailsForm

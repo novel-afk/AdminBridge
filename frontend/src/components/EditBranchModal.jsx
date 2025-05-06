@@ -7,6 +7,7 @@ import axios from "axios"
 
 export default function EditBranchModal({ isOpen, onClose, branch, onSuccess }) {
   const [formData, setFormData] = useState({
+    id: "",
     name: "",
     city: "",
     country: "",
@@ -19,6 +20,7 @@ export default function EditBranchModal({ isOpen, onClose, branch, onSuccess }) 
   useEffect(() => {
     if (branch) {
       setFormData({
+        id: branch.id ? branch.id.toString() : "",
         name: branch.name || "",
         city: branch.city || "",
         country: branch.country || "",
@@ -51,7 +53,7 @@ export default function EditBranchModal({ isOpen, onClose, branch, onSuccess }) 
         throw new Error("You must be logged in to perform this action")
       }
 
-      // Prepare data for the API
+      // Prepare data for the API - we don't need to send the ID in the body
       const apiData = {
         name: formData.name,
         city: formData.city,
@@ -83,6 +85,7 @@ export default function EditBranchModal({ isOpen, onClose, branch, onSuccess }) 
 
   const handleClose = () => {
     setFormData({
+      id: "",
       name: "",
       city: "",
       country: "",
@@ -109,6 +112,9 @@ export default function EditBranchModal({ isOpen, onClose, branch, onSuccess }) 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          {/* Hidden field for branch ID */}
+          <input type="hidden" name="id" value={formData.id} />
+          
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Branch Name</Label>
@@ -166,7 +172,7 @@ export default function EditBranchModal({ isOpen, onClose, branch, onSuccess }) 
               Cancel
             </Button>
             <Button type="submit" className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
+              {isSubmitting ? "Updating..." : "Update Branch"}
             </Button>
           </div>
         </form>

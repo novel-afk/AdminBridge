@@ -54,7 +54,7 @@ const columns = [
   { key: "role", label: "Role" },
   { key: "gender", label: "Gender" },
   { key: "nationality", label: "Nationality" },
-  { key: "phone", label: "Phone Number" },
+  { key: "phoneNumber", label: "Phone Number" },
   { key: "email", label: "Email" },
   { key: "emergencyContact", label: "Emergency Contact" },
   { key: "salary", label: "Salary" },
@@ -265,7 +265,7 @@ const EmployeeList = () => {
             `"${employee.dob || ''}"`,
             `"${employee.address?.replace(/"/g, '""') || ''}"`,
             `"${employee.emergency_contact || ''}"`,
-            employee.salary || '',
+            typeof employee.salary === 'number' ? employee.salary.toString() : (employee.salary || ''),
             `"${employee.joining_date || ''}"`,
             `"${employee.branch_name || ''}"`,
           ];
@@ -470,6 +470,20 @@ const EmployeeList = () => {
           </Button>
 
           <div className="flex items-center gap-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search employees..."
+                className="w-60 rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1); // Reset to first page on search
+                }}
+              />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            </div>
+
             <Button
               variant="outline"
               onClick={() => fetchEmployees(true)}
@@ -499,196 +513,303 @@ const EmployeeList = () => {
               <ArrowDownTrayIcon className="h-5 w-5" />
               Export
             </Button>
+          </div>
+        </div>
+
+        {selectedEmployees.length > 0 && (
+          <div className="mt-4 bg-blue-50 p-4 rounded-md flex justify-between items-center">
+            <span className="text-blue-800 font-medium">{selectedEmployees.length} {selectedEmployees.length === 1 ? 'employee' : 'employees'} selected</span>
             <Button 
-              onClick={handleDeleteSelected} 
-              disabled={selectedEmployees.length === 0 || refreshing}
-              className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
-              variant="ghost"
+              variant="destructive"
+              size="sm"
+              onClick={handleDeleteSelected}
+              className="bg-red-500 hover:bg-red-600 text-white"
             >
-              <TrashIcon className="h-5 w-5" />
-              Delete
+              <TrashIcon className="h-4 w-4 mr-1" />
+              Delete Selected
             </Button>
-            <div className="relative ml-2">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search employees..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
-                disabled={refreshing}
-              />
-            </div>
           </div>
-        </div>
-      </div>
+        )}
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
-          <button 
-            onClick={() => fetchEmployees()} 
-            className="ml-auto text-sm text-red-700 hover:text-red-900 underline"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
-
-      <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
-        {employees.length === 0 ? (
-          <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
-            <div className="text-center p-8 max-w-md">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <p className="text-gray-600 mb-4 text-lg">No employees found.</p>
-              <p className="text-gray-500 mb-6">Start by adding your first employee to the system.</p>
-              <Button 
-                onClick={() => setIsAddModalOpen(true)} 
-                className="bg-[#153147] hover:bg-[#1e1b4b]/90"
-              >
-                Add Your First Employee
-              </Button>
+        <div className="mt-6">
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4">
+              <p>{error}</p>
             </div>
-          </div>
-        ) : (
-          <div className={`h-full bg-white rounded-lg border border-gray-200 overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 flex flex-col`}>
-            <div className={`relative flex-1 overflow-hidden ${getTableHeight()}`}>
-              <div className="absolute inset-0 overflow-auto">
-                <div className="inline-block min-w-full max-w-full">
-                  <table className="w-full border-collapse table-auto">
-                    <thead className="bg-[#153147] sticky top-0 z-10 shadow-sm">
-                      <tr>
-                        {columns.map((column) => (
-                          <th
-                            key={column.key}
-                            scope="col"
-                            className={`px-6 py-4 text-left text-sm font-medium text-white first:pl-4 last:pr-4 
-                            ${column.key === "select" ? "min-w-[40px] w-10" : 
-                              column.key === "sNo" ? "min-w-[60px] w-16" :
-                              column.key === "name" ? "min-w-[160px]" :
-                              column.key === "role" ? "min-w-[100px]" :
-                              column.key === "gender" ? "min-w-[100px]" :
-                              column.key === "nationality" ? "min-w-[120px]" :
-                              column.key === "phone" ? "min-w-[130px]" :
-                              column.key === "email" ? "min-w-[180px]" :
-                              column.key === "emergencyContact" ? "min-w-[160px]" :
-                              column.key === "salary" ? "min-w-[100px]" :
-                              column.key === "branch" ? "min-w-[120px]" :
-                              column.key === "actions" ? "min-w-[100px] w-24" : ""
-                            }`}
-                          >
-                            {column.label}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {paginatedEmployees.map((employee, index) => (
-                        <tr 
-                          key={employee.id} 
-                          className={selectedEmployees.includes(employee.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}
-                        >
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Checkbox 
-                              checked={selectedEmployees.includes(employee.id)} 
-                              onCheckedChange={() => handleSelectEmployee(employee.id)}
-                            />
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {startIndex + index + 1}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {employee.name}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <Badge className="capitalize">{employee.user.role.toLowerCase()}</Badge>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            <div>
-                              {employee.email && <div><span className="font-medium">Email:</span> {employee.email}</div>}
-                              {employee.phone && <div><span className="font-medium">Phone:</span> {employee.phone}</div>}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {employee.nationality || '-'}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            <Button 
-                              onClick={() => handleView(employee)} 
-                              variant="ghost" 
-                              size="sm" 
-                              className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
-                            >
-                              <EyeIcon className="h-4 w-4 mr-1" /> View
-                            </Button>
-                            <Button 
-                              onClick={() => handleEdit(employee)} 
-                              variant="ghost" 
-                              size="sm" 
-                              className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
-                            >
-                              <PencilIcon className="h-4 w-4 mr-1" /> Edit
-                            </Button>
-                            {employee.user.role !== 'SuperAdmin' && (
-                              <Button 
-                                onClick={() => handleDeleteSingle(employee)} 
-                                variant="ghost" 
-                                size="sm" 
-                                className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-red-600"
-                              >
-                                <TrashIcon className="h-4 w-4 mr-1" /> Delete
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-24 bg-white">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                <p className="text-gray-500">Loading employees...</p>
+              </div>
+            </div>
+          ) : employees.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 bg-white">
+              <div className="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <h3 className="mt-2 text-lg font-medium text-gray-900">No employees found</h3>
+                <p className="mt-1 text-sm text-gray-500">Get started by adding a new employee.</p>
+                <div className="mt-6">
+                  <Button 
+                    onClick={() => setIsAddModalOpen(true)} 
+                    className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white"
+                  >
+                    <PlusIcon className="mr-2 h-5 w-5" />
+                    Add Employee
+                  </Button>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse">
+                <thead className="bg-[#153147]">
+                  <tr>
+                    <th scope="col" className="px-2 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      <Checkbox
+                        checked={selectedEmployees.length === paginatedEmployees.length && paginatedEmployees.length > 0}
+                        onCheckedChange={handleSelectAll}
+                        className="ml-2"
+                      />
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      S.No
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Name
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Role
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Gender
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Nationality
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Phone Number
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Email
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Emergency Contact
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Salary
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
+                      Branch
+                    </th>
+                    <th scope="col" className="px-3 py-4 text-center text-xs font-medium text-white whitespace-nowrap">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {paginatedEmployees.map((employee, index) => (
+                    <tr 
+                      key={employee.id} 
+                      className={selectedEmployees.includes(employee.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}
+                    >
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <Checkbox 
+                          checked={selectedEmployees.includes(employee.id)} 
+                          onCheckedChange={() => handleSelectEmployee(employee.id)}
+                          className="ml-2"
+                        />
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {startIndex + index + 1}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{employee.name}</div>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          employee.user.role === 'SuperAdmin' ? 'bg-purple-100 text-purple-800' :
+                          employee.user.role === 'BranchManager' ? 'bg-blue-100 text-blue-800' :
+                          employee.user.role === 'Counsellor' ? 'bg-green-100 text-green-800' :
+                          employee.user.role === 'Receptionist' ? 'bg-amber-100 text-amber-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {employee.user.role}
+                        </span>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.gender || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.nationality || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.contact_number || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {employee.user.email || '-'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.emergency_contact || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.salary 
+                          ? typeof employee.salary === 'number' 
+                            ? `$${employee.salary.toFixed(2)}` 
+                            : `$${employee.salary}`
+                          : '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.branch_name || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-center space-x-2">
+                          <Button 
+                            onClick={() => handleView(employee)} 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs px-2 py-1 text-gray-600 hover:text-blue-700"
+                          >
+                            <EyeIcon className="h-4 w-4 mr-1" /> View
+                          </Button>
+                          <Button 
+                            onClick={() => handleEdit(employee)} 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs px-2 py-1 text-gray-600 hover:text-indigo-700"
+                          >
+                            <PencilIcon className="h-4 w-4 mr-1" /> Edit
+                          </Button>
+                          {employee.user.role !== 'SuperAdmin' && (
+                            <Button 
+                              onClick={() => handleDeleteSingle(employee)} 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-xs px-2 py-1 text-gray-600 hover:text-red-700"
+                            >
+                              <TrashIcon className="h-4 w-4 mr-1" /> Delete
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Pagination - only show if we have data and multiple pages */}
+          {totalPages > 1 && (
+            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+                    <span className="font-medium">
+                      {Math.min(startIndex + itemsPerPage, filteredEmployees.length)}
+                    </span>{" "}
+                    of <span className="font-medium">{filteredEmployees.length}</span> results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                        currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="sr-only">Previous</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNumber = currentPage <= 3 
+                        ? i + 1 
+                        : currentPage >= totalPages - 2 
+                          ? totalPages - 4 + i 
+                          : currentPage - 2 + i;
+                        
+                      if (pageNumber > 0 && pageNumber <= totalPages) {
+                        return (
+                          <button
+                            key={pageNumber}
+                            onClick={() => setCurrentPage(pageNumber)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              currentPage === pageNumber
+                                ? 'z-10 bg-[#153147] border-[#153147] text-white'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        );
+                      }
+                      return null;
+                    })}
+                    
+                    <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                        currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="sr-only">Next</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modals */}
-      {isAddModalOpen && (
-        <AddEmployeeModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={handleAddSuccess}
-        />
+      <AddEmployeeModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)} 
+        onSuccess={handleAddSuccess}
+      />
+
+      {selectedEmployee && (
+        <>
+          <EditEmployeeModal 
+            isOpen={isEditModalOpen} 
+            onClose={() => setIsEditModalOpen(false)} 
+            employee={selectedEmployee}
+            onSuccess={handleEditSuccess}
+          />
+          <ViewEmployeeModal 
+            isOpen={isViewModalOpen} 
+            onClose={() => setIsViewModalOpen(false)} 
+            employee={selectedEmployee}
+          />
+        </>
       )}
 
-      {isEditModalOpen && selectedEmployee && (
-        <EditEmployeeModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleEditSuccess}
-          employee={selectedEmployee}
-        />
-      )}
-
-      {isViewModalOpen && selectedEmployee && (
-        <ViewEmployeeModal
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          employee={selectedEmployee}
-        />
-      )}
-
-      {/* Confirmation Modal */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={confirmationModal.onConfirm}
         title={confirmationModal.title}
         message={confirmationModal.message}
+        onConfirm={() => {
+          confirmationModal.onConfirm();
+          setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+        }}
         type={confirmationModal.type}
         confirmText={confirmationModal.confirmText}
       />

@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
+import { useAuth } from '../lib/AuthContext';
 
 // Form Field component to handle label, input, and error messages
 const FormField = ({ label, children, error }) => {
@@ -22,6 +23,7 @@ const FormField = ({ label, children, error }) => {
 };
 
 export default function AddJobModal({ isOpen, onClose, onSuccess }) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -38,7 +40,9 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Determine if user has branch selection privileges (only SuperAdmin)
+  const canSelectBranch = user?.role === 'SuperAdmin';
 
   // Reset form when modal is opened/closed
   useEffect(() => {
@@ -57,7 +61,6 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
       setErrors({});
       setServerError('');
       fetchBranches();
-      checkAdmin();
     }
   }, [isOpen]);
 
@@ -76,8 +79,24 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
       
       if (Array.isArray(response.data)) {
         setBranches(response.data);
+        
+        // Auto-select branch for non-SuperAdmin users
+        if (!canSelectBranch && user?.branch) {
+          setFormData(prev => ({
+            ...prev,
+            branch: user.branch.toString()
+          }));
+        }
       } else if (response.data.results && Array.isArray(response.data.results)) {
         setBranches(response.data.results);
+        
+        // Auto-select branch for non-SuperAdmin users
+        if (!canSelectBranch && user?.branch) {
+          setFormData(prev => ({
+            ...prev,
+            branch: user.branch.toString()
+          }));
+        }
       } else {
         console.error('Unexpected branches data format:', response.data);
         setBranches([]);
@@ -88,13 +107,15 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
     }
   };
 
-  const checkAdmin = () => {
-    const accessToken = localStorage.getItem('access_token');
-    if (accessToken) {
-      const decodedToken = JSON.parse(atob(accessToken.split('.')[1]));
-      setIsAdmin(decodedToken.is_superadmin);
+  // For non-SuperAdmin users, set branch when user data is available
+  useEffect(() => {
+    if (user && !canSelectBranch && user.branch) {
+      setFormData(prev => ({
+        ...prev,
+        branch: user.branch.toString()
+      }));
     }
-  };
+  }, [user, canSelectBranch]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -322,7 +343,7 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
                   <Label htmlFor="branch" className="block text-sm font-medium text-gray-700">
                     Branch <span className="text-red-500">*</span>
                   </Label>
-                  {isAdmin ? (
+                  {canSelectBranch ? (
                     // SuperAdmin can select any branch
                     <Select
                       name="branch"
@@ -335,17 +356,17 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
                       <SelectContent>
                         {branches.map((branch) => (
                           <SelectItem key={branch.id} value={branch.id.toString()}>
-                            {branch.name} - {branch.city}, {branch.country}
+                            {branch.name} {branch.city && branch.country ? `- ${branch.city}, ${branch.country}` : ''}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   ) : (
-                    // Non-admin users can only see their branch as disabled input
+                    // Non-SuperAdmin users can only see their branch as disabled input
                     <div>
                       <Input
                         type="text"
-                        value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
+                        value={branches.find(b => b.id.toString() === formData.branch)?.name || 'Loading...'}
                         className="mt-1 bg-gray-100"
                         disabled
                       />

@@ -277,8 +277,11 @@ export const branchAPI = {
   getById: (id: number) => 
     api.get(`/branches/${id}/`),
   
-  create: (branchData: any) => 
-    api.post('/branches/', branchData),
+  create: (branchData: any) => {
+    // Extract only necessary fields for branch creation
+    const { name, country, city, address } = branchData;
+    return api.post('/branches/', { name, country, city, address });
+  },
   
   update: (id: number, branchData: any) => 
     api.put(`/branches/${id}/`, branchData),

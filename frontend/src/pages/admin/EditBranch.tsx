@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const EditBranch = () => {
   const [formData, setFormData] = useState({
+    id: '',
     name: '',
     country: '',
     city: '',
@@ -29,6 +30,7 @@ const EditBranch = () => {
         });
 
         setFormData({
+          id: response.data.id.toString(),
           name: response.data.name,
           country: response.data.country,
           city: response.data.city,
@@ -72,8 +74,16 @@ const EditBranch = () => {
         return;
       }
       
+      // Prepare API data - we don't need to send the ID in the body
+      const apiData = {
+        name: formData.name,
+        country: formData.country,
+        city: formData.city,
+        address: formData.address
+      };
+      
       // Send data to API
-      await axios.put(`http://localhost:8000/api/branches/${id}/`, formData, {
+      await axios.put(`http://localhost:8000/api/branches/${id}/`, apiData, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       
@@ -115,6 +125,9 @@ const EditBranch = () => {
 
         <div className="bg-white rounded-lg shadow p-6">
           <form onSubmit={handleSubmit}>
+            {/* Hidden field for branch ID */}
+            <input type="hidden" name="id" value={formData.id} />
+            
             <div className="mb-4">
               <label htmlFor="name" className="block text-gray-700 text-sm font-medium mb-2">
                 Branch Name *
@@ -190,7 +203,7 @@ const EditBranch = () => {
                 disabled={submitting}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50"
               >
-                {submitting ? 'Saving...' : 'Save Changes'}
+                {submitting ? 'Updating...' : 'Update Branch'}
               </button>
             </div>
           </form>
