@@ -566,6 +566,26 @@ class BranchViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [permissions.IsAuthenticated]
         return [permission() for permission in permission_classes]
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        
+        # Check if branch has associated employees or students
+        employee_count = instance.employees.count()
+        student_count = instance.students.count()
+        
+        if employee_count > 0 or student_count > 0:
+            error_message = "Cannot delete this branch as it has "
+            if employee_count > 0 and student_count > 0:
+                error_message += f"{employee_count} employees and {student_count} students associated with it."
+            elif employee_count > 0:
+                error_message += f"{employee_count} employees associated with it."
+            else:
+                error_message += f"{student_count} students associated with it."
+                
+            return Response({"detail": error_message}, status=status.HTTP_400_BAD_REQUEST)
+            
+        return super().destroy(request, *args, **kwargs)
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     queryset = Employee.objects.all()

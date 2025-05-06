@@ -8,7 +8,8 @@ import {
   Trash, 
   Eye, 
   Pencil, 
-  MapPin 
+  MapPin,
+  XCircle
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -120,18 +121,37 @@ const BranchList = () => {
       confirmText: "Delete",
       onConfirm: async () => {
         const accessToken = localStorage.getItem("access_token");
+        let hasError = false;
+        let errorMessages = [];
         
         try {
           // Delete each selected branch
           for (const id of selectedBranches) {
-            await axios.delete(`http://localhost:8000/api/branches/${id}/`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
+            try {
+              await axios.delete(`http://localhost:8000/api/branches/${id}/`, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+            } catch (err) {
+              hasError = true;
+              if (axios.isAxiosError(err) && err.response?.data?.detail) {
+                errorMessages.push(`Branch #${id}: ${err.response.data.detail}`);
+              } else {
+                errorMessages.push(`Branch #${id}: Unknown error occurred.`);
+              }
+            }
           }
           
-          // Remove the deleted branches from state
-          setBranches(branches.filter(branch => !selectedBranches.includes(branch.id)));
+          // Refresh branch list
+          const response = await axios.get('http://localhost:8000/api/branches/', {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          setBranches(response.data);
           setSelectedBranches([]);
+          
+          // Show errors if any occurred
+          if (hasError) {
+            setError(errorMessages.join('\n'));
+          }
         } catch (err) {
           console.error("Error deleting branches:", err);
           setError("Failed to delete branches. Please try again.");
@@ -158,7 +178,12 @@ const BranchList = () => {
           setBranches(branches.filter(b => b.id !== branch.id));
         } catch (err) {
           console.error("Error deleting branch:", err);
-          setError("Failed to delete branch. Please try again.");
+          // Check if error is due to branch having associated users
+          if (axios.isAxiosError(err) && err.response?.data?.detail) {
+            setError(err.response.data.detail);
+          } else {
+            setError("Failed to delete branch. Please try again.");
+          }
         }
       },
     });
@@ -307,12 +332,19 @@ const BranchList = () => {
         </div>
       </div>
 
+      {/* Display error messages */}
       {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-600 p-4 rounded-lg flex items-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
           </svg>
-          {error}
+          <div className="whitespace-pre-line">{error}</div>
+          <button
+            onClick={() => setError('')}
+            className="ml-auto text-red-500 hover:text-red-700"
+          >
+            <XCircle className="h-5 w-5" />
+          </button>
         </div>
       )}
 
