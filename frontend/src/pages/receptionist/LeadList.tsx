@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { UserPlusIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../lib/AuthContext';
+import AddLeadModal from '../../components/AddLeadModal';
+import ViewLeadModal from '../../components/ViewLeadModal';
 
 interface Lead {
   id: number;
@@ -23,6 +25,9 @@ const ReceptionistLeadList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState(null);
 
   useEffect(() => {
     const fetchLeads = async () => {
@@ -60,6 +65,28 @@ const ReceptionistLeadList = () => {
     fetchLeads();
   }, [user, dataLoaded]);
 
+  const handleAddSuccess = () => {
+    setIsAddModalOpen(false);
+    setDataLoaded(false); // Refresh the list
+  };
+
+  const handleViewLead = async (id: number) => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        setError('You are not authenticated');
+        return;
+      }
+      const response = await axios.get(`http://localhost:8000/api/leads/${id}/`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      setSelectedLead(response.data);
+      setIsViewModalOpen(true);
+    } catch (err) {
+      setError('Failed to load lead details');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-full">
@@ -91,13 +118,13 @@ const ReceptionistLeadList = () => {
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
       <div className="flex justify-between items-center p-6 border-b">
         <h1 className="text-2xl font-semibold text-gray-800">Lead Management</h1>
-        <Link 
-          to="/receptionist/add-lead" 
-          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="bg-[#153147] hover:bg-[#153147]/90 text-white py-2 px-4 rounded-md transition-colors duration-300 flex items-center"
         >
           <UserPlusIcon className="w-5 h-5 mr-2" />
           Add Lead
-        </Link>
+        </button>
       </div>
 
       {leads.length === 0 ? (
@@ -160,13 +187,13 @@ const ReceptionistLeadList = () => {
                     {lead.lead_source}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                    <Link
-                      to={`/receptionist/leads/view/${lead.id}`}
-                      className="text-blue-600 hover:text-blue-900"
+                    <button
+                      onClick={() => handleViewLead(lead.id)}
+                      className="text-blue-600 hover:text-blue-900 focus:outline-none focus:underline"
                       title="View Details"
                     >
                       <EyeIcon className="w-5 h-5" />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -174,6 +201,19 @@ const ReceptionistLeadList = () => {
           </table>
         </div>
       )}
+      <AddLeadModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
+      />
+      <ViewLeadModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedLead(null);
+        }}
+        lead={selectedLead}
+      />
     </div>
   );
 };

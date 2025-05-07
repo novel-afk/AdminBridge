@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { EyeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import AddStudentModal from '../../components/AddStudentModal';
+import ViewStudentModal from '../../components/ViewStudentModal';
 
 interface Student {
   id: number;
@@ -24,6 +25,8 @@ const ReceptionistStudentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   const fetchStudents = async () => {
     try {
@@ -56,6 +59,23 @@ const ReceptionistStudentList = () => {
     setIsAddModalOpen(false);
     // Refresh the student list
     fetchStudents();
+  };
+
+  const handleViewStudent = async (id: number) => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        setError('You are not authenticated');
+        return;
+      }
+      const response = await axios.get(`http://localhost:8000/api/students/${id}/`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      setSelectedStudent(response.data);
+      setIsViewModalOpen(true);
+    } catch (err) {
+      setError('Failed to load student details');
+    }
   };
 
   if (loading) {
@@ -138,14 +158,14 @@ const ReceptionistStudentList = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {student.contact_number}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex ">
-                    <Link 
-                      to={`/receptionist/students/view/${student.id}`} 
-                      className="text-blue-600 hover:text-blue-900"
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex">
+                    <button
+                      onClick={() => handleViewStudent(student.id)}
+                      className="text-blue-600 hover:text-blue-900 focus:outline-none focus:underline"
                       title="View"
                     >
                       <EyeIcon className="w-5 h-5" />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -160,6 +180,14 @@ const ReceptionistStudentList = () => {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddSuccess}
         hideBranch={true}
+      />
+      <ViewStudentModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedStudent(null);
+        }}
+        student={selectedStudent}
       />
     </div>
   );
