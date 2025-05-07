@@ -5,6 +5,7 @@ import { UserIcon, PencilSquareIcon, EyeIcon, PlusIcon } from '@heroicons/react/
 import { useAuth } from '../../lib/AuthContext';
 import AddStudentModal from '../../components/counsellor/AddStudentModal';
 import ViewStudentModal from '../../components/ViewStudentModal';
+import EditStudentModal from '../../components/EditStudentModal';
 
 interface Student {
   id: number;
@@ -39,6 +40,8 @@ const CounsellorStudentList = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editStudent, setEditStudent] = useState<Student | null>(null);
 
   const fetchStudents = async () => {
     try {
@@ -183,8 +186,8 @@ const CounsellorStudentList = () => {
                           parentNumber: student.parent_number || '',
                           institute: student.institution_name || '',
                           language: student.language_test || '',
-                          profilePicture: student.profile_image || '',
-                          cv: student.resume || '',
+                          profilePicture: student.profile_picture || '',
+                          cv: student.cv || '',
                         };
                         setSelectedStudent(mappedStudent);
                         setIsViewModalOpen(true);
@@ -194,13 +197,16 @@ const CounsellorStudentList = () => {
                     >
                       <EyeIcon className="w-5 h-5" />
                     </button>
-                    <Link 
-                      to={`/counsellor/edit-student/${student.id}`} 
+                    <button
+                      onClick={() => {
+                        setEditStudent(student);
+                        setIsEditModalOpen(true);
+                      }}
                       className="text-indigo-600 hover:text-indigo-900"
                       title="Edit"
                     >
                       <PencilSquareIcon className="w-5 h-5" />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -222,6 +228,19 @@ const CounsellorStudentList = () => {
           isOpen={isViewModalOpen}
           onClose={() => setIsViewModalOpen(false)}
           student={selectedStudent}
+        />
+      )}
+
+      {/* Edit Student Modal */}
+      {isEditModalOpen && editStudent && (
+        <EditStudentModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSuccess={() => {
+            setIsEditModalOpen(false);
+            fetchStudents();
+          }}
+          student={editStudent}
         />
       )}
     </div>
