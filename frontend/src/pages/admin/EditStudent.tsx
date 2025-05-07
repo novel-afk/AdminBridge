@@ -42,9 +42,11 @@ interface Student {
 const EditStudent = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   
   const [formData, setFormData] = useState({
     user: {
+      id: 0,
       first_name: '',
       last_name: '',
       email: '',
@@ -104,6 +106,7 @@ const EditStudent = () => {
         // Set form data
         setFormData({
           user: {
+            id: student.user.id,
             first_name: student.user.first_name,
             last_name: student.user.last_name,
             email: student.user.email,
@@ -281,15 +284,12 @@ const EditStudent = () => {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">Edit Student</h1>
-          <p className="text-gray-600 mt-1">Update student information</p>
         </div>
-        
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
-        
         <div className="bg-white rounded-lg shadow p-6">
           <form onSubmit={handleSubmit}>
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Personal Information</h2>
@@ -297,7 +297,7 @@ const EditStudent = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <label htmlFor="user.first_name" className="block text-gray-700 text-sm font-medium mb-2">
-                  CourseName
+                  First Name
                 </label>
                 <input
                   type="text"
@@ -306,7 +306,6 @@ const EditStudent = () => {
                   value={formData.user.first_name}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
                 />
               </div>
               
@@ -321,7 +320,6 @@ const EditStudent = () => {
                   value={formData.user.last_name}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
                 />
               </div>
             </div>
@@ -338,7 +336,6 @@ const EditStudent = () => {
                   value={formData.user.email}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
                 />
               </div>
               
@@ -353,7 +350,6 @@ const EditStudent = () => {
                   value={formData.contact_number}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-
                 />
               </div>
             </div>
@@ -505,147 +501,13 @@ const EditStudent = () => {
               />
             </div>
             
-            <hr className="my-6" />
-            
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Education Information</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label htmlFor="institution_name" className="block text-gray-700 text-sm font-medium mb-2">
-                  Institution Name
-                </label>
-                <input
-                  type="text"
-                  id="institution_name"
-                  name="institution_name"
-                  value={formData.institution_name}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="language_test" className="block text-gray-700 text-sm font-medium mb-2">
-                  Language Test
-                </label>
-                <select
-                  id="language_test"
-                  name="language_test"
-                  value={formData.language_test}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="None">None</option>
-                  <option value="IELTS">IELTS</option>
-                  <option value="TOEFL">TOEFL</option>
-                  <option value="PTE">PTE</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-            
-            <hr className="my-6" />
-            
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Family Information</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              <div>
-                <label htmlFor="father_name" className="block text-gray-700 text-sm font-medium mb-2">
-                  Father's Name
-                </label>
-                <input
-                  type="text"
-                  id="father_name"
-                  name="father_name"
-                  value={formData.father_name}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="mother_name" className="block text-gray-700 text-sm font-medium mb-2">
-                  Mother's Name
-                </label>
-                <input
-                  type="text"
-                  id="mother_name"
-                  name="mother_name"
-                  value={formData.mother_name}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="parent_number" className="block text-gray-700 text-sm font-medium mb-2">
-                Parent Contact Number
-              </label>
-              <input
-                type="text"
-                id="parent_number"
-                name="parent_number"
-                value={formData.parent_number}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <hr className="my-6" />
-            
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Branch & Additional Notes</h2>
-            
-            <div className="mb-6">
-              <label htmlFor="branch" className="block text-gray-700 text-sm font-medium mb-2">
-                Branch
-              </label>
-              <select
-                id="branch"
-                name="branch"
-                value={formData.branch}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">Select Branch</option>
-                {branches.map(branch => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name} ({branch.city}, {branch.country})
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="mb-6">
-              <label htmlFor="comments" className="block text-gray-700 text-sm font-medium mb-2">
-                Comments/Notes
-              </label>
-              <textarea
-                id="comments"
-                name="comments"
-                value={formData.comments}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Any additional notes about the student..."
-              ></textarea>
-            </div>
-            
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                type="button"
-                onClick={() => navigate('/admin/students')}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300"
-              >
-                Cancel
-              </button>
+            <div className="flex justify-end mt-8">
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50"
+                className="px-6 py-2 bg-blue-700 text-white rounded-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50"
               >
-                {loading ? 'Updating...' : 'Update Student'}
+                {loading ? 'Updating...' : 'Update'}
               </button>
             </div>
           </form>
