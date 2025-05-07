@@ -169,6 +169,7 @@ function App() {
             <Route path="/counsellor/leads" element={<CounsellorLeadList />} />
             <Route path="/counsellor/add-lead" element={<CounsellorAddLead />} />
             <Route path="/counsellor/edit-lead/:id" element={<EditLead />} />
+            <Route path="/counsellor/leads/:id" element={<ViewLead />} />
             
             {/* Counsellor can view employees in their branch */}
             <Route path="/counsellor/employees" element={<CounsellorEmployeeList />} />

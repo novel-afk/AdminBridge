@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../lib/AuthContext';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 interface Branch {
   id: number;
@@ -215,8 +216,8 @@ const ReceptionistAddLead = () => {
         gpa: formData.gpa ? parseFloat(formData.gpa) : null,
       };
       
-      // Send to API
-      await axios.post('http://localhost:8000/api/leads/', leadData, {
+      // Send to the API
+      await axios.post(`${API_BASE_URL}/leads/`, leadData, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       

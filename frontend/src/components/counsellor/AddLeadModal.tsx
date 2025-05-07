@@ -4,6 +4,7 @@ import { XMarkIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../lib/AuthContext';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 interface Branch {
   id: number;
@@ -226,7 +227,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
       console.log("Submitting lead data:", leadData);
       
       // Send to the API
-      await axios.post('http://localhost:8000/api/leads/', leadData, {
+      await axios.post(`${API_BASE_URL}/leads/`, leadData, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       

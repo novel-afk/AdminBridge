@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { UserPlusIcon, PencilSquareIcon, PhoneIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, PencilSquareIcon, EyeIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../lib/AuthContext';
 import { leadAPI } from '../../lib/api';
 import AddLeadModal from '../../components/counsellor/AddLeadModal';
+import { format } from 'date-fns';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 interface Lead {
   id: number;
@@ -17,13 +19,180 @@ interface Lead {
   created_at: string;
   lead_source: string;
   branch: number;
+  branch_name?: string;
+  interested_degree?: string;
+  language_test: string;
+  language_score?: number | null;
+  notes?: string;
+  referred_by?: string;
+  courses_studied?: string;
+  gpa?: number | null;
+  created_by?: number;
+  assigned_to?: number;
+  assigned_to_name?: string;
+  created_by_name?: string;
 }
+
+const ViewLeadModal = ({ isOpen, onClose, lead }: { isOpen: boolean; onClose: () => void; lead: Lead | null }) => {
+  if (!isOpen || !lead) return null;
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM dd, yyyy h:mm a');
+    } catch (e) {
+      return 'Invalid date';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-800">Lead Details</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          >
+            <XMarkIcon className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="border-b border-gray-200 bg-gray-50 px-6 py-4 mb-6">
+            <h2 className="text-lg font-semibold text-gray-800">
+              {lead.name}
+            </h2>
+            <div className="mt-1 flex items-center">
+              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                lead.lead_source === 'Website' ? 'bg-blue-100 text-blue-800' :
+                lead.lead_source === 'Social Media' ? 'bg-purple-100 text-purple-800' :
+                lead.lead_source === 'Referral' ? 'bg-green-100 text-green-800' :
+                lead.lead_source === 'Walk-in' ? 'bg-yellow-100 text-yellow-800' :
+                lead.lead_source === 'Email' ? 'bg-indigo-100 text-indigo-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {lead.lead_source}
+              </span>
+              <span className="ml-2 text-sm text-gray-500">
+                Added on {formatDate(lead.created_at)}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-md font-medium text-gray-800 mb-3">Personal Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-gray-500 text-sm">Email:</span>
+                  <p className="text-gray-800">{lead.email}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Phone:</span>
+                  <p className="text-gray-800">{lead.phone}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Nationality:</span>
+                  <p className="text-gray-800">{lead.nationality}</p>
+                </div>
+                {lead.referred_by && (
+                  <div>
+                    <span className="text-gray-500 text-sm">Referred By:</span>
+                    <p className="text-gray-800">{lead.referred_by}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-md font-medium text-gray-800 mb-3">Education & Interests</h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-gray-500 text-sm">Interested Country:</span>
+                  <p className="text-gray-800">{lead.interested_country || 'Not specified'}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Interested Degree:</span>
+                  <p className="text-gray-800">{lead.interested_degree || 'Not specified'}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Interested Course:</span>
+                  <p className="text-gray-800">{lead.interested_course || 'Not specified'}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Previous Courses:</span>
+                  <p className="text-gray-800">{lead.courses_studied || 'Not specified'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div>
+              <h3 className="text-md font-medium text-gray-800 mb-3">Academic Qualifications</h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-gray-500 text-sm">Language Test:</span>
+                  <p className="text-gray-800">{lead.language_test}</p>
+                </div>
+                {lead.language_test !== 'None' && (
+                  <div>
+                    <span className="text-gray-500 text-sm">Language Score:</span>
+                    <p className="text-gray-800">{lead.language_score || 'Not provided'}</p>
+                  </div>
+                )}
+                <div>
+                  <span className="text-gray-500 text-sm">GPA:</span>
+                  <p className="text-gray-800">{lead.gpa || 'Not provided'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-md font-medium text-gray-800 mb-3">Branch Information</h3>
+              <div className="space-y-3">
+                <div>
+                  <span className="text-gray-500 text-sm">Branch:</span>
+                  <p className="text-gray-800">{lead.branch_name}</p>
+                </div>
+                <div>
+                  <span className="text-gray-500 text-sm">Lead Source:</span>
+                  <p className="text-gray-800">{lead.lead_source}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {lead.notes && (
+            <div className="mt-6">
+              <h3 className="text-md font-medium text-gray-800 mb-3">Notes</h3>
+              <div className="bg-gray-50 p-4 rounded-md">
+                <p className="text-gray-800 whitespace-pre-line">{lead.notes}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-gray-200 px-6 py-4 flex justify-end">
+          <button
+            onClick={onClose}
+            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CounsellorLeadList = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const { user } = useAuth();
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -40,8 +209,7 @@ const CounsellorLeadList = () => {
         return;
       }
 
-      // Only fetch leads from the counsellor's branch
-      const response = await axios.get('http://localhost:8000/api/leads/', {
+      const response = await axios.get(`${API_BASE_URL}/leads/`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
@@ -69,6 +237,26 @@ const CounsellorLeadList = () => {
     setDataLoaded(false);
     // Refresh the lead list after adding a new lead
     fetchLeads();
+  };
+
+  const handleViewLead = async (id: number) => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        setError('You are not authenticated');
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/leads/${id}/`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      setSelectedLead(response.data);
+      setIsViewModalOpen(true);
+    } catch (err) {
+      console.error('Error fetching lead details:', err);
+      setError('Failed to load lead details');
+    }
   };
 
   if (loading) {
@@ -183,15 +371,14 @@ const CounsellorLeadList = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {lead.lead_source}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                   
-                    <a
-                      href={`tel:${lead.phone}`}
-                      className="text-green-600 hover:text-green-900"
-                      title="Call"
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <button
+                      onClick={() => handleViewLead(lead.id)}
+                      className="text-indigo-600 hover:text-indigo-900 focus:outline-none focus:underline"
+                      title="View Lead Details"
                     >
-                      <PhoneIcon className="w-5 h-5" />
-                    </a>
+                      <EyeIcon className="h-5 w-5" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -205,6 +392,16 @@ const CounsellorLeadList = () => {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddSuccess}
+      />
+
+      {/* View Lead Modal */}
+      <ViewLeadModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedLead(null);
+        }}
+        lead={selectedLead}
       />
     </div>
   );
