@@ -17,6 +17,8 @@ const AddJob = () => {
     branch: '',
     job_type: 'Full-Time',
     is_active: true,
+    location: '',
+    required_experience: '',
   });
   
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -109,6 +111,8 @@ const AddJob = () => {
         branch: parseInt(formData.branch),
         job_type: formData.job_type,
         is_active: formData.is_active,
+        location: formData.location,
+        required_experience: formData.required_experience,
       };
       
       // Send to API
@@ -251,6 +255,36 @@ const AddJob = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                 required
               ></textarea>
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="location" className="block text-gray-700 text-sm font-medium mb-2">
+                Location *
+              </label>
+              <input
+                type="text"
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
+            </div>
+
+            <div className="mb-6">
+              <label htmlFor="required_experience" className="block text-gray-700 text-sm font-medium mb-2">
+                Required Experience *
+              </label>
+              <input
+                type="text"
+                id="required_experience"
+                name="required_experience"
+                value={formData.required_experience}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
+              />
             </div>
 
             <div className="mb-6">

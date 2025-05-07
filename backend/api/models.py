@@ -282,6 +282,8 @@ class Job(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_jobs')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    location = models.CharField(max_length=255, default='Not specified')
+    required_experience = models.CharField(max_length=255, default='Not specified')
     
     def __str__(self):
         return self.title

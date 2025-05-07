@@ -245,7 +245,7 @@ class JobSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'requirements', 
                   'branch', 'branch_name', 'branch_location', 'job_type',
                   'salary_range', 'is_active', 'created_by', 'created_by_name', 
-                  'created_at', 'updated_at']
+                  'created_at', 'updated_at', 'location', 'required_experience']
         read_only_fields = ['created_by']
         
     def get_branch_location(self, obj):

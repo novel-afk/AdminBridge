@@ -50,15 +50,15 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
       
       // Populate form with job data
       setFormData({
-        title: job.title || '',
-        description: job.description || '',
-        requirements: job.requirements || '',
-        job_type: job.job_type || '',
-        location: job.location || '',
-        salary_range: job.salary_range || '',
-        required_experience: job.required_experience || '',
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+        branch: job.branch,
+        job_type: job.job_type,
+        salary_range: job.salary_range,
         is_active: job.is_active,
-        branch: job.branch ? job.branch.toString() : '',
+        location: job.location || '',
+        required_experience: job.required_experience || '',
       });
       
       setIsLoading(false);
@@ -249,20 +249,17 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
       return;
     }
 
-    // Generate a comprehensive description that includes all the additional fields
-    const fullDescription = `${formData.description}\n\n` +
-      `Location: ${formData.location}\n` + 
-      `Required Experience: ${formData.required_experience}`;
-
-    // Create the request payload with only the fields supported by the backend
+    // Create the request payload with all fields supported by the backend
     const payload = {
       title: formData.title,
-      description: fullDescription,
+      description: formData.description,
       requirements: formData.requirements,
       branch: formData.branch,
       job_type: formData.job_type,
       salary_range: formData.salary_range,
       is_active: formData.is_active,
+      location: formData.location,
+      required_experience: formData.required_experience,
     };
     
     try {
