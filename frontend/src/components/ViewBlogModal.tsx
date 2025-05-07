@@ -23,6 +23,7 @@ interface Blog {
   status: 'draft' | 'published';
   slug: string;
   tags: string[];
+  featured_image?: string;
 }
 
 interface ViewBlogModalProps {
@@ -47,10 +48,10 @@ const ViewBlogModal = ({ isOpen, onClose, blog }: ViewBlogModalProps) => {
         
         <div className="mt-4 space-y-6">
           {/* Featured image */}
-          {blog.thumbnail_image && (
-            <div className="w-full">
+          {(blog.featured_image || blog.thumbnail_image) && (
+            <div className="w-full mb-4">
               <img 
-                src={blog.thumbnail_image} 
+                src={blog.featured_image || blog.thumbnail_image} 
                 alt={blog.title} 
                 className="w-full h-56 object-cover rounded-lg" 
               />

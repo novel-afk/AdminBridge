@@ -42,6 +42,8 @@ interface Blog {
   status: 'draft' | 'published';
   slug: string;
   tags: string[];
+  featured_image?: string;
+  is_published: boolean;
 }
 
 interface EditBlogModalProps {
@@ -91,9 +93,9 @@ const EditBlogModal = ({ isOpen, onClose, onSuccess, blog }: EditBlogModalProps)
     if (blog) {
       setTitle(blog.title);
       setContent(blog.content);
-      setIsPublished(blog.status === 'published');
+      setIsPublished(blog.status === 'published' || blog.is_published);
       setBranchId(blog.branch);
-      setExistingImage(blog.thumbnail_image);
+      setExistingImage(blog.featured_image || blog.thumbnail_image);
       setRemoveExistingImage(false);
     }
   }, [blog]);
@@ -121,11 +123,11 @@ const EditBlogModal = ({ isOpen, onClose, onSuccess, blog }: EditBlogModalProps)
     if (blog) {
       setTitle(blog.title);
       setContent(blog.content);
-      setIsPublished(blog.status === 'published');
+      setIsPublished(blog.status === 'published' || blog.is_published);
       setBranchId(blog.branch);
       setFeaturedImage(null);
       setPreviewImage(null);
-      setExistingImage(blog.thumbnail_image);
+      setExistingImage(blog.featured_image || blog.thumbnail_image);
       setRemoveExistingImage(false);
     }
     setError("");

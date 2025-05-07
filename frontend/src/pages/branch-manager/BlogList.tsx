@@ -33,12 +33,15 @@ interface Blog {
   status: 'draft' | 'published';
   slug: string;
   tags: string[];
+  featured_image: string | null;
+  is_published: boolean;
 }
 
 const columns = [
   { key: "select", label: "" },
   { key: "sNo", label: "S.No" },
   { key: "title", label: "Title" },
+  { key: "branch", label: "Branch" },
   { key: "author", label: "Author" },
   { key: "status", label: "Status" },
   { key: "created", label: "Created At" },
@@ -186,6 +189,7 @@ const BranchManagerBlogList = () => {
         '',
         blog.id,
         blog.title,
+        blog.branch_name,
         blog.author_name,
         blog.status,
         new Date(blog.created_at).toLocaleString(),
@@ -303,6 +307,31 @@ const BranchManagerBlogList = () => {
     setIsEditModalOpen(false);
   };
 
+  // Helper function to get image URL
+  const getImageUrl = (blog) => {
+    if (blog.featured_image) return blog.featured_image;
+    const imageId = (blog.id % 10) + 1;
+    return `https://source.unsplash.com/collection/1346951/800x450?sig=${imageId}`;
+  };
+
+  // Helper to get status string
+  const getStatus = (blog) => {
+    if (typeof blog.is_published === 'boolean') {
+      return blog.is_published ? 'Published' : 'Draft';
+    }
+    if (blog.status) {
+      return blog.status.charAt(0).toUpperCase() + blog.status.slice(1);
+    }
+    return 'Unknown';
+  };
+
+  // Helper to truncate text
+  const truncateText = (text, maxLength) => {
+    if (!text) return '';
+    const strippedText = text.replace(/<[^>]*>?/gm, '');
+    return strippedText.length > maxLength ? strippedText.slice(0, maxLength) + '...' : strippedText;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -314,9 +343,9 @@ const BranchManagerBlogList = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Branch Blogs</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Blogs</h1>
         <div className="flex space-x-2">
-          <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => setIsAddModalOpen(true)} className="bg-[#153147] hover:bg-[#0c1f2e]">
             <PlusIcon className="h-5 w-5 mr-2" />
             Add Blog
           </Button>
@@ -337,7 +366,6 @@ const BranchManagerBlogList = () => {
               />
             </div>
           </div>
-          
           <div className="flex space-x-2">
             <Button 
               onClick={handleExport}
@@ -348,7 +376,6 @@ const BranchManagerBlogList = () => {
               <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
               Export
             </Button>
-            
             <Button
               onClick={handleDeleteSelected}
               variant="outline"
@@ -360,124 +387,130 @@ const BranchManagerBlogList = () => {
             </Button>
           </div>
         </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left">
-                  <Checkbox
-                    checked={currentBlogs.length > 0 && selectedBlogs.length === currentBlogs.length}
-                    onCheckedChange={handleSelectAll}
-                  />
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  S.No
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Author
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Updated At
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentBlogs.length > 0 ? (
-                currentBlogs.map((blog, index) => (
-                  <tr key={blog.id} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
-                    <td className="px-6 py-4 whitespace-nowrap">
+        {/* Select All Checkbox */}
+        <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center">
+          <Checkbox
+            checked={currentBlogs.length > 0 && selectedBlogs.length === currentBlogs.length}
+            onCheckedChange={handleSelectAll}
+            className="mr-2"
+          />
+          <span className="text-sm text-gray-600">
+            {selectedBlogs.length > 0 ? 
+              `${selectedBlogs.length} blog${selectedBlogs.length > 1 ? 's' : ''} selected` : 
+              'Select all blogs on this page'
+            }
+          </span>
+        </div>
+        {/* Blog Cards Grid View */}
+        <div className="p-6">
+          {currentBlogs.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {currentBlogs.map((blog) => (
+                <div 
+                  key={blog.id}
+                  className={`rounded-lg border overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 ${
+                    selectedBlogs.includes(blog.id) ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+                  }`}
+                >
+                  {/* Blog Image */}
+                  <div className="h-48 relative">
+                    <img 
+                      src={getImageUrl(blog)} 
+                      alt={blog.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2">
                       <Checkbox
                         checked={selectedBlogs.includes(blog.id)}
                         onCheckedChange={() => handleSelectBlog(blog.id)}
+                        className="bg-white/80 text-blue-500 shadow-sm border-gray-300"
                       />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {startIndex + index + 1}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {blog.title}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {blog.author_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    </div>
+                    <div className="absolute top-2 right-2">
                       <Badge 
                         className={`${
-                          blog.status === 'published' 
+                          getStatus(blog) === 'Published' 
                             ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                             : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        } px-2 py-1 text-xs`}
+                        } px-2 py-1 text-xs font-semibold`}
                       >
-                        {blog.status ? blog.status.charAt(0).toUpperCase() + blog.status.slice(1) : 'Unknown'}
+                        {getStatus(blog)}
                       </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(blog.created_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(blog.updated_at).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <Button 
-                          onClick={() => handleView(blog)} 
-                          size="sm"
-                          variant="ghost"
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
-                        >
-                          <EyeIcon className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button 
-                          onClick={() => handleEdit(blog)} 
-                          size="sm"
-                          variant="ghost"
-                          className="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                        </Button>
-                        
-                        <Button 
-                          onClick={() => handleDeleteSingle(blog)} 
-                          size="sm"
-                          variant="ghost"
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </Button>
+                    </div>
+                  </div>
+                  {/* Blog Content */}
+                  <div className="p-4">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-2 line-clamp-1">{blog.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {truncateText(blog.content, 100)}
+                    </p>
+                    <div className="space-y-2 text-sm text-gray-500 mb-4">
+                      <div className="flex items-center">
+                        <span>{blog.author_name}</span>
                       </div>
-                    </td>
-                  </tr>
-                ))
+                      <div className="flex items-center">
+                        <span>{blog.branch_name}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span>{new Date(blog.created_at).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-2 pt-2 border-t border-gray-100">
+                      <Button 
+                        onClick={() => handleView(blog)} 
+                        size="sm"
+                        variant="ghost"
+                        className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                      >
+                        <EyeIcon className="h-4 w-4 mr-1" /> View
+                      </Button>
+                      <Button 
+                        onClick={() => handleEdit(blog)} 
+                        size="sm"
+                        variant="ghost"
+                        className="text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50"
+                      >
+                        <PencilIcon className="h-4 w-4 mr-1" /> Edit
+                      </Button>
+                      <Button 
+                        onClick={() => handleDeleteSingle(blog)} 
+                        size="sm"
+                        variant="ghost"
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                      >
+                        <TrashIcon className="h-4 w-4 mr-1" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              {error ? (
+                <div className="text-red-500">
+                  <div className="text-4xl mb-4">⚠️</div>
+                  <p>{error}</p>
+                </div>
+              ) : blogs.length === 0 ? (
+                <div>
+                  <div className="text-4xl mb-4">📝</div>
+                  <p className="text-gray-500 mb-4">No blogs found. Create your first blog!</p>
+                  <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                    <PlusIcon className="h-5 w-5 mr-2" />
+                    Add Blog
+                  </Button>
+                </div>
               ) : (
-                <tr>
-                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                    {error ? 
-                      <div className="text-red-500">{error}</div> :
-                      blogs.length === 0 ? 
-                        user?.branch ? "No blogs found in your branch." : "No blogs available at this time." : 
-                        "No blogs match your search criteria."
-                    }
-                  </td>
-                </tr>
+                <div>
+                  <div className="text-4xl mb-4">🔍</div>
+                  <p className="text-gray-500">No blogs match your search criteria.</p>
+                </div>
               )}
-            </tbody>
-          </table>
+            </div>
+          )}
         </div>
-        
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-between items-center border-t border-gray-200 px-4 py-3 sm:px-6">
@@ -511,38 +544,31 @@ const BranchManagerBlogList = () => {
           </div>
         )}
       </div>
-
-      {/* Confirmation Modal */}
+      {/* Modals */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         title={confirmationModal.title}
         message={confirmationModal.message}
         confirmText={confirmationModal.confirmText}
-        onConfirm={confirmationModal.onConfirm}
-        onCancel={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
         type={confirmationModal.type}
+        onConfirm={confirmationModal.onConfirm}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
       />
-      
-      {/* Add Blog Modal */}
       <AddBlogModal
         isOpen={isAddModalOpen}
-        onSuccess={handleAddSuccess}
         onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
       />
-      
-      {/* Edit Blog Modal */}
       <EditBlogModal
         isOpen={isEditModalOpen}
-        blog={selectedBlog}
-        onSuccess={handleEditSuccess}
         onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleEditSuccess}
+        blog={selectedBlog}
       />
-      
-      {/* View Blog Modal */}
       <ViewBlogModal
         isOpen={isViewModalOpen}
-        blog={selectedBlog}
         onClose={() => setIsViewModalOpen(false)}
+        blog={selectedBlog}
       />
     </div>
   );
