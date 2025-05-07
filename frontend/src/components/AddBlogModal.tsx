@@ -67,6 +67,13 @@ const AddBlogModal = ({ isOpen, onClose, onSuccess }: AddBlogModalProps) => {
     }
   }, [user, isOpen]);
   
+  // After the SuperAdmin fetchBranches useEffect, add:
+  useEffect(() => {
+    if (user?.role === 'BranchManager' && user.branch) {
+      setBranchId(user.branch);
+    }
+  }, [user, isOpen]);
+  
   // Handle file change
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -258,6 +265,20 @@ const AddBlogModal = ({ isOpen, onClose, onSuccess }: AddBlogModalProps) => {
                     </SelectGroup>
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            
+            {/* Branch field for BranchManager */}
+            {user?.role === 'BranchManager' && (
+              <div className="space-y-2">
+                <Label htmlFor="branch">Branch</Label>
+                <Input
+                  id="branch"
+                  value={user.branch_name || user.branch || ''}
+                  readOnly
+                  disabled
+                  className="bg-gray-100"
+                />
               </div>
             )}
             

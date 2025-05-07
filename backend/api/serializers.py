@@ -10,10 +10,22 @@ from datetime import date
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
+    branch = serializers.SerializerMethodField()
+    branch_name = serializers.SerializerMethodField()
     
+    def get_branch(self, obj):
+        if obj.role == 'BranchManager' and hasattr(obj, 'employee_profile') and obj.employee_profile.branch:
+            return obj.employee_profile.branch.id
+        return None
+
+    def get_branch_name(self, obj):
+        if obj.role == 'BranchManager' and hasattr(obj, 'employee_profile') and obj.employee_profile.branch:
+            return obj.employee_profile.branch.name
+        return None
+
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'role', 'password']
+        fields = ['id', 'email', 'first_name', 'last_name', 'role', 'password', 'branch', 'branch_name']
         extra_kwargs = {
             'password': {'write_only': True},
             'email': {'validators': []}
