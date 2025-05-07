@@ -31,13 +31,13 @@
 module.exports = {
   // REPLACE WITH YOUR ACTUAL CREDENTIALS
   EMAIL_USER: 'novel.koirala@gmail.com',  // Enter your Gmail address here
-  EMAIL_PASSWORD: 'fsewtfrvcgusjzsp',  // Enter your App Password here (no spaces)
+  EMAIL_PASSWORD: 'atvwlbjjzcynmixf',  // Updated App Password (no spaces)
   
   // Application URLs - Update with your actual URL
   FRONTEND_URL: 'http://localhost:5173',
   
   // Recipient for test email - Already set to the requested address
-  TEST_RECIPIENT: 'damdilip2@gmail.com',
+  TEST_RECIPIENT: 'dilipshrestha503@gmail.com',
   
   // Email sending configuration (usually don't need to change)
   RETRY_INTERVAL: 5,  // Minutes between retry attempts
