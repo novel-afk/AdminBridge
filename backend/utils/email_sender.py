@@ -19,59 +19,32 @@ def send_employee_credentials_email(user_data, employee_data=None):
         bool: True if email was sent successfully, False otherwise
     """
     try:
-        # Create the email data object
-        email_data = {
-            'email': user_data.get('email'),
-            'firstName': user_data.get('first_name'),
-            'lastName': user_data.get('last_name'),
-            'role': user_data.get('role')
-        }
-        
-        # Add branch information if available
-        if employee_data and 'branch' in employee_data:
-            from api.models import Branch
-            try:
-                branch = Branch.objects.get(id=employee_data.get('branch'))
-                email_data['branch'] = branch.name
-            except Branch.DoesNotExist:
-                logger.warning(f"Branch with ID {employee_data.get('branch')} not found")
-        
-        # Convert the data to JSON string
-        email_json = json.dumps(email_data)
-        
-        # Get the path to the Node.js script
+        email = user_data.get('email')
+        login_url = 'https://yourwebsite.com/login'  # TODO: Replace with your actual login URL
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        send_email_script = os.path.join(script_dir, 'sendEmail.js')
-        
-        # Make sure the script is executable
-        try:
-            os.chmod(send_email_script, 0o755)
-        except Exception as e:
-            logger.warning(f"Could not set executable permissions on {send_email_script}: {str(e)}")
-        
+        project_root = os.path.abspath(os.path.join(script_dir, '../../'))
+        send_email_script = os.path.join(project_root, 'send_employee_email.js')
+
         # Log the email data and command
-        logger.info(f"Sending email to {email_data['email']} with role {email_data['role']}")
-        logger.info(f"Email script path: {send_email_script}")
-        
-        # Run the Node.js script and wait for it to complete
+        logger.info(f"Sending employee credentials email to {email} using {send_email_script}")
+
         process = subprocess.run(
-            ['node', send_email_script, email_json],
+            ['node', send_email_script, email, login_url],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
-        
-        # Log the output
+
         if process.stdout:
             logger.info(f"Email script stdout: {process.stdout}")
         if process.stderr:
             logger.warning(f"Email script stderr: {process.stderr}")
-            
+
         if process.returncode != 0:
             logger.error(f"Email script exited with code {process.returncode}")
             return False
-            
-        logger.info(f"Successfully queued email to {email_data['email']}")
+
+        logger.info(f"Successfully queued email to {email}")
         return True
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")
