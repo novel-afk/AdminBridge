@@ -96,7 +96,6 @@ const ViewLeadModal = ({ isOpen, onClose, lead }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <dl>
                 <DetailsItem label="Created By" value={lead.created_by_name} />
-                <DetailsItem label="Assigned To" value={lead.assigned_to_name} />
                 <DetailsItem label="Created At" value={formatDate(lead.created_at)} />
               </dl>
             </div>

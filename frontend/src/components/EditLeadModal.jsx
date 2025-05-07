@@ -39,7 +39,6 @@ const EditLeadModal = ({ isOpen, onClose, onSuccess, lead }) => {
     courses_studied: '',
     gpa: '',
     notes: '',
-    assigned_to: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -66,7 +65,6 @@ const EditLeadModal = ({ isOpen, onClose, onSuccess, lead }) => {
         courses_studied: lead.courses_studied || '',
         gpa: lead.gpa || '',
         notes: lead.notes || '',
-        assigned_to: lead.assigned_to || '',
       });
       
       // Reset to first step when opening the modal
@@ -349,19 +347,6 @@ const EditLeadModal = ({ isOpen, onClose, onSuccess, lead }) => {
               onChange={(e) => setFormData({ ...formData, referred_by: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
             />
-          </FormField>
-
-          <FormField label="Assigned To" error={errors.assigned_to}>
-            <select
-              value={formData.assigned_to}
-              onChange={(e) => setFormData({ ...formData, assigned_to: e.target.value })}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
-            >
-              <option value="">Unassigned</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>{user.first_name} {user.last_name} ({user.role})</option>
-              ))}
-            </select>
           </FormField>
         </div>
         
