@@ -375,11 +375,11 @@ const EmployeeList = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 ">
     
 
       {/* Page title and controls */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div >
         <div className="flex-none pb-6">
           <h1 className="text-2xl font-bold text-gray-800">Employees</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your staff information</p>
@@ -391,7 +391,7 @@ const EmployeeList = () => {
               disabled={refreshing}
             >
               <PlusIcon className="h-5 w-5" />
-              Add
+              Add Employee
             </Button>
 
             <div className="flex items-center gap-4">
@@ -467,94 +467,117 @@ const EmployeeList = () => {
         {/* Employees table */}
         <div className={`bg-white shadow overflow-hidden rounded-lg mb-6 ${getContainerClass()}`}>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+            <table className="min-w-full border-collapse">
               <thead className="bg-[#153147]">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
+                  <th className="px-2 py-4 text-left text-xs font-medium text-white whitespace-nowrap">
                     <Checkbox
-                      checked={selectedEmployees.length === filteredEmployees.length && filteredEmployees.length > 0}
+                      checked={selectedEmployees.length === paginatedEmployees.length && paginatedEmployees.length > 0}
                       onCheckedChange={handleSelectAll}
+                      className="ml-2"
                     />
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    S.No
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Nationality
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">S.No</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Name</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Role</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Gender</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Nationality</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Phone Number</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Email</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Emergency Contact</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Salary</th>
+                  <th className="px-3 py-4 text-left text-xs font-medium text-white whitespace-nowrap">Branch</th>
+                  <th className="px-3 py-4 text-center text-xs font-medium text-white whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
-              <tbody className={`bg-white divide-y divide-gray-200 ${getTableHeight()}`}>
+              <tbody className="divide-y divide-gray-200">
                 {paginatedEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={12} className="px-6 py-4 text-center text-gray-500">
                       No employees found.
                     </td>
                   </tr>
                 ) : (
                   paginatedEmployees.map((employee, index) => (
                     <tr key={employee.id} className={selectedEmployees.includes(employee.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-2 py-4 whitespace-nowrap text-sm text-gray-500">
                         <Checkbox 
                           checked={selectedEmployees.includes(employee.id)} 
                           onCheckedChange={() => handleSelectEmployee(employee.id)}
+                          className="ml-2"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                         {startIndex + index + 1}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {employee.name}
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{employee.name}</div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <Badge className="capitalize">{employee.user.role.toLowerCase()}</Badge>
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          employee.user.role === 'SuperAdmin' ? 'bg-purple-100 text-purple-800' :
+                          employee.user.role === 'BranchManager' ? 'bg-blue-100 text-blue-800' :
+                          employee.user.role === 'Counsellor' ? 'bg-green-100 text-green-800' :
+                          employee.user.role === 'Receptionist' ? 'bg-amber-100 text-amber-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {employee.user.role}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div>
-                          {employee.email && <div><span className="font-medium">Email:</span> {employee.email}</div>}
-                          {employee.phone && <div><span className="font-medium">Phone:</span> {employee.phone}</div>}
-                        </div>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.gender || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
                         {employee.nationality || '-'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <Button 
-                          onClick={() => handleView(employee)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
-                        >
-                          <EyeIcon className="h-4 w-4 mr-1" /> View
-                        </Button>
-                        <Button 
-                          onClick={() => handleEdit(employee)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
-                        >
-                          <PencilIcon className="h-4 w-4 mr-1" /> Edit
-                        </Button>
-                        <Button 
-                          onClick={() => handleDeleteSingle(employee)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-red-600"
-                        >
-                          <TrashIcon className="h-4 w-4 mr-1" /> Delete
-                        </Button>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.contact_number || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {employee.user.email || '-'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.emergency_contact || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.salary 
+                          ? typeof employee.salary === 'number' 
+                            ? `$${employee.salary.toFixed(2)}` 
+                            : `$${employee.salary}`
+                          : '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {employee.branch_name || '-'}
+                      </td>
+                      <td className="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-center space-x-2">
+                          <Button 
+                            onClick={() => handleView(employee)} 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs px-2 py-1 text-gray-600 hover:text-blue-700"
+                          >
+                            <EyeIcon className="h-4 w-4 mr-1" /> View
+                          </Button>
+                          <Button 
+                            onClick={() => handleEdit(employee)} 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs px-2 py-1 text-gray-600 hover:text-indigo-700"
+                          >
+                            <PencilIcon className="h-4 w-4 mr-1" /> Edit
+                          </Button>
+                          <Button 
+                            onClick={() => handleDeleteSingle(employee)} 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-xs px-2 py-1 text-gray-600 hover:text-red-700"
+                          >
+                            <TrashIcon className="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

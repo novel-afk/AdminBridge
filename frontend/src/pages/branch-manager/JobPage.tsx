@@ -319,7 +319,6 @@ export default function JobPage() {
           <h1 className="text-2xl font-bold text-gray-800">Jobs</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your job listings</p>
         </div>
-        
         <div className="flex-1 flex justify-center items-center">
           <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
@@ -333,14 +332,10 @@ export default function JobPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-     
-
-      {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex-none pb-6">
           <h1 className="text-2xl font-bold text-gray-800">Jobs</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your job listings</p>
-
           <div className="flex justify-between items-center mt-8">
             <Button 
               onClick={() => setIsAddModalOpen(true)} 
@@ -350,7 +345,6 @@ export default function JobPage() {
               <PlusIcon className="h-5 w-5" />
               Add Job
             </Button>
-
             <div className="flex items-center gap-4">
               <Button
                 variant="outline"
@@ -406,8 +400,6 @@ export default function JobPage() {
             </div>
           </div>
         </div>
-
-        {/* Error message */}
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -422,143 +414,164 @@ export default function JobPage() {
             </button>
           </div>
         )}
-
-        {/* Jobs table */}
-        <div className="bg-[#153147] shadow overflow-hidden rounded-lg mb-6">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-[#153147]">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    <Checkbox
-                      checked={selectedJobs.length === filteredJobs.length && filteredJobs.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Title</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Location</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Type</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Salary</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Status</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Created</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredJobs.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-4 whitespace-nowrap text-center text-gray-500">
-                      No jobs found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredJobs.map((job) => (
-                    <tr key={job.id} className={selectedJobs.includes(job.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Checkbox 
-                          checked={selectedJobs.includes(job.id)} 
-                          onCheckedChange={() => handleSelectJob(job.id)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{job.title}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          <div className="flex items-center">
-                            <MapPinIcon className="h-4 w-4 mr-1 text-gray-400" /> 
-                            {job.branch_location || job.branch_name || 'Unknown'}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">
-                          <div className="flex items-center">
-                            <BriefcaseIcon className="h-4 w-4 mr-1 text-gray-400" /> 
-                            {job.job_type || 'Not specified'}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {job.salary_range || 'Not specified'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getJobStatus(job.is_active)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(job.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <Button 
-                          onClick={() => handleView(job)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
-                        >
-                          <EyeIcon className="h-4 w-4 mr-1" /> View
-                        </Button>
-                        <Button 
-                          onClick={() => handleEdit(job)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
-                        >
-                          <PencilIcon className="h-4 w-4 mr-1" /> Edit
-                        </Button>
-                        <Button 
-                          onClick={() => handleDeleteSingle(job)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-red-600"
-                        >
-                          <TrashIcon className="h-4 w-4 mr-1" /> Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+        {/* Card grid layout for jobs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-8">
+          {filteredJobs.length === 0 ? (
+            <div className="col-span-3 bg-white rounded-lg border border-gray-200 flex items-center justify-center p-12">
+              <div className="text-center max-w-md">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <p className="text-gray-600 mb-4 text-lg">No jobs found</p>
+                <p className="text-gray-500 mb-6">Start by adding your first job listing</p>
+                <Button 
+                  onClick={() => setIsAddModalOpen(true)} 
+                  className="bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
+                >
+                  Add Your First Job
+                </Button>
+              </div>
+            </div>
+          ) : (
+            filteredJobs.map((job) => (
+              <div 
+                key={job.id}
+                className="group relative bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_8px_16px_rgba(30,27,75,0.12)] hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 border border-gray-100"
+              >
+                {/* Checkbox for selection */}
+                <div className="absolute top-3 left-3 z-10">
+                  <Checkbox
+                    checked={selectedJobs.includes(job.id)}
+                    onCheckedChange={() => handleSelectJob(job.id)}
+                    className="data-[state=checked]:bg-[#1e1b4b] data-[state=checked]:border-[#1e1b4b]"
+                    aria-label={`Select ${job.title}`}
+                  />
+                </div>
+                {/* Status Indicator - Top */}
+                <div 
+                  className={`absolute top-0 left-0 w-full h-1 ${
+                    job.is_active 
+                      ? 'bg-gradient-to-r from-[#1e1b4b]/60 via-[#1e1b4b] to-[#1e1b4b]/60'
+                      : 'bg-gradient-to-r from-red-400/80 via-red-500 to-red-400/80'
+                  }`}
+                />
+                {/* Status Indicator - Left Side */}
+                <div 
+                  className={`absolute top-0 left-0 w-1 h-full ${
+                    job.is_active 
+                      ? 'bg-gradient-to-b from-[#1e1b4b]/60 via-[#1e1b4b] to-[#1e1b4b]/60'
+                      : 'bg-gradient-to-b from-red-400/80 via-red-500 to-red-400/80'
+                  }`}
+                />
+                <div className="p-5 pl-6">
+                  {/* Header */}
+                  <div className="flex justify-between items-start">
+                    <div className="pl-7">
+                      <h3 className="text-base font-semibold text-gray-900 group-hover:text-[#1e1b4b] transition-colors line-clamp-1">
+                        {job.title}
+                      </h3>
+                      <Badge 
+                        variant="outline" 
+                        className={`mt-1.5 text-xs ${
+                          job.is_active
+                            ? 'bg-[#1e1b4b]/5 text-[#1e1b4b] border-[#1e1b4b]/20'
+                            : 'bg-red-50 text-red-700 border-red-200'
+                        }`}
+                      >
+                        {job.is_active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-[#1e1b4b] hover:text-[#1e1b4b] hover:bg-[#1e1b4b]/5 rounded-lg"
+                        onClick={() => handleView(job)}
+                        title="View Details"
+                      >
+                        <EyeIcon className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-[#1e1b4b] hover:text-[#1e1b4b] hover:bg-[#1e1b4b]/5 rounded-lg"
+                        onClick={() => handleEdit(job)}
+                        title="Edit Job"
+                      >
+                        <PencilIcon className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg"
+                        onClick={() => handleDeleteSingle(job)}
+                        title="Delete Job"
+                      >
+                        <TrashIcon className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                  {/* Branch and Location Info */}
+                  <div className="mt-4 pl-7 space-y-2">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#1e1b4b]/5 flex items-center justify-center">
+                        <BriefcaseIcon className="h-3.5 w-3.5 text-[#1e1b4b]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{job.branch_name}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{job.job_type}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-[#1e1b4b]/5 flex items-center justify-center">
+                        <MapPinIcon className="h-3.5 w-3.5 text-[#1e1b4b]" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm text-gray-500 truncate">{job.branch_location}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* Selection overlay */}
+                {selectedJobs.includes(job.id) && (
+                  <div className="absolute inset-0 bg-[#1e1b4b]/5 pointer-events-none" />
                 )}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            ))
+          )}
         </div>
+        {isAddModalOpen && (
+          <AddJobModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onSuccess={handleAddSuccess}
+          />
+        )}
+        {isEditModalOpen && selectedJob && (
+          <EditJobModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSuccess={handleEditSuccess}
+            job={selectedJob}
+          />
+        )}
+        {isViewModalOpen && selectedJob && (
+          <ViewJobModal
+            isOpen={isViewModalOpen}
+            onClose={() => setIsViewModalOpen(false)}
+            job={selectedJob}
+          />
+        )}
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          confirmText={confirmationModal.confirmText}
+        />
       </div>
-
-      {/* Modals */}
-      {isAddModalOpen && (
-        <AddJobModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={handleAddSuccess}
-        />
-      )}
-
-      {isEditModalOpen && selectedJob && (
-        <EditJobModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          onSuccess={handleEditSuccess}
-          job={selectedJob}
-        />
-      )}
-
-      {isViewModalOpen && selectedJob && (
-        <ViewJobModal
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          job={selectedJob}
-        />
-      )}
-
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={confirmationModal.isOpen}
-        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={confirmationModal.onConfirm}
-        title={confirmationModal.title}
-        message={confirmationModal.message}
-        type={confirmationModal.type}
-        confirmText={confirmationModal.confirmText}
-      />
     </div>
   )
 } 
