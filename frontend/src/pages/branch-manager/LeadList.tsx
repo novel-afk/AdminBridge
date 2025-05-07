@@ -6,6 +6,7 @@ import {
   MagnifyingGlassIcon, 
   PlusIcon, 
   ArrowDownTrayIcon, 
+  TrashIcon,
   EyeIcon, 
   PencilIcon 
 } from '@heroicons/react/24/outline';
@@ -54,8 +55,6 @@ const columns = [
   { key: "interestedCourse", label: "Course" },
   { key: "language", label: "Language Test" },
   { key: "source", label: "Lead Source" },
-  { key: "createdBy", label: "Created By" },
-  { key: "assignedTo", label: "Assigned To" },
   { key: "createdAt", label: "Created At" },
   { key: "actions", label: "Actions" },
 ];
@@ -325,91 +324,129 @@ const LeadList = () => {
     }
   };
 
+  const handleDeleteSingle = (lead: Lead) => {
+    showConfirmation({
+      title: 'Delete Lead',
+      message: `Are you sure you want to delete ${lead.name}? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        const accessToken = localStorage.getItem('access_token');
+        try {
+          await axios.delete(`${API_BASE_URL}/leads/${lead.id}/`, {
+            headers: { Authorization: `Bearer ${accessToken}` }
+          });
+          
+          // Refresh data after deletion
+          fetchLeads();
+          
+        } catch (err) {
+          console.error('Error deleting lead:', err);
+          setError('Failed to delete lead. Please try again.');
+        }
+      },
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    showConfirmation({
+      title: 'Delete Selected Leads',
+      message: `Are you sure you want to delete ${selectedLeads.length} selected lead(s)? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        const accessToken = localStorage.getItem('access_token');
+        try {
+          // Delete each selected lead
+          for (const id of selectedLeads) {
+            await axios.delete(`${API_BASE_URL}/leads/${id}/`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+          }
+          
+          // Clear selection and refresh data
+          setSelectedLeads([]);
+          fetchLeads();
+          
+        } catch (err) {
+          console.error('Error deleting leads:', err);
+          setError('Failed to delete leads. Please try again.');
+        }
+      },
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <div className="flex-none pb-6">
+        <div className="flex-none">
           <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
         </div>
-        
-        <div className="flex-1 flex justify-center items-center">
-          <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
-            <div className="text-xl text-gray-600">Loading leads...</div>
-            <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  return (
-    <div className="min-h-screen bg-gray-100">
-     
+        <div className="flex justify-between items-center mt-8 pb-6">
+          <Button 
+            onClick={() => setIsAddModalOpen(true)} 
+            className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+            disabled={refreshing}
+          >
+            <PlusIcon className="h-5 w-5" />
+            Add
+          </Button>
 
-      {/* Page title and controls */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex-none pb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
-
-          <div className="flex justify-between items-center mt-8">
-            <Button 
-              onClick={() => setIsAddModalOpen(true)} 
-              className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => fetchLeads(true)}
               disabled={refreshing}
+              className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
             >
-              <PlusIcon className="h-5 w-5" />
-              Add
+              {refreshing ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Refresh
+                </>
+              )}
             </Button>
-
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => fetchLeads(true)}
+            <Button 
+              variant="outline" 
+              onClick={handleExport} 
+              disabled={filteredLeads.length === 0 || refreshing}
+              className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+            >
+              <ArrowDownTrayIcon className="h-5 w-5" />
+              Export
+            </Button>
+            <Button 
+              onClick={handleDeleteSelected} 
+              disabled={selectedLeads.length === 0 || refreshing}
+              className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
+              variant="ghost"
+            >
+              <TrashIcon className="h-5 w-5" />
+              Delete
+            </Button>
+            <div className="relative ml-2">
+              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="Search leads..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
                 disabled={refreshing}
-                className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-              >
-                {refreshing ? (
-                  <>
-                    <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
-                    Refreshing...
-                  </>
-                ) : (
-                  <>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh
-                  </>
-                )}
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleExport} 
-                disabled={filteredLeads.length === 0 || refreshing}
-                className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-              >
-                <ArrowDownTrayIcon className="h-5 w-5" />
-                Export
-              </Button>
-              <div className="relative ml-2">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-                <Input
-                  type="text"
-                  placeholder="Search leads..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
-                  disabled={refreshing}
-                />
-              </div>
+              />
             </div>
           </div>
         </div>
 
-        {/* Error message if any */}
         {error && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
@@ -425,221 +462,650 @@ const LeadList = () => {
           </div>
         )}
 
-        {/* Leads table */}
-        <div className={`bg-white shadow overflow-hidden rounded-lg mb-6 ${getContainerClass()}`}>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-[#153147]">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <Checkbox
-                      checked={selectedLeads.length === filteredLeads.length && filteredLeads.length > 0}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    S.No
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Nationality
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Contact Info
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Country
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Source
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Created At
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className={`bg-white divide-y divide-gray-200 ${getTableHeight()}`}>
-                {paginatedLeads.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-4 text-center text-gray-500">
-                      No leads found.
-                    </td>
-                  </tr>
-                ) : (
-                  paginatedLeads.map((lead, index) => (
-                    <tr key={lead.id} className={selectedLeads.includes(lead.id) ? 'bg-indigo-50' : 'hover:bg-gray-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Checkbox 
-                          checked={selectedLeads.includes(lead.id)} 
-                          onCheckedChange={() => handleSelectLead(lead.id)}
-                        />
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {startIndex + index + 1}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {lead.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lead.nationality || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div>
-                          {lead.email && <div><span className="font-medium">Email:</span> {lead.email}</div>}
-                          {lead.phone && <div><span className="font-medium">Phone:</span> {lead.phone}</div>}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {lead.interested_country || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <Badge variant="outline" className="capitalize">
-                          {lead.lead_source || 'Unknown'}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(lead.created_at)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <Button 
-                          onClick={() => handleView(lead)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
+        <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
+          {loading ? (
+            <div className="flex flex-col h-full">
+              <div className="flex-1 flex justify-center items-center">
+                <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+                  <div className="text-xl text-gray-600">Loading leads...</div>
+                  <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+                </div>
+              </div>
+            </div>
+          ) : (!loading && leads.length === 0) ? (
+            <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+              <div className="text-center p-8 max-w-md">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <p className="text-gray-600 mb-4 text-lg">No leads found.</p>
+                <p className="text-gray-500 mb-6">Start by adding your first lead to the system.</p>
+                <Button 
+                  onClick={() => setIsAddModalOpen(true)} 
+                  className="bg-[#153147] hover:bg-[#1e1b4b]/90"
+                >
+                  Add Your First Lead
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative h-full bg-white rounded-lg border border-gray-200 overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 flex flex-col">
+              <div className={`relative flex-1 overflow-hidden ${getTableHeight()}`}>
+                <div className="absolute inset-0 overflow-auto">
+                  <div className="inline-block min-w-full max-w-full">
+                    <table className="w-full border-collapse table-auto">
+                      <thead className="bg-[#153147] sticky top-0 z-10 shadow-sm">
+                        <tr>
+                          {columns.map((column) => (
+                            <th
+                              key={column.key}
+                              scope="col"
+                              className={`px-6 py-4 text-left text-sm font-medium text-white first:pl-4 last:pr-4 
+                              ${column.key === "select" ? "min-w-[40px] w-10" : 
+                                column.key === "sNo" ? "min-w-[60px] w-16" :
+                                column.key === "name" ? "min-w-[160px]" :
+                                column.key === "nationality" ? "min-w-[120px]" :
+                                column.key === "contact" ? "min-w-[180px]" :
+                                column.key === "interestedCountry" ? "min-w-[120px]" :
+                                column.key === "interestedDegree" ? "min-w-[120px]" :
+                                column.key === "interestedCourse" ? "min-w-[120px]" :
+                                column.key === "language" ? "min-w-[130px]" :
+                                column.key === "source" ? "min-w-[120px]" :
+                                column.key === "createdAt" ? "min-w-[150px]" :
+                                column.key === "actions" ? "min-w-[100px] w-24" : ""
+                              }`}
+                              style={{ position: 'sticky', top: 0 }}
+                            >
+                              {column.key === "select" ? (
+                                <Checkbox
+                                  checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
+                                  onCheckedChange={handleSelectAll}
+                                  aria-label="Select all"
+                                />
+                              ) : (
+                                column.label
+                              )}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody className={`divide-y divide-gray-100`}>
+                        {paginatedLeads.map((lead, index) => (
+                          <tr 
+                            key={lead.id} 
+                            className="hover:bg-gray-50 transition-all duration-200 ease-in-out group relative even:bg-gray-50/30"
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap first:pl-4 group-hover:bg-gray-50 transition-colors duration-200">
+                              <Checkbox
+                                checked={selectedLeads.includes(lead.id)}
+                                onCheckedChange={() => handleSelectLead(lead.id)}
+                                aria-label={`Select ${lead.name}`}
+                              />
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                              {startIndex + index + 1}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-900 font-medium group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[200px]" title={lead.name}>
+                              {lead.name}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[150px]" title={lead.nationality}>
+                              {lead.nationality || '-'}
+                            </td>
+                            <td className="px-6 py-4 text-sm group-hover:bg-gray-50 transition-colors duration-200">
+                              <div className="truncate max-w-[180px]" title={lead.email}>
+                                <a href={`mailto:${lead.email}`} className="text-blue-600 hover:text-blue-800 transition-colors truncate inline-block max-w-full">
+                                  {lead.email}
+                                </a>
+                              </div>
+                              <div className="text-gray-600">{lead.phone}</div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                              {lead.interested_country ? (
+                                <Badge className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                  {lead.interested_country}
+                                </Badge>
+                              ) : "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                              {lead.interested_degree ? (
+                                <Badge className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                                  {lead.interested_degree}
+                                </Badge>
+                              ) : "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                              {lead.interested_course ? (
+                                <div className="truncate max-w-[150px]" title={lead.interested_course}>
+                                  {lead.interested_course}
+                                </div>
+                              ) : "-"}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                              <div>{lead.language_test || "None"}</div>
+                              {lead.language_score && (
+                                <div className="text-sm font-medium">Score: {lead.language_score}</div>
+                              )}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap group-hover:bg-gray-50 transition-colors duration-200">
+                              <Badge 
+                                variant="outline"
+                                className={`
+                                  px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200
+                                  ${lead.lead_source === 'Website' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                                  lead.lead_source === 'Social Media' ? 'bg-purple-100 text-purple-800 border-purple-200' : 
+                                  lead.lead_source === 'Referral' ? 'bg-green-100 text-green-800 border-green-200' : 
+                                  lead.lead_source === 'Walk-in' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                                  lead.lead_source === 'Phone Inquiry' ? 'bg-orange-100 text-orange-800 border-orange-200' : 
+                                  lead.lead_source === 'Email' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : 
+                                  lead.lead_source === 'Event' ? 'bg-pink-100 text-pink-800 border-pink-200' : 
+                                  'bg-gray-100 text-gray-800 border-gray-200'}
+                                `}
+                              >
+                                {lead.lead_source}
+                              </Badge>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                              {formatDate(lead.created_at)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 last:pr-4 group-hover:bg-gray-50 transition-colors duration-200">
+                              <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
+                                <button
+                                  onClick={() => handleView(lead)}
+                                  className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded-full"
+                                  title="View"
+                                  disabled={refreshing}
+                                >
+                                  <EyeIcon className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleEdit(lead)}
+                                  className="text-green-600 hover:text-green-800 transition-colors p-1 hover:bg-green-50 rounded-full"
+                                  title="Edit"
+                                  disabled={refreshing}
+                                >
+                                  <PencilIcon className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSingle(lead)}
+                                  className="text-red-600 hover:text-red-800 transition-colors p-1 hover:bg-red-50 rounded-full"
+                                  title="Delete"
+                                  disabled={refreshing}
+                                >
+                                  <TrashIcon className="h-5 w-5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+              {paginatedLeads.length > 0 && (
+                <hr className="border-t border-gray-200 my-2" />
+              )}
+              {totalPages > 1 && (
+                <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                  <div className="flex-1 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-700">
+                        Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                        <span className="font-medium">{Math.min(startIndex + itemsPerPage, filteredLeads.length)}</span> of{' '}
+                        <span className="font-medium">{filteredLeads.length}</span> results
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                            currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                          }`}
                         >
-                          <EyeIcon className="h-4 w-4 mr-1" /> View
-                        </Button>
-                        <Button 
-                          onClick={() => handleEdit(lead)} 
-                          variant="ghost" 
-                          size="sm" 
-                          className="inline-flex items-center px-2 py-1 text-gray-700 hover:text-indigo-600"
+                          <span className="sr-only">Previous</span>
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                          <button
+                            key={pageNumber}
+                            onClick={() => setCurrentPage(pageNumber)}
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                              currentPage === pageNumber
+                                ? 'z-10 bg-[#153147] border-[#153147] text-white'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            }`}
+                          >
+                            {pageNumber}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                            currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                          }`}
                         >
-                          <PencilIcon className="h-4 w-4 mr-1" /> Edit
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                          <span className="sr-only">Next</span>
+                          <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="absolute left-0 right-0 bottom-0 h-[3px] bg-gray-400" />
+            </div>
+          )}
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 rounded-lg">
-            <div className="flex flex-1 justify-between sm:hidden">
-              <Button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                variant="outline"
-                className="relative inline-flex items-center rounded-md px-4 py-2 text-sm font-medium"
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                variant="outline"
-                className="relative ml-3 inline-flex items-center rounded-md px-4 py-2 text-sm font-medium"
-              >
-                Next
-              </Button>
-            </div>
-            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
-                  <span className="font-medium">
-                    {Math.min(startIndex + itemsPerPage, filteredLeads.length)}
-                  </span>{" "}
-                  of <span className="font-medium">{filteredLeads.length}</span> results
-                </p>
-              </div>
-              <div>
-                <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                  <Button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    variant="outline"
-                    className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                  >
-                    <span className="sr-only">Previous</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
-                    </svg>
-                  </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <Button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      variant={currentPage === page ? "default" : "outline"}
-                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 ${
-                        currentPage === page
-                          ? "z-10 bg-indigo-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                          : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-offset-0"
-                      }`}
-                    >
-                      {page}
-                    </Button>
-                  ))}
-                  <Button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    variant="outline"
-                    className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
-                  >
-                    <span className="sr-only">Next</span>
-                    <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
-                    </svg>
-                  </Button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Modals */}
-      {isAddModalOpen && (
-        <AddLeadModal
-          isOpen={isAddModalOpen}
+        
+        <div className="w-full border-t border-gray-200 my-2" />
+        
+        <AddLeadModal 
+          isOpen={isAddModalOpen} 
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={handleAddSuccess}
         />
-      )}
-
-      {isEditModalOpen && selectedLead && (
-        <EditLeadModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
+        
+        <EditLeadModal 
+          isOpen={isEditModalOpen} 
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedLead(null);
+          }}
           onSuccess={handleEditSuccess}
           lead={selectedLead}
         />
-      )}
-
-      {isViewModalOpen && selectedLead && (
+        
         <ViewLeadModal
           isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedLead(null);
+          }}
           lead={selectedLead}
         />
+        
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal({ ...confirmationModal, isOpen: false })}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          onConfirm={confirmationModal.onConfirm}
+          type={confirmationModal.type}
+          confirmText={confirmationModal.confirmText}
+        />
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="flex-none">
+        <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
+      </div>
+
+      <div className="flex justify-between items-center mt-8 pb-6">
+        <Button 
+          onClick={() => setIsAddModalOpen(true)} 
+          className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+          disabled={refreshing}
+        >
+          <PlusIcon className="h-5 w-5" />
+          Add
+        </Button>
+
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => fetchLeads(true)}
+            disabled={refreshing}
+            className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+          >
+            {refreshing ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            disabled={filteredLeads.length === 0 || refreshing}
+            className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Export
+          </Button>
+          <Button 
+            onClick={handleDeleteSelected} 
+            disabled={selectedLeads.length === 0 || refreshing}
+            className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
+            variant="ghost"
+          >
+            <TrashIcon className="h-5 w-5" />
+            Delete
+          </Button>
+          <div className="relative ml-2">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
+              disabled={refreshing}
+            />
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+          {error}
+          <button 
+            onClick={() => fetchLeads()} 
+            className="ml-auto text-sm text-red-700 hover:text-red-900 underline"
+          >
+            Try Again
+          </button>
+        </div>
       )}
 
-      {/* Confirmation Modal */}
+      <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
+        {loading ? (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 flex justify-center items-center">
+              <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+                <div className="text-xl text-gray-600">Loading leads...</div>
+                <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+              </div>
+            </div>
+          </div>
+        ) : (!loading && leads.length === 0) ? (
+          <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
+            <div className="text-center p-8 max-w-md">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <p className="text-gray-600 mb-4 text-lg">No leads found.</p>
+              <p className="text-gray-500 mb-6">Start by adding your first lead to the system.</p>
+              <Button 
+                onClick={() => setIsAddModalOpen(true)} 
+                className="bg-[#153147] hover:bg-[#1e1b4b]/90"
+              >
+                Add Your First Lead
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative h-full bg-white rounded-lg border border-gray-200 overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-200 flex flex-col">
+            <div className={`relative flex-1 overflow-hidden ${getTableHeight()}`}>
+              <div className="absolute inset-0 overflow-auto">
+                <div className="inline-block min-w-full max-w-full">
+                  <table className="w-full border-collapse table-auto">
+                    <thead className="bg-[#153147] sticky top-0 z-10 shadow-sm">
+                      <tr>
+                        {columns.map((column) => (
+                          <th
+                            key={column.key}
+                            scope="col"
+                            className={`px-6 py-4 text-left text-sm font-medium text-white first:pl-4 last:pr-4 
+                            ${column.key === "select" ? "min-w-[40px] w-10" : 
+                              column.key === "sNo" ? "min-w-[60px] w-16" :
+                              column.key === "name" ? "min-w-[160px]" :
+                              column.key === "nationality" ? "min-w-[120px]" :
+                              column.key === "contact" ? "min-w-[180px]" :
+                              column.key === "interestedCountry" ? "min-w-[120px]" :
+                              column.key === "interestedDegree" ? "min-w-[120px]" :
+                              column.key === "interestedCourse" ? "min-w-[120px]" :
+                              column.key === "language" ? "min-w-[130px]" :
+                              column.key === "source" ? "min-w-[120px]" :
+                              column.key === "createdAt" ? "min-w-[150px]" :
+                              column.key === "actions" ? "min-w-[100px] w-24" : ""
+                            }`}
+                            style={{ position: 'sticky', top: 0 }}
+                          >
+                            {column.key === "select" ? (
+                              <Checkbox
+                                checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
+                                onCheckedChange={handleSelectAll}
+                                aria-label="Select all"
+                              />
+                            ) : (
+                              column.label
+                            )}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className={`divide-y divide-gray-100`}>
+                      {paginatedLeads.map((lead, index) => (
+                        <tr 
+                          key={lead.id} 
+                          className="hover:bg-gray-50 transition-all duration-200 ease-in-out group relative even:bg-gray-50/30"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap first:pl-4 group-hover:bg-gray-50 transition-colors duration-200">
+                            <Checkbox
+                              checked={selectedLeads.includes(lead.id)}
+                              onCheckedChange={() => handleSelectLead(lead.id)}
+                              aria-label={`Select ${lead.name}`}
+                            />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                            {startIndex + index + 1}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-900 font-medium group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[200px]" title={lead.name}>
+                            {lead.name}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[150px]" title={lead.nationality}>
+                            {lead.nationality || '-'}
+                          </td>
+                          <td className="px-6 py-4 text-sm group-hover:bg-gray-50 transition-colors duration-200">
+                            <div className="truncate max-w-[180px]" title={lead.email}>
+                              <a href={`mailto:${lead.email}`} className="text-blue-600 hover:text-blue-800 transition-colors truncate inline-block max-w-full">
+                                {lead.email}
+                              </a>
+                            </div>
+                            <div className="text-gray-600">{lead.phone}</div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                            {lead.interested_country ? (
+                              <Badge className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                {lead.interested_country}
+                              </Badge>
+                            ) : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                            {lead.interested_degree ? (
+                              <Badge className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                                {lead.interested_degree}
+                              </Badge>
+                            ) : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                            {lead.interested_course ? (
+                              <div className="truncate max-w-[150px]" title={lead.interested_course}>
+                                {lead.interested_course}
+                              </div>
+                            ) : "-"}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                            <div>{lead.language_test || "None"}</div>
+                            {lead.language_score && (
+                              <div className="text-sm font-medium">Score: {lead.language_score}</div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap group-hover:bg-gray-50 transition-colors duration-200">
+                            <Badge 
+                              variant="outline"
+                              className={`
+                                px-3 py-1 rounded-full text-xs font-medium transition-colors duration-200
+                                ${lead.lead_source === 'Website' ? 'bg-blue-100 text-blue-800 border-blue-200' : 
+                                lead.lead_source === 'Social Media' ? 'bg-purple-100 text-purple-800 border-purple-200' : 
+                                lead.lead_source === 'Referral' ? 'bg-green-100 text-green-800 border-green-200' : 
+                                lead.lead_source === 'Walk-in' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' : 
+                                lead.lead_source === 'Phone Inquiry' ? 'bg-orange-100 text-orange-800 border-orange-200' : 
+                                lead.lead_source === 'Email' ? 'bg-indigo-100 text-indigo-800 border-indigo-200' : 
+                                lead.lead_source === 'Event' ? 'bg-pink-100 text-pink-800 border-pink-200' : 
+                                'bg-gray-100 text-gray-800 border-gray-200'}
+                              `}
+                            >
+                              {lead.lead_source}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
+                            {formatDate(lead.created_at)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 last:pr-4 group-hover:bg-gray-50 transition-colors duration-200">
+                            <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
+                              <button
+                                onClick={() => handleView(lead)}
+                                className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded-full"
+                                title="View"
+                                disabled={refreshing}
+                              >
+                                <EyeIcon className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleEdit(lead)}
+                                className="text-green-600 hover:text-green-800 transition-colors p-1 hover:bg-green-50 rounded-full"
+                                title="Edit"
+                                disabled={refreshing}
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteSingle(lead)}
+                                className="text-red-600 hover:text-red-800 transition-colors p-1 hover:bg-red-50 rounded-full"
+                                title="Delete"
+                                disabled={refreshing}
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            {paginatedLeads.length > 0 && (
+              <hr className="border-t border-gray-200 my-2" />
+            )}
+            {totalPages > 1 && (
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                      <span className="font-medium">{Math.min(startIndex + itemsPerPage, filteredLeads.length)}</span> of{' '}
+                      <span className="font-medium">{filteredLeads.length}</span> results
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                      <button
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="sr-only">Previous</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                        <button
+                          key={pageNumber}
+                          onClick={() => setCurrentPage(pageNumber)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === pageNumber
+                              ? 'z-10 bg-[#153147] border-[#153147] text-white'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className="sr-only">Next</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </nav>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="absolute left-0 right-0 bottom-0 h-[3px] bg-gray-400" />
+          </div>
+        )}
+      </div>
+      
+      <div className="w-full border-t border-gray-200 my-2" />
+      
+      <AddLeadModal 
+        isOpen={isAddModalOpen} 
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={handleAddSuccess}
+      />
+      
+      <EditLeadModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedLead(null);
+        }}
+        onSuccess={handleEditSuccess}
+        lead={selectedLead}
+      />
+      
+      <ViewLeadModal
+        isOpen={isViewModalOpen}
+        onClose={() => {
+          setIsViewModalOpen(false);
+          setSelectedLead(null);
+        }}
+        lead={selectedLead}
+      />
+      
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
-        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
-        onConfirm={confirmationModal.onConfirm}
+        onClose={() => setConfirmationModal({ ...confirmationModal, isOpen: false })}
         title={confirmationModal.title}
         message={confirmationModal.message}
+        onConfirm={confirmationModal.onConfirm}
         type={confirmationModal.type}
         confirmText={confirmationModal.confirmText}
       />
