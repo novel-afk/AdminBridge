@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -304,7 +305,8 @@ const EducationForm = ({ formData, setFormData, onBack, onSubmit, errors, isSubm
   );
 };
 
-const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
+const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
+  console.log('AddStudentModal mounted');
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -329,6 +331,17 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
     degree: null,
   });
 
+  // Prefill formData if initialData is provided
+  useEffect(() => {
+    if (initialData) {
+      setFormData(prev => ({
+        ...prev,
+        ...initialData,
+        branch: initialData.branch ? initialData.branch.toString() : prev.branch,
+      }));
+    }
+  }, [initialData]);
+
   // Check if the current user is an admin
   const isAdmin = user?.role === 'SuperAdmin';
 
@@ -340,7 +353,6 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         setBranches(response.data);
-        
         // If user has a branch and is not admin, auto-select their branch
         if (user?.branch && !isAdmin) {
           setFormData(prev => ({ ...prev, branch: user.branch.toString() }));
@@ -352,11 +364,8 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
         console.error('Error fetching branches:', error);
       }
     };
-
-    if (isOpen) {
-      fetchBranches();
-    }
-  }, [isOpen, user, isAdmin]);
+    fetchBranches();
+  }, [user, isAdmin]);
 
   const validatePersonalInfo = () => {
     const newErrors = {};
@@ -573,9 +582,7 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
     }
   };
 
-  if (!isOpen) return null;
-
-  return (
+  const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl w-[800px] max-h-[90vh] overflow-y-auto m-4">
         <div className="sticky top-0 bg-white border-b border-[#1e1b4b]/20 p-6 flex justify-between items-center">
@@ -593,7 +600,6 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
-        
         <div className="p-6">
           {step === 1 ? (
             <PersonalInfoForm
@@ -619,6 +625,7 @@ const AddStudentModal = ({ isOpen, onClose, onSuccess }) => {
       </div>
     </div>
   );
+  return ReactDOM.createPortal(modalContent, document.body);
 };
 
 export default AddStudentModal; 

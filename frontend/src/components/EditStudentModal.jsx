@@ -44,6 +44,9 @@ const FileUpload = ({ id, label, accept, value, onChange, error, existingFile })
 );
 
 const EditStudentModal = ({ isOpen, onClose, onSuccess, student }) => {
+  if (!student || !student.user) {
+    return null;
+  }
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
@@ -186,8 +189,6 @@ const EditStudentModal = ({ isOpen, onClose, onSuccess, student }) => {
       setIsSubmitting(false);
     }
   };
-
-  if (!isOpen || !student) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

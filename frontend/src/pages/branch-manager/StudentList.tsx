@@ -88,6 +88,16 @@ const StudentList = (): ReactElement => {
   interface FormattedStudent extends Student {
     fullName: string;
     email: string;
+    name: string;
+    phone: string;
+    emergencyContact: string;
+    fatherName: string;
+    motherName: string;
+    parentNumber: string;
+    institute: string;
+    language: string;
+    profilePicture: string | null;
+    cv: string | null;
   }
 
   // Format student data for UI
@@ -158,15 +168,15 @@ const StudentList = (): ReactElement => {
   }, [navigate]);
 
   const handleView = (student: Student) => {
-    // Format student data to match the ViewStudentModal component's expected props
-    const formattedStudent = formatStudentData(student);
-    setSelectedStudent(formattedStudent);
+    setSelectedStudent(formatStudentData(student));
     setIsViewModalOpen(true);
+    setIsEditModalOpen(false);
   };
 
   const handleEdit = (student: Student) => {
     setSelectedStudent(student);
     setIsEditModalOpen(true);
+    setIsViewModalOpen(false);
   };
 
   const handleEditSuccess = () => {
@@ -282,6 +292,24 @@ const StudentList = (): ReactElement => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex-none pb-6">
+          <h1 className="text-2xl font-bold text-[#153147]">Students</h1>
+          <p className="text-sm text-[#ADB8BB] mt-1">Manage your students information</p>
+        </div>
+        <div className="flex-1 flex justify-center items-center">
+          <div className="border-white hover:border-white/80 rounded-lg shadow-md p-8 flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+            <div className="text-xl text-[#153147]">Loading students...</div>
+            <p className="text-sm text-[#ADB8BB] mt-2">Please wait while we fetch the data</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -351,23 +379,27 @@ const StudentList = (): ReactElement => {
         }}
         student={selectedStudent}
       />
-      <EditStudentModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedStudent(null);
-        }}
-        student={selectedStudent}
-        onSuccess={handleEditSuccess}
-        hideBranch={true}
-      />
-      <AddStudentModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-        hideBranch={true}
-        initialData={selectedStudent}
-      />
+      {isEditModalOpen && (
+        <EditStudentModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedStudent(null);
+          }}
+          student={selectedStudent}
+          onSuccess={handleEditSuccess}
+          hideBranch={true}
+        />
+      )}
+      {/* Add Student Modal */}
+      {isAddModalOpen && (
+        <AddStudentModal
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+          hideBranch={true}
+          initialData={selectedStudent}
+        />
+      )}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         onClose={() => setConfirmationModal({ ...confirmationModal, isOpen: false })}

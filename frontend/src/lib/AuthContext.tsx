@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import { authAPI } from './api';
+import toast from 'react-hot-toast';
 
 // Define user type
 export type User = {
@@ -123,6 +124,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(userResponse.data);
       localStorage.setItem('user', JSON.stringify(userResponse.data));
       setIsAuthenticated(true);
+      toast.success('Logged in successfully!');
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -140,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     setIsUsingDefaultPassword(false);
+    toast.success('Logged out successfully!');
   };
 
   return (
