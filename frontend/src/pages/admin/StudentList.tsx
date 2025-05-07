@@ -92,7 +92,7 @@ const StudentList = () => {
   const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 10;
   
   // API base URL - should match your backend configuration
   const API_BASE_URL = 'http://localhost:8000/api';
@@ -669,73 +669,56 @@ const StudentList = () => {
               </div>
             </div>
             {totalPages > 1 && (
-              <div className="flex-shrink-0 border-t border-gray-200 px-6 py-4 flex items-center justify-between shadow-md bg-white">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1.5 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-gray-200 hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-                  {totalPages > 5 && currentPage > 3 && (
-                    <>
+              <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                <div className="flex-1 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                      <span className="font-medium">{Math.min(startIndex + itemsPerPage, filteredStudents.length)}</span> of{' '}
+                      <span className="font-medium">{filteredStudents.length}</span> results
+                    </p>
+                  </div>
+                  <div>
+                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                       <button
-                        onClick={() => setCurrentPage(1)}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-200 hover:bg-gray-50"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
                       >
-                        1
+                        <span className="sr-only">Previous</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
                       </button>
-                      <span className="text-gray-500">...</span>
-                    </>
-                  )}
-                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                    let pageNum;
-                    if (totalPages <= 5) {
-                      pageNum = i + 1;
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1;
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i;
-                    } else {
-                      pageNum = currentPage - 2 + i;
-                    }
-                    return pageNum;
-                  }).map(page => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-1.5 rounded-md text-sm font-medium border ${
-                        currentPage === page
-                          ? 'bg-[#1e1b4b] text-white border-[#1e1b4b]'
-                          : 'text-gray-600 hover:text-gray-800 border-gray-200 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  {totalPages > 5 && currentPage < totalPages - 2 && (
-                    <>
-                      <span className="text-gray-500">...</span>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                        <button
+                          key={pageNumber}
+                          onClick={() => setCurrentPage(pageNumber)}
+                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                            currentPage === pageNumber
+                              ? 'z-10 bg-[#153147] border-[#153147] text-white'
+                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      ))}
                       <button
-                        onClick={() => setCurrentPage(totalPages)}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-200 hover:bg-gray-50"
+                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages}
+                        className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
+                          currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
+                        }`}
                       >
-                        {totalPages}
+                        <span className="sr-only">Next</span>
+                        <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
                       </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    className="px-3 py-1.5 text-gray-600 hover:text-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded border border-gray-200 hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-                </div>
-                <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">
-                  Showing {Math.min(filteredStudents.length, startIndex + 1)}-
-                  {Math.min(startIndex + itemsPerPage, filteredStudents.length)} of {filteredStudents.length} students
+                    </nav>
+                  </div>
                 </div>
               </div>
             )}
