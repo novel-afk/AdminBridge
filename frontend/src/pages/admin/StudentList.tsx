@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { 
   MagnifyingGlassIcon, 
@@ -83,6 +83,7 @@ const StudentList = () => {
   const [error, setError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   
   // New state variables for the enhanced UI
   const [searchQuery, setSearchQuery] = useState("");
@@ -190,6 +191,16 @@ const StudentList = () => {
 
     fetchStudents();
   }, [navigate]);
+
+  useEffect(() => {
+    setIsAddModalOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (isAddModalOpen) {
+      console.log('DEBUG: isAddModalOpen set to true');
+    }
+  }, [isAddModalOpen]);
 
   // Filtered students based on search query
   const filteredStudents = students.filter((student) =>
@@ -440,7 +451,7 @@ const StudentList = () => {
             disabled={refreshing}
           >
             <PlusIcon className="h-5 w-5" />
-            Add
+            Add Students
           </Button>
 
           <div className="flex items-center gap-4">
@@ -721,11 +732,13 @@ const StudentList = () => {
         )}
       </div>
       
-      <AddStudentModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-      />
+      {isAddModalOpen && (console.log('DEBUG: Rendering AddStudentModal'),
+        <AddStudentModal 
+          isOpen={isAddModalOpen} 
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+        />
+      )}
       
       <EditStudentModal 
         isOpen={isEditModalOpen} 
