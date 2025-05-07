@@ -141,16 +141,14 @@ class StudentSerializer(serializers.ModelSerializer):
                   'enrollment_date', 'age', 'gender', 'nationality',
                   'contact_number', 'address', 'institution_name', 'language_test',
                   'profile_image', 'emergency_contact', 'mother_name',
-                  'father_name', 'parent_number', 'resume', 'comments',
+                  'father_name', 'parent_number', 'resume',
                   'created_at', 'updated_at']
         
     def create(self, validated_data):
         user_data = validated_data.pop('user')
         user = UserSerializer().create(user_data)
-        
         # Generate unique student ID
         student_id = f"STD{str(uuid.uuid4())[:8].upper()}"
-        
         student = Student.objects.create(
             user=user, 
             student_id=student_id,
@@ -172,6 +170,11 @@ class StudentSerializer(serializers.ModelSerializer):
                 
             user.save()
             
+        # Ensure parent fields and resume are updated
+        for attr in ['mother_name', 'father_name', 'parent_number', 'resume']:
+            if attr in validated_data:
+                setattr(instance, attr, validated_data[attr])
+        
         return super().update(instance, validated_data)
 
 
@@ -186,7 +189,7 @@ class StudentDetailSerializer(serializers.ModelSerializer):
             'id', 'user', 'branch', 'student_id', 'age', 'gender', 
             'nationality', 'contact_number', 'address', 'institution_name',
             'language_test', 'emergency_contact', 'mother_name', 'father_name',
-            'parent_number', 'profile_image', 'comments', 'enrollment_date'
+            'parent_number', 'profile_image', 'enrollment_date'
         ]
         read_only_fields = ['student_id', 'enrollment_date']
 
@@ -200,7 +203,7 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'nationality', 'contact_number', 'address', 'institution_name',
             'language_test', 'emergency_contact', 'mother_name', 'father_name',
-            'parent_number', 'profile_image', 'comments'
+            'parent_number', 'profile_image'
         ]
 
 

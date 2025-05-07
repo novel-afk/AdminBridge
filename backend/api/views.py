@@ -834,77 +834,6 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'password': 'Nepal@123'  # Default password for all students
             }
             
-            # Debug print statements
-            print("User data:", user_data)
-            print("Student data:", student_data)
-            
-            # Create a serializer context with all the data needed
-            serializer_data = {
-                'user': user_data,
-                'branch': student_data.get('branch'),
-                'registration_number': student_data.get('registration_number', ''),
-                'contact_number': student_data.get('contact_number', ''),
-                'address': student_data.get('address', ''),
-                'emergency_contact': student_data.get('emergency_contact', ''),
-                'dob': student_data.get('dob'),  # Add date of birth field
-                'nationality': student_data.get('nationality', ''),
-                'gender': student_data.get('gender', 'Other'),  # Default to Other if not provided
-            }
-            
-            # Handle file uploads if they exist
-            if 'profile_image' in request.FILES:
-                serializer_data['profile_image'] = request.FILES['profile_image']
-                
-            if 'citizenship_document' in request.FILES:
-                serializer_data['citizenship_document'] = request.FILES['citizenship_document']
-            
-            # Debug the serializer data
-            print("Serializer data:", serializer_data)
-            
-            serializer = self.get_serializer(data=serializer_data)
-            is_valid = serializer.is_valid()
-            
-            if not is_valid:
-                print("Serializer errors:", serializer.errors)
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            self.perform_create(serializer)
-            
-            # Send email notification to the new student
-            from utils.email_sender import send_employee_credentials_email
-            send_employee_credentials_email(user_data, student_data)
-            
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-        
-        # If not using JSON, fall back to standard processing
-        return super().create(request, *args, **kwargs)
-        
-    def update(self, request, *args, **kwargs):
-        # Process the JSON student data sent from frontend for updates
-        if 'student_data' in request.data:
-            import json
-            student_data = json.loads(request.data['student_data'])
-            
-            # For non-SuperAdmin users, ensure branch ID matches their own branch
-            if request.user.role != 'SuperAdmin':
-                if hasattr(request.user, 'employee_profile') and request.user.employee_profile.branch:
-                    student_data['branch'] = request.user.employee_profile.branch.id
-            
-            # Get the current instance
-            instance = self.get_object()
-            
-            # Prepare user data
-            user_data = {
-                'first_name': request.data.get('user.first_name'),
-                'last_name': request.data.get('user.last_name'),
-                'email': request.data.get('user.email')
-            }
-            
-            # Debug print statements
-            print("Update - User data:", user_data)
-            print("Update - Student data:", student_data)
-            
             # Create a serializer context with all the data needed
             serializer_data = {
                 'user': user_data,
@@ -920,37 +849,71 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'mother_name': student_data.get('mother_name', ''),
                 'father_name': student_data.get('father_name', ''),
                 'parent_number': student_data.get('parent_number', ''),
-                'comments': student_data.get('comments', '')
             }
             
             # Handle file uploads if they exist
             if 'profile_image' in request.FILES:
                 serializer_data['profile_image'] = request.FILES['profile_image']
-                
             if 'resume' in request.FILES:
                 serializer_data['resume'] = request.FILES['resume']
+            if 'citizenship_document' in request.FILES:
+                serializer_data['citizenship_document'] = request.FILES['citizenship_document']
             
-            # Debug the serializer data
-            print("Update - Serializer data:", serializer_data)
-            
-            # Use partial=True to only update provided fields
-            serializer = self.get_serializer(instance, data=serializer_data, partial=True)
+            serializer = self.get_serializer(data=serializer_data)
             is_valid = serializer.is_valid()
             
             if not is_valid:
-                print("Update - Serializer errors:", serializer.errors)
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
             
-            self.perform_update(serializer)
+            self.perform_create(serializer)
             
-            if getattr(instance, '_prefetched_objects_cache', None):
-                # If 'prefetch_related' has been applied to a queryset, we need to
-                # forcibly invalidate the prefetch cache on the instance.
-                instance._prefetched_objects_cache = {}
-                
-            return Response(serializer.data)
-        
+            # Send email notification to the new student
+            from utils.email_sender import send_employee_credentials_email
+            send_employee_credentials_email(user_data, student_data)
+            
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         # If not using JSON, fall back to standard processing
+        return super().create(request, *args, **kwargs)
+        
+    def update(self, request, *args, **kwargs):
+        # Process the JSON student data sent from frontend for updates
+        if 'student_data' in request.data:
+            import json
+            student_data = json.loads(request.data['student_data'])
+            instance = self.get_object()
+            user_data = {
+                'first_name': request.data.get('user.first_name', instance.user.first_name),
+                'last_name': request.data.get('user.last_name', instance.user.last_name),
+                'email': request.data.get('user.email', instance.user.email),
+                'role': 'Student',
+                'password': request.data.get('user.password', None)
+            }
+            serializer_data = {
+                'user': user_data,
+                'branch': student_data.get('branch', instance.branch.id),
+                'age': student_data.get('age', instance.age),
+                'gender': student_data.get('gender', instance.gender),
+                'nationality': student_data.get('nationality', instance.nationality),
+                'contact_number': student_data.get('contact_number', instance.contact_number),
+                'address': student_data.get('address', instance.address),
+                'institution_name': student_data.get('institution_name', instance.institution_name),
+                'language_test': student_data.get('language_test', instance.language_test),
+                'emergency_contact': student_data.get('emergency_contact', instance.emergency_contact),
+                'mother_name': student_data.get('mother_name', instance.mother_name),
+                'father_name': student_data.get('father_name', instance.father_name),
+                'parent_number': student_data.get('parent_number', instance.parent_number),
+            }
+            if 'profile_image' in request.FILES:
+                serializer_data['profile_image'] = request.FILES['profile_image']
+            if 'resume' in request.FILES:
+                serializer_data['resume'] = request.FILES['resume']
+            serializer = self.get_serializer(instance, data=serializer_data, partial=True)
+            is_valid = serializer.is_valid()
+            if not is_valid:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            self.perform_update(serializer)
+            return Response(serializer.data)
         return super().update(request, *args, **kwargs)
 
 class LeadViewSet(viewsets.ModelViewSet):

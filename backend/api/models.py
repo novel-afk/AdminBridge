@@ -182,7 +182,6 @@ class Student(models.Model):
     parent_number = models.CharField(max_length=20, blank=True, null=True)
     resume = models.FileField(upload_to='student_resumes/', blank=True, null=True,
                             help_text="Upload CV/Resume (PDF only)")
-    comments = models.TextField(blank=True, null=True)
     
     # System Fields
     created_at = models.DateTimeField(auto_now_add=True)
