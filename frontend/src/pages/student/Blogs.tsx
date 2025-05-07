@@ -143,7 +143,7 @@ const Blogs: React.FC = () => {
     <StudentLayout>
       <div className="bg-gray-50 min-h-screen">
         {/* Hero section */}
-        <div className="bg-gradient-to-b from-blue-50 to-indigo-50 py-16">
+        <div className="bg-gradient-to-b from-blue-50 to-indigo-50 py-8">
           <div className="container mx-auto px-6">
             <h1 className="text-4xl md:text-5xl font-bold text-[#153147] mb-4">Our Blog</h1>
             <p className="text-xl text-gray-700 mb-8 max-w-2xl">

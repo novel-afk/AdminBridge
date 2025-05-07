@@ -90,7 +90,7 @@ const Jobs: React.FC = () => {
 
   return (
     <StudentLayout>
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6">
         <div className="flex flex-col">
           <h1 className="text-3xl font-bold text-[#153147] mb-2">Job Listings</h1>
           <p className="text-gray-600 mb-6">Explore available positions</p>

@@ -24,7 +24,7 @@ export const StudentLayout: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <div className="min-h-screen bg-white flex flex-col w-full">
       {/* <StudentHeader /> */}
-      <main className="w-full flex-1 overflow-auto pt-16 px-4 pb-6">{children}</main>
+      <main className="w-full flex-1 overflow-auto px-4 pb-6">{children}</main>
     </div>
   );
 };

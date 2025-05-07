@@ -62,7 +62,7 @@ const JobDetail: React.FC = () => {
 
   return (
     <StudentLayout>
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6">
         {loading ? (
           <div className="text-center py-12">Loading job details...</div>
         ) : !job ? (
