@@ -73,41 +73,6 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
     }
   };
 
-  // Extract additional details from the description
-  const extractDetailsFromDescription = (description) => {
-    let location = '';
-    let requiredExperience = '';
-
-    // Try to extract location
-    const locationMatch = description.match(/Location: (.*?)(?:\n|$)/);
-    if (locationMatch && locationMatch[1]) {
-      location = locationMatch[1].trim();
-    }
-
-    // Try to extract required experience
-    const requiredExperienceMatch = description.match(/Required Experience: (.*?)(?:\n|$)/);
-    if (requiredExperienceMatch && requiredExperienceMatch[1]) {
-      requiredExperience = requiredExperienceMatch[1].trim();
-    }
-
-    return {
-      location,
-      requiredExperience
-    };
-  };
-
-  // Extract the main description without the metadata
-  const extractMainDescription = (description) => {
-    // Remove the metadata lines
-    const mainDescription = description
-      .replace(/Department: .*?(?:\n|$)/g, '')
-      .replace(/Location: .*?(?:\n|$)/g, '')
-      .replace(/Required Experience: .*?(?:\n|$)/g, '')
-      .trim();
-    
-    return mainDescription;
-  };
-
   // Debug: Monitor formData changes
   useEffect(() => {
     if (isOpen && job) {
@@ -249,20 +214,17 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
       return;
     }
 
-    // Generate a comprehensive description that includes all the additional fields
-    const fullDescription = `${formData.description}\n\n` +
-      `Location: ${formData.location}\n` + 
-      `Required Experience: ${formData.required_experience}`;
-
-    // Create the request payload with only the fields supported by the backend
+    // Create the request payload with all fields supported by the backend
     const payload = {
       title: formData.title,
-      description: fullDescription,
+      description: formData.description,
       requirements: formData.requirements,
       branch: formData.branch,
       job_type: formData.job_type,
       salary_range: formData.salary_range,
       is_active: formData.is_active,
+      location: formData.location,
+      required_experience: formData.required_experience,
     };
     
     try {

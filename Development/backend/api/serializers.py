@@ -239,10 +239,10 @@ class JobSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Job
-        fields = ['id', 'title', 'description', 'requirements', 
-                  'branch', 'branch_name', 'branch_location', 'job_type',
-                  'salary_range', 'is_active', 'created_by', 'created_by_name', 
-                  'created_at', 'updated_at']
+        fields = [
+            'id', 'title', 'location', 'required_experience', 'description', 'requirements', 'salary_range', 'is_active', 'created_at', 'updated_at', 'branch', 'created_by', 'job_type',
+            'created_by_name', 'branch_name', 'branch_location'
+        ]
         read_only_fields = ['created_by']
         
     def get_branch_location(self, obj):
@@ -255,7 +255,13 @@ class JobSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context['request'].user
         validated_data['created_by'] = user
-        return super().create(validated_data)
+        return Job.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 class JobResponseSerializer(serializers.ModelSerializer):

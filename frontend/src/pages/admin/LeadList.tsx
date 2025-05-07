@@ -428,69 +428,70 @@ const LeadList = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-none pb-6">
-        <h1 className="text-2xl font-bold mb-6 text-[#153147] px-4 py-2 rounded-md">Leads</h1>
+      <div className="flex-none ">
+        <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
+      </div>
 
-        <div className="flex justify-between items-center mt-8">
-          <Button 
-            onClick={() => setIsAddModalOpen(true)} 
-            className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+      <div className="flex justify-between items-center mt-8 pb-6">
+        <Button 
+          onClick={() => setIsAddModalOpen(true)} 
+          className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+          disabled={refreshing}
+        >
+          <PlusIcon className="h-5 w-5" />
+          Add
+        </Button>
+
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => fetchLeads(true)}
             disabled={refreshing}
+            className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
           >
-            <PlusIcon className="h-5 w-5" />
-            Add
+            {refreshing ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </>
+            )}
           </Button>
-
-          <div className="flex items-center gap-4">
-            <Button
-              variant="outline"
-              onClick={() => fetchLeads(true)}
+          <Button 
+            variant="outline" 
+            onClick={handleExport} 
+            disabled={filteredLeads.length === 0 || refreshing}
+            className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+          >
+            <ArrowDownTrayIcon className="h-5 w-5" />
+            Export
+          </Button>
+          <Button 
+            onClick={handleDeleteSelected} 
+            disabled={selectedLeads.length === 0 || refreshing}
+            className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
+            variant="ghost"
+          >
+            <TrashIcon className="h-5 w-5" />
+            Delete
+          </Button>
+          <div className="relative ml-2">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
               disabled={refreshing}
-              className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-            >
-              {refreshing ? (
-                <>
-                  <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
-                  Refreshing...
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  Refresh
-                </>
-              )}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleExport} 
-              disabled={filteredLeads.length === 0 || refreshing}
-              className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-            >
-              <ArrowDownTrayIcon className="h-5 w-5" />
-              Export
-            </Button>
-            <Button 
-              onClick={handleDeleteSelected} 
-              disabled={selectedLeads.length === 0 || refreshing}
-              className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
-              variant="ghost"
-            >
-              <TrashIcon className="h-5 w-5" />
-              Delete
-            </Button>
-            <div className="relative ml-2">
-              <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-              <Input
-                type="text"
-                placeholder="Search leads..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
-                disabled={refreshing}
-              />
-            </div>
+            />
           </div>
         </div>
       </div>
@@ -511,7 +512,17 @@ const LeadList = () => {
       )}
 
       <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
-        {leads.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col h-full">
+            <div className="flex-1 flex justify-center items-center">
+              <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+                <div className="text-xl text-gray-600">Loading leads...</div>
+                <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+              </div>
+            </div>
+          </div>
+        ) : (!loading && leads.length === 0) ? (
           <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
             <div className="text-center p-8 max-w-md">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

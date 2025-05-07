@@ -18,6 +18,9 @@ const FormField = ({ label, error, children, required }) => (
   </div>
 );
 
+/**
+ * @param {{ isOpen: boolean, onClose: () => void, onSuccess: () => void }} props
+ */
 const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);

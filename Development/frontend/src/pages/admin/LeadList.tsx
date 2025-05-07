@@ -112,10 +112,12 @@ const LeadList = () => {
 
   // Function to fetch leads from API
   const fetchLeads = async (showRefreshing = false) => {
-    // If already loaded and not refreshing, don't fetch again
-    if (dataLoaded && !showRefreshing) {
-      return;
+    setLoading(true);
+    setLeads([]); // Force clear leads so 'No leads found' never shows during loading
+    if (showRefreshing) {
+      setRefreshing(true);
     }
+    setError('');
     
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
@@ -124,13 +126,6 @@ const LeadList = () => {
     }
     
     try {
-      if (showRefreshing) {
-        setRefreshing(true);
-      } else if (!dataLoaded) {
-        setLoading(true);
-      }
-      setError('');
-      
       // Use the centralized API
       const { leadAPI } = await import('../../lib/api');
       const response = await leadAPI.getAll();
@@ -151,14 +146,13 @@ const LeadList = () => {
       const formattedLeads = leadData.map(formatLeadData);
           
       setLeads(formattedLeads);
-      setLoading(false);
-      setRefreshing(false);
-      setDataLoaded(true);
     } catch (err: any) {
       console.error('Error fetching leads:', err);
       setError(err.response?.data?.detail || 'Failed to fetch leads. Please try again.');
+    } finally {
       setLoading(false);
       setRefreshing(false);
+      setDataLoaded(true);
     }
   };
 
@@ -511,7 +505,18 @@ const LeadList = () => {
       )}
 
       <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
-        {leads.length === 0 ? (
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+              <svg className="animate-spin h-10 w-10 text-[#1e1b4b] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+              <div className="text-lg font-medium text-gray-700 mb-2">Loading leads...</div>
+              <div className="text-gray-500">Please wait while we fetch the data</div>
+            </div>
+          </div>
+        ) : (!loading && leads.length === 0) ? (
           <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
             <div className="text-center p-8 max-w-md">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
