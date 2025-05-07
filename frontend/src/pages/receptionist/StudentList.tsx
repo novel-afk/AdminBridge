@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { EyeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import AddStudentModal from '../../components/AddStudentModal';
@@ -27,6 +27,7 @@ const ReceptionistStudentList = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const location = useLocation();
 
   const fetchStudents = async () => {
     try {
@@ -54,10 +55,13 @@ const ReceptionistStudentList = () => {
     fetchStudents();
   }, []);
 
-  const handleAddSuccess = () => {
-    // Close the modal
+  // Ensure modal is always closed on navigation to this page
+  useEffect(() => {
     setIsAddModalOpen(false);
-    // Refresh the student list
+  }, [location]);
+
+  const handleAddSuccess = () => {
+    setIsAddModalOpen(false);
     fetchStudents();
   };
 
@@ -71,11 +75,31 @@ const ReceptionistStudentList = () => {
       const response = await axios.get(`http://localhost:8000/api/students/${id}/`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      setSelectedStudent(response.data);
+      const s = response.data;
+      setSelectedStudent({
+        name: `${s.user.first_name} ${s.user.last_name}`,
+        profilePicture: s.profile_image,
+        age: s.age,
+        gender: s.gender,
+        nationality: s.nationality,
+        phone: s.contact_number,
+        email: s.user.email,
+        emergencyContact: s.emergency_contact,
+        fatherName: s.father_name,
+        motherName: s.mother_name,
+        parentNumber: s.parent_number,
+        institute: s.institution_name,
+        language: s.language_test,
+        cv: s.resume,
+      });
       setIsViewModalOpen(true);
     } catch (err) {
       setError('Failed to load student details');
     }
+  };
+
+  const handleAddClick = () => {
+    setIsAddModalOpen(true);
   };
 
   if (loading) {
@@ -103,7 +127,7 @@ const ReceptionistStudentList = () => {
           <p className="text-gray-500 mt-1">View students enrolled in your branch</p>
         </div>
         <button
-          onClick={() => setIsAddModalOpen(true)}
+          onClick={handleAddClick}
           className="flex items-center px-4 py-2 bg-[#153147] text-white rounded-md hover:bg-[#153147]/90 transition-colors duration-300"
         >
           <PlusIcon className="w-5 h-5 mr-2" />
@@ -175,12 +199,14 @@ const ReceptionistStudentList = () => {
       )}
 
       {/* Add Student Modal */}
-      <AddStudentModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-        hideBranch={true}
-      />
+      {isAddModalOpen && (
+        <AddStudentModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+          hideBranch={true}
+        />
+      )}
       <ViewStudentModal
         isOpen={isViewModalOpen}
         onClose={() => {
