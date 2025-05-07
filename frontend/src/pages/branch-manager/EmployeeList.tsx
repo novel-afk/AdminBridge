@@ -224,44 +224,44 @@ const EmployeeList = () => {
   };
 
   const handleExport = () => {
-    const exportData = selectedEmployees.length > 0
-      ? filteredEmployees.filter(employee => selectedEmployees.includes(employee.id))
-      : filteredEmployees;
+    showConfirmation({
+      title: 'Export Employees Data',
+      message: 'Are you sure you want to export the employees data?',
+      type: 'warning',
+      onConfirm: () => {
+        const exportData = selectedEmployees.length > 0
+          ? filteredEmployees.filter(employee => selectedEmployees.includes(employee.id))
+          : filteredEmployees;
 
-    // Create CSV content
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Headers
-    const headers = [
-      "Name", "Email", "Role", "Phone", "Gender", 
-      "Nationality", "Emergency Contact", "Salary", "Branch"
-    ];
-    csvContent += headers.join(",") + "\n";
-    
-    // Data rows
-    exportData.forEach(employee => {
-      const row = [
-        `"${employee.name || ''}"`,
-        `"${employee.email || ''}"`,
-        `"${employee.user.role || ''}"`,
-        `"${employee.phone || ''}"`,
-        `"${employee.gender || ''}"`,
-        `"${employee.nationality || ''}"`,
-        `"${employee.emergencyContact || ''}"`,
-        `"${employee.salary || ''}"`,
-        `"${employee.branch_name || ''}"`,
-      ];
-      csvContent += row.join(",") + "\n";
+        let csvContent = "data:text/csv;charset=utf-8,";
+        const headers = [
+          "Name", "Email", "Role", "Phone", "Gender", 
+          "Nationality", "Emergency Contact", "Salary", "Branch"
+        ];
+        csvContent += headers.join(",") + "\n";
+        exportData.forEach(employee => {
+          const row = [
+            `"${employee.name || ''}"`,
+            `"${employee.email || ''}"`,
+            `"${employee.user.role || ''}"`,
+            `"${employee.phone || ''}"`,
+            `"${employee.gender || ''}"`,
+            `"${employee.nationality || ''}"`,
+            `"${employee.emergencyContact || ''}"`,
+            `"${employee.salary || ''}"`,
+            `"${employee.branch_name || ''}"`,
+          ];
+          csvContent += row.join(",") + "\n";
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "employees_export.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      },
     });
-    
-    // Create download link
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "employees_export.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleDeleteSelected = () => {

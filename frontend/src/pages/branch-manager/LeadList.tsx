@@ -225,56 +225,56 @@ const LeadList = () => {
   };
 
   const handleExport = () => {
-    const exportData = selectedLeads.length > 0
-      ? filteredLeads.filter(lead => selectedLeads.includes(lead.id))
-      : filteredLeads;
+    showConfirmation({
+      title: 'Export Leads Data',
+      message: 'Are you sure you want to export the leads data?',
+      type: 'warning',
+      onConfirm: () => {
+        const exportData = selectedLeads.length > 0
+          ? filteredLeads.filter(lead => selectedLeads.includes(lead.id))
+          : filteredLeads;
 
-    // Create CSV content
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Headers
-    const headers = [
-      "Name", "Email", "Phone", "Nationality", "Branch", 
-      "Interested Country", "Interested Degree", "Interested Course",
-      "Language Test", "Language Score", "Lead Source", "Created At",
-      "Notes", "Referred By", "Courses Studied", "GPA",
-      "Created By", "Assigned To"
-    ];
-    csvContent += headers.join(",") + "\n";
-    
-    // Data rows
-    exportData.forEach(lead => {
-      const row = [
-        `"${lead.name || ''}"`,
-        `"${lead.email || ''}"`,
-        `"${lead.phone || ''}"`,
-        `"${lead.nationality || ''}"`,
-        `"${lead.branch_name || ''}"`,
-        `"${lead.interested_country || ''}"`,
-        `"${lead.interested_degree || ''}"`,
-        `"${lead.interested_course || ''}"`,
-        `"${lead.language_test || ''}"`,
-        `"${lead.language_score || ''}"`,
-        `"${lead.lead_source || ''}"`,
-        `"${lead.created_at ? formatDate(lead.created_at) : ''}"`,
-        `"${lead.notes || ''}"`,
-        `"${lead.referred_by || ''}"`,
-        `"${lead.courses_studied || ''}"`,
-        `"${lead.gpa || ''}"`,
-        `"${lead.created_by_name || ''}"`,
-        `"${lead.assigned_to_name || ''}"`,
-      ];
-      csvContent += row.join(",") + "\n";
+        let csvContent = "data:text/csv;charset=utf-8,";
+        const headers = [
+          "Name", "Email", "Phone", "Nationality", "Branch", 
+          "Interested Country", "Interested Degree", "Interested Course",
+          "Language Test", "Language Score", "Lead Source", "Created At",
+          "Notes", "Referred By", "Courses Studied", "GPA",
+          "Created By", "Assigned To"
+        ];
+        csvContent += headers.join(",") + "\n";
+        exportData.forEach(lead => {
+          const row = [
+            `"${lead.name || ''}"`,
+            `"${lead.email || ''}"`,
+            `"${lead.phone || ''}"`,
+            `"${lead.nationality || ''}"`,
+            `"${lead.branch_name || ''}"`,
+            `"${lead.interested_country || ''}"`,
+            `"${lead.interested_degree || ''}"`,
+            `"${lead.interested_course || ''}"`,
+            `"${lead.language_test || ''}"`,
+            `"${lead.language_score || ''}"`,
+            `"${lead.lead_source || ''}"`,
+            `"${lead.created_at ? formatDate(lead.created_at) : ''}"`,
+            `"${lead.notes || ''}"`,
+            `"${lead.referred_by || ''}"`,
+            `"${lead.courses_studied || ''}"`,
+            `"${lead.gpa || ''}"`,
+            `"${lead.created_by_name || ''}"`,
+            `"${lead.assigned_to_name || ''}"`,
+          ];
+          csvContent += row.join(",") + "\n";
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "leads_export.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      },
     });
-    
-    // Create a download link and trigger the download
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "leads_export.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const handleView = (lead: Lead) => {

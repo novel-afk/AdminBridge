@@ -6,7 +6,8 @@ import {
   PlusIcon, 
   TrashIcon, 
   EyeIcon, 
-  PencilIcon 
+  PencilIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -41,6 +42,7 @@ const StudentList = (): ReactElement => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
   
   // Get branch manager's branch ID
   useEffect(() => {
@@ -249,6 +251,103 @@ const StudentList = (): ReactElement => {
     });
   };
 
+  const handleSelectStudent = (id: number) => {
+    setSelectedStudents((prev) => {
+      if (prev.includes(id)) {
+        return prev.filter((studentId) => studentId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedStudents(students.map((student) => student.id));
+    } else {
+      setSelectedStudents([]);
+    }
+  };
+
+  const handleExport = () => {
+    showConfirmation({
+      title: 'Export Students Data',
+      message: 'Are you sure you want to export the students data?',
+      type: 'warning',
+      onConfirm: () => {
+        const exportData = selectedStudents.length > 0
+          ? students.filter(student => selectedStudents.includes(student.id))
+          : students;
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        const headers = [
+          "Student ID", "Name", "Email", "Phone", "Gender", 
+          "Nationality", "Institution", "Language Test", "Branch"
+        ];
+        csvContent += headers.join(",") + "\n";
+        exportData.forEach(student => {
+          const row = [
+            `"${student.student_id || ''}"`,
+            `"${student.fullName || ''}"`,
+            `"${student.email || ''}"`,
+            `"${student.contact_number || ''}"`,
+            `"${student.gender || ''}"`,
+            `"${student.nationality || ''}"`,
+            `"${student.institution_name || ''}"`,
+            `"${student.language_test || ''}"`,
+            `"${student.branch_name || ''}"`,
+          ];
+          csvContent += row.join(",") + "\n";
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "students_export.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      },
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    showConfirmation({
+      title: 'Delete Selected Students',
+      message: `Are you sure you want to delete ${selectedStudents.length} selected student(s)? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        const accessToken = localStorage.getItem('access_token');
+        try {
+          // Delete each selected student
+          for (const id of selectedStudents) {
+            await axios.delete(`${API_BASE_URL}/students/${id}/`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+          }
+          
+          // Clear selection and refresh
+          setSelectedStudents([]);
+          fetchStudents();
+          
+          showConfirmation({
+            title: 'Students Deleted Successfully',
+            message: 'The selected students have been deleted.',
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: () => {
+              // No need to fetch again
+            }
+          });
+          
+        } catch (err) {
+          console.error('Error deleting students:', err);
+          setError('Failed to delete students. Please try again.');
+        }
+      },
+    });
+  };
+
   const columns: Column[] = [
     { header: 'Student ID', accessor: 'student_id' },
     { header: 'Name', accessor: 'fullName' },
@@ -317,7 +416,7 @@ const StudentList = (): ReactElement => {
         <div className="flex gap-4">
           <Button
             onClick={handleAdd}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 bg-[#153147]"
           >
             <PlusIcon className="h-5 w-5" />
             Add Student
@@ -344,28 +443,60 @@ const StudentList = (): ReactElement => {
         >
           Refresh
         </Button>
+        <Button 
+          variant="outline" 
+          onClick={handleExport} 
+          disabled={students.length === 0 || refreshing}
+          className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+        >
+          <ArrowDownTrayIcon className="h-5 w-5" />
+          Export
+        </Button>
+        <Button 
+          onClick={handleDeleteSelected} 
+          disabled={selectedStudents.length === 0 || refreshing}
+          className="bg-red-50 text-red-600 hover:bg-red-100 flex items-center gap-2"
+          variant="ghost"
+        >
+          <TrashIcon className="h-5 w-5" />
+          Delete
+        </Button>
       </div>
 
-      <div className="bg-[#153147]  rounded-lg shadow overflow-hidden">
+      <div className="bg-[#153147] rounded-lg shadow overflow-hidden">
         <DataTable
-          columns={columns}
+          columns={[
+            {
+              header: '',
+              accessor: 'select',
+              render: (student: Student) => (
+                <input
+                  type="checkbox"
+                  checked={selectedStudents.includes(student.id)}
+                  onChange={() => handleSelectStudent(student.id)}
+                  className="h-4 w-4 text-[#153147] focus:ring-[#153147] border-gray-300 rounded"
+                />
+              )
+            },
+            ...columns
+          ]}
           data={students.filter(student => {
-    const searchTerms = searchQuery.toLowerCase().split(' ');
-    const studentData = [
-      student.fullName,
-      student.email,
-      student.contact_number,
-      student.student_id,
-      student.gender,
-      student.nationality,
-      student.institution_name,
-      student.language_test
-    ].map(field => (field || '').toLowerCase());
+            const searchTerms = searchQuery.toLowerCase().split(' ');
+            const studentData = [
+              student.fullName,
+              student.email,
+              student.contact_number,
+              student.student_id,
+              student.gender,
+              student.nationality,
+              student.institution_name,
+              student.language_test
+            ].map(field => (field || '').toLowerCase());
 
-    return searchTerms.every(term =>
-      studentData.some(field => field.includes(term))
-    );
-  })}
+            return searchTerms.every(term =>
+              studentData.some(field => field.includes(term))
+            );
+          })}
           isLoading={loading}
           error={error}
         />
@@ -394,6 +525,7 @@ const StudentList = (): ReactElement => {
       {/* Add Student Modal */}
       {isAddModalOpen && (
         <AddStudentModal
+          isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={handleAddSuccess}
           hideBranch={true}
