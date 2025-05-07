@@ -64,13 +64,23 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
     <form onSubmit={handleNext} className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-[#1e1b4b]/20">Personal Information</h2>
       <div className="grid grid-cols-2 gap-6">
-        <FormField label="Name" error={errors.name} required>
+        <FormField label="First Name" error={errors.firstName} required>
           <input
             type="text"
             required
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className={`w-full px-4 py-2.5 border ${errors.name ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+            value={formData.firstName}
+            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+            className={`w-full px-4 py-2.5 border ${errors.firstName ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
+          />
+        </FormField>
+
+        <FormField label="Last Name" error={errors.lastName} required>
+          <input
+            type="text"
+            required
+            value={formData.lastName}
+            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+            className={`w-full px-4 py-2.5 border ${errors.lastName ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
           />
         </FormField>
 
@@ -291,7 +301,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
   const [errors, setErrors] = useState({});
   const [branches, setBranches] = useState([]);
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     role: '',
     gender: '',
     nationality: '',
@@ -339,7 +350,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
     const newErrors = {};
     
     // Required field validation
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.firstName.trim()) newErrors.firstName = 'First Name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last Name is required';
     if (!formData.role) newErrors.role = 'Role is required';
     if (!formData.gender) newErrors.gender = 'Gender is required';
     if (!formData.nationality.trim()) newErrors.nationality = 'Nationality is required';
@@ -390,11 +402,6 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
       setIsSubmitting(true);
       setErrors({});
       
-      // Split name into first and last name
-      const nameParts = formData.name.split(' ');
-      const firstName = nameParts[0];
-      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-      
       // Create the employee data object in the format the backend expects
       const employeeData = {
         branch: formData.branch,
@@ -423,8 +430,8 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
       formDataToSend.append('employee_data', JSON.stringify(employeeData));
       
       // Add user data fields
-      formDataToSend.append('user.first_name', firstName);
-      formDataToSend.append('user.last_name', lastName);
+      formDataToSend.append('user.first_name', formData.firstName);
+      formDataToSend.append('user.last_name', formData.lastName);
       formDataToSend.append('user.email', formData.email);
       formDataToSend.append('user.role', formData.role);
       formDataToSend.append('user.password', 'Employee@123'); // Default password
