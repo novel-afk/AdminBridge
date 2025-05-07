@@ -236,12 +236,14 @@ const EditStudentModal = ({ isOpen, onClose, onSuccess, student }) => {
                   <input type="text" required value={formData.nationality} onChange={e => setFormData({ ...formData, nationality: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900" />
                 </FormField>
                 <FormField label="Branch" error={errors.branch} required>
-                  <select required value={formData.branch} onChange={e => setFormData({ ...formData, branch: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900">
-                    <option value="">Select Branch</option>
-                    {branches.map(branch => (
-                      <option key={branch.id} value={branch.id}>{branch.name}</option>
-                    ))}
-                  </select>
+                  {branches.length > 0 && (
+                    <select required value={formData.branch} onChange={e => setFormData({ ...formData, branch: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900">
+                      <option value="">Select Branch</option>
+                      {branches.map(branch => (
+                        <option key={branch.id} value={branch.id}>{branch.name}</option>
+                      ))}
+                    </select>
+                  )}
                 </FormField>
                 <FileUpload id="profileImage" label="Profile Image" accept="image/*" value={formData.profileImage} onChange={e => setFormData({ ...formData, profileImage: e.target.files[0] })} error={errors.profileImage} existingFile={formData.existingProfileImage} />
               </div>
@@ -279,12 +281,6 @@ const EditStudentModal = ({ isOpen, onClose, onSuccess, student }) => {
                   <input type="text" value={formData.emergencyContact} onChange={e => setFormData({ ...formData, emergencyContact: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900" />
                 </FormField>
                 <FileUpload id="resume" label="Resume (PDF)" accept="application/pdf" value={formData.resume} onChange={e => setFormData({ ...formData, resume: e.target.files[0] })} error={errors.resume} existingFile={formData.existingResume} />
-                <FormField label="Date of Birth" error={errors.dob}>
-                  <input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900" />
-                </FormField>
-                <FormField label="Address" error={errors.address} required>
-                  <textarea required value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} rows={3} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900" />
-                </FormField>
               </div>
               <div className="flex justify-between mt-8">
                 <button type="button" onClick={handleBack} className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-sm">Back</button>
