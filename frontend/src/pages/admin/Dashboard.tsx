@@ -487,6 +487,7 @@ const AdminDashboard = () => {
                               </div>
                               <div className="flex space-x-2">
                                 <button
+                                  type="button"
                                   className={`px-3 py-1 rounded ${currentPage === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                                   onClick={() => handlePageChange(currentPage - 1)}
                                   disabled={currentPage === 1}
@@ -495,6 +496,7 @@ const AdminDashboard = () => {
                                 </button>
                                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                                   <button
+                                    type="button"
                                     key={page}
                                     className={`px-3 py-1 rounded ${page === currentPage ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                                     onClick={() => handlePageChange(page)}
@@ -503,6 +505,7 @@ const AdminDashboard = () => {
                                   </button>
                                 ))}
                                 <button
+                                  type="button"
                                   className={`px-3 py-1 rounded ${currentPage === totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                                   onClick={() => handlePageChange(currentPage + 1)}
                                   disabled={currentPage === totalPages}

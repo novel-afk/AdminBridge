@@ -187,16 +187,34 @@ class ActivityLogMiddleware:
                 'DELETE': 'DELETE',
                 'GET': 'VIEW'
             }),
+            # Blogs
+            (r'^/api/blogs/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'PATCH': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+            # Jobs
+            (r'^/api/jobs/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'PATCH': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
         ]
     
     def __call__(self, request):
+        # Debug: Print path, method, and authentication status
+        print(f"[ActivityLogMiddleware] Path: {request.path}, Method: {request.method}, Auth: {getattr(request.user, 'is_authenticated', False)}")
         # Get response first
         response = self.get_response(request)
         
         # Only log if user is authenticated
         if not request.user.is_authenticated:
             return response
-            
+        
         # Check if this request should be logged
         for pattern, methods in self.logged_patterns:
             if re.match(pattern, request.path):
@@ -209,15 +227,16 @@ class ActivityLogMiddleware:
                 # Create activity log
                 from .models import User, ActivityLog, Branch
                 
-                # Only log POST, PUT, and DELETE actions
-                if request.method not in ['POST', 'PUT', 'DELETE']:
+                # Only log POST, PUT, PATCH, and DELETE actions
+                if request.method not in ['POST', 'PUT', 'PATCH', 'DELETE']:
                     return self.get_response(request)
                 
                 # Extract entity type from path
                 path_parts = request.path.split('/')
                 if len(path_parts) > 2:
                     entity_type = path_parts[2]  # e.g., 'students', 'employees', etc.
-                    
+                    print(f"[ActivityLogMiddleware] entity_type: {entity_type}")
+                    action_details = None
                     if request.method == 'POST':
                         # Handle creation
                         try:
@@ -228,7 +247,7 @@ class ActivityLogMiddleware:
                                 data = request.POST.dict()
                             else:
                                 data = {}
-                                
+                            print(f"[ActivityLogMiddleware] data: {data}")
                             if 'student_data' in data:
                                 student_data = json.loads(data['student_data'])
                                 if entity_type == 'students':
@@ -239,14 +258,12 @@ class ActivityLogMiddleware:
                                         branch_name = branch.name
                                     except Branch.DoesNotExist:
                                         branch_name = str(branch_id)
-                                    # Get name from user data
                                     first_name = request.POST.get('user.first_name', '')
                                     last_name = request.POST.get('user.last_name', '')
                                     name = f"{first_name} {last_name}".strip()
                                     action_details = f"{request.user.get_full_name()} added student {name} in {branch_name}"
                             elif isinstance(data, dict):
                                 if entity_type == 'employees':
-                                    # Extract role and branch from employee_data if it exists
                                     employee_data = data.get('employee_data')
                                     if employee_data:
                                         try:
@@ -256,11 +273,9 @@ class ActivityLogMiddleware:
                                             branch_id = None
                                     else:
                                         branch_id = None
-                                    
                                     role = data.get('user.role', '')
                                     first_name = data.get('user.first_name', '')
                                     last_name = data.get('user.last_name', '')
-                                    
                                     try:
                                         branch = Branch.objects.get(id=branch_id) if branch_id else None
                                         branch_name = branch.name if branch else 'Unknown Branch'
@@ -271,11 +286,16 @@ class ActivityLogMiddleware:
                                 elif entity_type == 'branches':
                                     branch_name = data.get('name', '')
                                     action_details = f"{request.user.get_full_name()} added branch {branch_name}"
-                        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+                                elif entity_type == 'blogs':
+                                    title = data.get('title', '')
+                                    action_details = f"{request.user.get_full_name()} added blog '{title}'"
+                                elif entity_type == 'jobs':
+                                    title = data.get('title', '')
+                                    action_details = f"{request.user.get_full_name()} added job '{title}'"
+                        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError) as e:
+                            print(f"[ActivityLogMiddleware] Exception in POST data parsing: {e}")
                             return self.get_response(request)
-                            
-                    elif request.method == 'PUT':
-                        # Handle updates
+                    elif request.method in ['PUT', 'PATCH']:
                         entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
                         if entity_type == 'students':
                             action_details = f"{request.user.get_full_name()} updated student details"
@@ -283,9 +303,11 @@ class ActivityLogMiddleware:
                             action_details = f"{request.user.get_full_name()} updated employee details"
                         elif entity_type == 'branches':
                             action_details = f"{request.user.get_full_name()} updated branch details"
-                            
+                        elif entity_type == 'blogs':
+                            action_details = f"{request.user.get_full_name()} updated blog"
+                        elif entity_type == 'jobs':
+                            action_details = f"{request.user.get_full_name()} updated job"
                     elif request.method == 'DELETE':
-                        # Handle deletions
                         entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
                         if entity_type == 'students':
                             action_details = f"{request.user.get_full_name()} removed a student"
@@ -293,14 +315,19 @@ class ActivityLogMiddleware:
                             action_details = f"{request.user.get_full_name()} removed an employee"
                         elif entity_type == 'branches':
                             action_details = f"{request.user.get_full_name()} removed a branch"
-                
-                ActivityLog.objects.create(
-                    user=request.user,
-                    action_type=action_type,
-                    action_model=model_name,
-                    action_details=action_details,
-                    ip_address=request.META.get('REMOTE_ADDR')
-                )
+                        elif entity_type == 'blogs':
+                            action_details = f"{request.user.get_full_name()} removed a blog"
+                        elif entity_type == 'jobs':
+                            action_details = f"{request.user.get_full_name()} removed a job"
+                    if action_details:
+                        ActivityLog.objects.create(
+                            user=request.user,
+                            action_type=action_type,
+                            action_model=model_name,
+                            action_details=action_details,
+                            ip_address=request.META.get('REMOTE_ADDR')
+                        )
+                        print(f"[ActivityLogMiddleware] Logged: {action_type} {model_name} - {action_details}")
                 break
         
         return response
