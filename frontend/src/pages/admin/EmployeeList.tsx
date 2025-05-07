@@ -77,7 +77,7 @@ const EmployeeList = () => {
   const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 10;
   
   // API base URL - should match your backend configuration
   const API_BASE_URL = 'http://localhost:8000/api';
@@ -195,8 +195,8 @@ const EmployeeList = () => {
     if (paginatedEmployees.length === 4) return 'h-[300px]';
     if (paginatedEmployees.length === 5) return 'h-[360px]';
     if (paginatedEmployees.length <= 8) return 'h-[500px]';
-    if (paginatedEmployees.length <= 12) return 'h-[620px]';
-    return 'h-[680px]'; // Fixed height for 13-15 items
+    if (paginatedEmployees.length <= 10) return 'h-[620px]';
+    return 'h-[680px]'; // Fixed height for 11-15 items
   };
 
   // Calculate container size based on content
@@ -708,14 +708,12 @@ const EmployeeList = () => {
           {/* Pagination - only show if we have data and multiple pages */}
           {totalPages > 1 && (
             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div className="flex-1 flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
-                    <span className="font-medium">
-                      {Math.min(startIndex + itemsPerPage, filteredEmployees.length)}
-                    </span>{" "}
-                    of <span className="font-medium">{filteredEmployees.length}</span> results
+                    Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+                    <span className="font-medium">{Math.min(startIndex + itemsPerPage, filteredEmployees.length)}</span> of{' '}
+                    <span className="font-medium">{filteredEmployees.length}</span> results
                   </p>
                 </div>
                 <div>
@@ -732,32 +730,19 @@ const EmployeeList = () => {
                         <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </button>
-                    
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      const pageNumber = currentPage <= 3 
-                        ? i + 1 
-                        : currentPage >= totalPages - 2 
-                          ? totalPages - 4 + i 
-                          : currentPage - 2 + i;
-                        
-                      if (pageNumber > 0 && pageNumber <= totalPages) {
-                        return (
-                          <button
-                            key={pageNumber}
-                            onClick={() => setCurrentPage(pageNumber)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                              currentPage === pageNumber
-                                ? 'z-10 bg-[#153147] border-[#153147] text-white'
-                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                            }`}
-                          >
-                            {pageNumber}
-                          </button>
-                        );
-                      }
-                      return null;
-                    })}
-                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                      <button
+                        key={pageNumber}
+                        onClick={() => setCurrentPage(pageNumber)}
+                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                          currentPage === pageNumber
+                            ? 'z-10 bg-[#153147] border-[#153147] text-white'
+                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                        }`}
+                      >
+                        {pageNumber}
+                      </button>
+                    ))}
                     <button
                       onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
                       disabled={currentPage === totalPages}
