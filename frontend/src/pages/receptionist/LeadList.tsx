@@ -22,10 +22,15 @@ const ReceptionistLeadList = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     const fetchLeads = async () => {
+      // If data already loaded, don't fetch again
+      if (dataLoaded) return;
+      
       try {
+        setLoading(true);
         const accessToken = localStorage.getItem('access_token');
         if (!accessToken) {
           setError('You are not authenticated');
@@ -44,6 +49,7 @@ const ReceptionistLeadList = () => {
 
         setLeads(filteredLeads);
         setLoading(false);
+        setDataLoaded(true);
       } catch (err: any) {
         console.error('Error fetching leads:', err);
         setError(err.response?.data?.detail || 'Failed to fetch leads');
@@ -52,7 +58,7 @@ const ReceptionistLeadList = () => {
     };
 
     fetchLeads();
-  }, [user]);
+  }, [user, dataLoaded]);
 
   if (loading) {
     return (

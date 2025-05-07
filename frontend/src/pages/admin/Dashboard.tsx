@@ -15,8 +15,7 @@ import {
   LineElement
 } from 'chart.js';
 import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 ChartJS.register(
   CategoryScale,
@@ -114,7 +113,7 @@ const AdminDashboard = () => {
       setError(null);
       
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/admin/stats/`, {
+        const response = await axios.get(`${API_BASE_URL}/admin/stats/`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         
@@ -157,7 +156,7 @@ const AdminDashboard = () => {
         navigate('/login');
         return;
       }
-      const response = await axios.get(`${API_BASE_URL}/api/activity-logs/all/`, {
+      const response = await axios.get(`${API_BASE_URL}/activity-logs/all/`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       const logs = response.data;

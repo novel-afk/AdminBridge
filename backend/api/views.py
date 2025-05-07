@@ -38,59 +38,84 @@ def admin_stats(request):
     API endpoint for admin dashboard statistics
     """
     try:
-        # Count real data if available
-        branch_count = Branch.objects.count() or 5
-        employee_count = Employee.objects.count() or 42
-        student_count = Student.objects.count() or 350
-        lead_count = Lead.objects.count() or 28
-        job_count = Job.objects.count() or 15
+        # Count real data from the database
+        branch_count = Branch.objects.count()
+        manager_count = Employee.objects.filter(user__role='BranchManager').count()
+        counsellor_count = Employee.objects.filter(user__role='Counsellor').count()
+        receptionist_count = Employee.objects.filter(user__role='Receptionist').count()
+        student_count = Student.objects.count()
+        lead_count = Lead.objects.count()
+        job_count = Job.objects.count()
         
-        # Generate mock data for demonstration or use real data when available
+        # Get real branch data and student counts
         branches = Branch.objects.all()
-        branch_names = [branch.name for branch in branches] if branches.exists() else [
-            "Kathmandu", "Pokhara", "Chitwan", "Butwal", "Biratnagar"
-        ]
-        
         students_by_branch = {}
-        for name in branch_names:
-            students_by_branch[name] = random.randint(30, 120)
+        
+        if branches.exists():
+            for branch in branches:
+                students_count = Student.objects.filter(branch=branch).count()
+                students_by_branch[branch.name] = students_count
+        
+        # Get lead source distribution
+        lead_source_counts = {}
+        lead_sources = Lead.objects.values('lead_source').annotate(count=Count('lead_source'))
+        for item in lead_sources:
+            lead_source_counts[item['lead_source']] = item['count']
             
-        leads_status_count = {
-            "New": random.randint(5, 15),
-            "Contacted": random.randint(10, 20),
-            "Qualified": random.randint(5, 15),
-            "Converted": random.randint(5, 20),
-            "Closed": random.randint(3, 10)
-        }
+        # If no lead sources found, provide some default categories
+        if not lead_source_counts:
+            lead_source_counts = {
+                "Website": Lead.objects.filter(lead_source="Website").count(),
+                "Social Media": Lead.objects.filter(lead_source="Social Media").count(),
+                "Referral": Lead.objects.filter(lead_source="Referral").count(),
+                "Walk-in": Lead.objects.filter(lead_source="Walk-in").count(),
+                "Phone Inquiry": Lead.objects.filter(lead_source="Phone Inquiry").count(),
+                "Email": Lead.objects.filter(lead_source="Email").count(),
+                "Event": Lead.objects.filter(lead_source="Event").count(),
+                "Other": Lead.objects.filter(lead_source="Other").count()
+            }
         
-        # Mock data for monthly student registrations (last 6 months)
-        current_month = timezone.now().month
-        current_year = timezone.now().year
-        
-        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        # Calculate monthly student registrations for the last 6 months
         monthly_student_registrations = {}
+        current_date = timezone.now()
         
+        # Get the last 6 months
         for i in range(6):
-            # Calculate month index (going backward from current month)
-            month_idx = (current_month - i - 1) % 12
-            if month_idx == 0:
-                month_idx = 12
-                current_year -= 1
+            # Calculate month and year (going back from current month)
+            month = (current_date.month - i) % 12
+            if month == 0:
+                month = 12
+            
+            year = current_date.year
+            if current_date.month - i <= 0:
+                year -= 1
                 
-            month_name = month_names[month_idx - 1]
-            monthly_student_registrations[month_name] = random.randint(10, 50)
-
+            # Get month name
+            month_name = datetime.date(year, month, 1).strftime('%b')
+            
+            # Count students registered in this month
+            start_date = datetime.date(year, month, 1)
+            if month == 12:
+                end_date = datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
+            else:
+                end_date = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+                
+            month_count = Student.objects.filter(enrollment_date__range=[start_date, end_date]).count()
+            monthly_student_registrations[month_name] = month_count
+        
         # Reverse to show in chronological order
         monthly_student_registrations = dict(reversed(list(monthly_student_registrations.items())))
             
         stats = {
             "branchCount": branch_count,
-            "employeeCount": employee_count,
+            "managerCount": manager_count,
+            "counsellorCount": counsellor_count,
+            "receptionistCount": receptionist_count,
             "studentCount": student_count,
             "leadCount": lead_count,
             "jobCount": job_count,
             "studentsByBranch": students_by_branch,
-            "leadsStatusCount": leads_status_count,
+            "leadsStatusCount": lead_source_counts,
             "monthlyStudentRegistrations": monthly_student_registrations
         }
         
@@ -950,14 +975,17 @@ class LeadViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         
+        # Select related fields to reduce database queries
+        queryset = Lead.objects.select_related('branch', 'created_by', 'assigned_to')
+        
         # SuperAdmin can see all leads
         if user.role == 'SuperAdmin':
-            return Lead.objects.all()
+            return queryset
             
         # Branch Manager, Counsellor, and Receptionist can see leads in their branch
         if user.role in ['BranchManager', 'Counsellor', 'Receptionist'] and hasattr(user, 'employee_profile'):
             user_branch = user.employee_profile.branch
-            return Lead.objects.filter(branch=user_branch)
+            return queryset.filter(branch=user_branch)
             
         # Students and others can't see leads
         return Lead.objects.none()
@@ -1136,14 +1164,19 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         
+        # Base queryset with select_related for performance
+        base_queryset = EmployeeAttendance.objects.select_related(
+            'employee', 'employee__user', 'employee__branch', 'created_by', 'updated_by'
+        )
+        
         # SuperAdmin can see all attendance records
         if user.role == 'SuperAdmin':
-            return EmployeeAttendance.objects.all()
+            return base_queryset
         
         # Branch Manager can see attendance records for employees in their branch
         if user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
             user_branch = user.employee_profile.branch
-            return EmployeeAttendance.objects.filter(employee__branch=user_branch)
+            return base_queryset.filter(employee__branch=user_branch)
         
         # Others can't see any records
         return EmployeeAttendance.objects.none()
@@ -1167,8 +1200,43 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Get all employees first
+        user = self.request.user
+        employees = []
+        
+        if user.role == 'SuperAdmin':
+            employees = Employee.objects.select_related('user', 'branch').all()
+        elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
+            user_branch = user.employee_profile.branch
+            employees = Employee.objects.select_related('user', 'branch').filter(branch=user_branch)
+        
+        # Get existing attendance records for this date
         queryset = self.get_queryset().filter(date=date)
-        serializer = self.get_serializer(queryset, many=True)
+        existing_attendance = {record.employee_id: record for record in queryset}
+        
+        # Create attendance data for all employees
+        attendance_data = []
+        for employee in employees:
+            if employee.id in existing_attendance:
+                # Use existing record
+                attendance_data.append(existing_attendance[employee.id])
+            else:
+                # Create a placeholder record (will not be saved to DB)
+                attendance_data.append({
+                    'employee': employee.id,
+                    'employee_name': f"{employee.user.first_name} {employee.user.last_name}",
+                    'employee_id': employee.employee_id,
+                    'employee_role': employee.user.role,
+                    'branch_name': employee.branch.name,
+                    'date': date,
+                    'time_in': '09:00:00',
+                    'time_out': '17:00:00',
+                    'status': 'Present',
+                    'remarks': None
+                })
+        
+        # Serialize the data
+        serializer = self.get_serializer(attendance_data, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
@@ -1184,6 +1252,87 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().filter(employee__employee_id=employee_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def bulk_update(self, request):
+        """
+        Bulk update attendance records
+        Expects a list of attendance records in the format:
+        [
+            {
+                "employee": 1,
+                "date": "2023-01-01",
+                "status": "Present"
+            }
+        ]
+        """
+        if not request.user.role == 'SuperAdmin':
+            return Response(
+                {"detail": "Only SuperAdmin can perform bulk updates."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        attendance_data = request.data
+        if not isinstance(attendance_data, list):
+            return Response(
+                {"detail": "Expected a list of attendance records."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        results = []
+        for record in attendance_data:
+            employee_id = record.get('employee')
+            date_str = record.get('date')
+            status_value = record.get('status')
+            
+            if not employee_id or not date_str or not status_value:
+                results.append({
+                    'success': False,
+                    'error': "Missing required fields (employee, date, status)",
+                    'data': record
+                })
+                continue
+            
+            try:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                
+                # Find or create the attendance record
+                attendance, created = EmployeeAttendance.objects.get_or_create(
+                    employee_id=employee_id,
+                    date=date,
+                    defaults={
+                        'status': status_value,
+                        'created_by': request.user,
+                        'time_in': '09:00:00',
+                        'time_out': '17:00:00'
+                    }
+                )
+                
+                if not created:
+                    # Update existing record
+                    attendance.status = status_value
+                    attendance.updated_by = request.user
+                    attendance.save(update_fields=['status', 'updated_by'])
+                
+                results.append({
+                    'success': True,
+                    'employee_id': employee_id,
+                    'date': date_str,
+                    'status': status_value
+                })
+                
+            except Exception as e:
+                results.append({
+                    'success': False,
+                    'error': str(e),
+                    'data': record
+                })
+        
+        return Response({
+            'results': results,
+            'success_count': len([r for r in results if r.get('success')]),
+            'error_count': len([r for r in results if not r.get('success')])
+        })
 
 
 class StudentAttendanceViewSet(viewsets.ModelViewSet):
@@ -1202,18 +1351,23 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         
+        # Base queryset with select_related for performance
+        base_queryset = StudentAttendance.objects.select_related(
+            'student', 'student__user', 'student__branch', 'created_by', 'updated_by'
+        )
+        
         # SuperAdmin can see all attendance records
         if user.role == 'SuperAdmin':
-            return StudentAttendance.objects.all()
+            return base_queryset
         
         # Branch Manager can see attendance records for students in their branch
         if user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
             user_branch = user.employee_profile.branch
-            return StudentAttendance.objects.filter(student__branch=user_branch)
+            return base_queryset.filter(student__branch=user_branch)
         
         # Students can see their own attendance records
         if user.role == 'Student' and hasattr(user, 'student_profile'):
-            return StudentAttendance.objects.filter(student=user.student_profile)
+            return base_queryset.filter(student=user.student_profile)
         
         # Others can't see any records
         return StudentAttendance.objects.none()
@@ -1237,8 +1391,44 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Get all students first
+        user = self.request.user
+        students = []
+        
+        if user.role == 'SuperAdmin':
+            students = Student.objects.select_related('user', 'branch').all()
+        elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
+            user_branch = user.employee_profile.branch
+            students = Student.objects.select_related('user', 'branch').filter(branch=user_branch)
+        elif user.role == 'Student' and hasattr(user, 'student_profile'):
+            students = [user.student_profile]
+        
+        # Get existing attendance records for this date
         queryset = self.get_queryset().filter(date=date)
-        serializer = self.get_serializer(queryset, many=True)
+        existing_attendance = {record.student_id: record for record in queryset}
+        
+        # Create attendance data for all students
+        attendance_data = []
+        for student in students:
+            if student.id in existing_attendance:
+                # Use existing record
+                attendance_data.append(existing_attendance[student.id])
+            else:
+                # Create a placeholder record (will not be saved to DB)
+                attendance_data.append({
+                    'student': student.id,
+                    'student_name': f"{student.user.first_name} {student.user.last_name}",
+                    'student_id': student.student_id,
+                    'branch_name': student.branch.name,
+                    'date': date,
+                    'time_in': '09:00:00',
+                    'time_out': '17:00:00',
+                    'status': 'Present',
+                    'remarks': None
+                })
+        
+        # Serialize the data
+        serializer = self.get_serializer(attendance_data, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
@@ -1254,6 +1444,87 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().filter(student__student_id=student_id)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def bulk_update(self, request):
+        """
+        Bulk update attendance records
+        Expects a list of attendance records in the format:
+        [
+            {
+                "student": 1,
+                "date": "2023-01-01",
+                "status": "Present"
+            }
+        ]
+        """
+        if not request.user.role == 'SuperAdmin':
+            return Response(
+                {"detail": "Only SuperAdmin can perform bulk updates."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        attendance_data = request.data
+        if not isinstance(attendance_data, list):
+            return Response(
+                {"detail": "Expected a list of attendance records."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        results = []
+        for record in attendance_data:
+            student_id = record.get('student')
+            date_str = record.get('date')
+            status_value = record.get('status')
+            
+            if not student_id or not date_str or not status_value:
+                results.append({
+                    'success': False,
+                    'error': "Missing required fields (student, date, status)",
+                    'data': record
+                })
+                continue
+            
+            try:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                
+                # Find or create the attendance record
+                attendance, created = StudentAttendance.objects.get_or_create(
+                    student_id=student_id,
+                    date=date,
+                    defaults={
+                        'status': status_value,
+                        'created_by': request.user,
+                        'time_in': '09:00:00',
+                        'time_out': '17:00:00'
+                    }
+                )
+                
+                if not created:
+                    # Update existing record
+                    attendance.status = status_value
+                    attendance.updated_by = request.user
+                    attendance.save(update_fields=['status', 'updated_by'])
+                
+                results.append({
+                    'success': True,
+                    'student_id': student_id,
+                    'date': date_str,
+                    'status': status_value
+                })
+                
+            except Exception as e:
+                results.append({
+                    'success': False,
+                    'error': str(e),
+                    'data': record
+                })
+        
+        return Response({
+            'results': results,
+            'success_count': len([r for r in results if r.get('success')]),
+            'error_count': len([r for r in results if not r.get('success')])
+        })
 
 
 class ActivityLogPagination(PageNumberPagination):

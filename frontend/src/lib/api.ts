@@ -151,8 +151,10 @@ export const studentAPI = {
 
 // Lead API
 export const leadAPI = {
-  getAll: () => 
-    api.get('/leads/'),
+  getAll: () => {
+    console.log('Fetching all leads');
+    return api.get('/leads/');
+  },
   
   getById: (id: number) => 
     api.get(`/leads/${id}/`),

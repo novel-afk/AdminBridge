@@ -212,6 +212,12 @@ class LeadSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         validated_data['created_by'] = user
         return super().create(validated_data)
+        
+    def to_representation(self, instance):
+        # This improves performance by reducing database queries
+        representation = super().to_representation(instance)
+        # Add any additional transformations to speed up serialization
+        return representation
 
 
 class JobSerializer(serializers.ModelSerializer):

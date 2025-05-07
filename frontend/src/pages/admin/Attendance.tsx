@@ -394,79 +394,28 @@ const AttendancePage = () => {
     try {
       // Fetch employee attendance for selected date
       const employeeAttendanceResponse = await axios.get(
-        `${API_BASE_URL}/employee-attendance/?date=${selectedDate}`,
+        `${API_BASE_URL}/employee-attendance/by_date/?date=${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
       
       console.log('Employee attendance API response:', employeeAttendanceResponse.data);
-      
-      // Handle different API response formats
-      let existingAttendanceData: any[] = [];
+      let allEmployeeAttendance: any[] = [];
       if (Array.isArray(employeeAttendanceResponse.data)) {
-        existingAttendanceData = employeeAttendanceResponse.data;
+        allEmployeeAttendance = employeeAttendanceResponse.data;
       } else if (employeeAttendanceResponse.data.results && Array.isArray(employeeAttendanceResponse.data.results)) {
-        existingAttendanceData = employeeAttendanceResponse.data.results;
+        allEmployeeAttendance = employeeAttendanceResponse.data.results;
       } else if (employeeAttendanceResponse.data.data && Array.isArray(employeeAttendanceResponse.data.data)) {
-        existingAttendanceData = employeeAttendanceResponse.data.data;
+        allEmployeeAttendance = employeeAttendanceResponse.data.data;
       }
-      
-      // Create attendance records for all employees
-      const allEmployeeAttendance = employees.map(employee => {
-        // Try to find existing attendance record for this employee
-        const existingRecord = existingAttendanceData.find(record => record.employee === employee.id);
-        
-        if (existingRecord) {
-          // Use existing record but ensure employee details are up to date
-          return {
-            ...existingRecord,
-            employee_name: employee.employee_name,
-            employee_id: employee.employee_id,
-            employee_role: employee.employee_role,
-            branch_name: employee.branch_name
-          };
-        } else {
-          // Create new attendance record for this employee
-          return {
-            employee: employee.id,
-            employee_name: employee.employee_name,
-            employee_id: employee.employee_id,
-            employee_role: employee.employee_role,
-            branch_name: employee.branch_name,
-            date: selectedDate,
-            time_in: null,
-            time_out: null,
-            status: 'Present',
-            remarks: null
-          };
-        }
-      });
-      
-      console.log('All employee attendance records:', allEmployeeAttendance);
       setEmployeeAttendance(allEmployeeAttendance);
-      
     } catch (err: any) {
       console.error('Error fetching employee attendance data:', err);
       if (!error) {
         setError('Failed to load employee attendance data');
       }
-      
-      // Create default attendance data for all employees
-      const defaultEmployeeAttendance = employees.map(employee => ({
-        employee: employee.id,
-        employee_name: employee.employee_name,
-        employee_id: employee.employee_id,
-        employee_role: employee.employee_role,
-        branch_name: employee.branch_name,
-        date: selectedDate,
-        time_in: null,
-        time_out: null,
-        status: 'Present',
-        remarks: null
-      }));
-      
-      setEmployeeAttendance(defaultEmployeeAttendance);
+      setEmployeeAttendance([]);
     }
   };
 
@@ -474,73 +423,26 @@ const AttendancePage = () => {
   const fetchStudentAttendanceData = async (token: string) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/student-attendance/?date=${selectedDate}`,
+        `${API_BASE_URL}/student-attendance/by_date/?date=${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       );
       
       console.log('Student attendance API response:', response.data);
-      
-      let existingAttendanceData: any[] = [];
+      let allStudentAttendance: any[] = [];
       if (Array.isArray(response.data)) {
-        existingAttendanceData = response.data;
+        allStudentAttendance = response.data;
       } else if (response.data.results && Array.isArray(response.data.results)) {
-        existingAttendanceData = response.data.results;
+        allStudentAttendance = response.data.results;
       } else if (response.data.data && Array.isArray(response.data.data)) {
-        existingAttendanceData = response.data.data;
+        allStudentAttendance = response.data.data;
       }
-      
-      // Create attendance records for all students
-      const allStudentAttendance = students.map(student => {
-        // Try to find existing attendance record for this student
-        const existingRecord = existingAttendanceData.find(record => record.student === student.id);
-        
-        if (existingRecord) {
-          // Use existing record but ensure student details are up to date
-          return {
-            ...existingRecord,
-            student_name: student.student_name,
-            student_id: student.student_id,
-            branch_name: student.branch_name
-          };
-        } else {
-          // Create new attendance record for this student
-          return {
-            student: student.id,
-            student_name: student.student_name,
-            student_id: student.student_id,
-            branch_name: student.branch_name,
-            date: selectedDate,
-            time_in: null,
-            time_out: null,
-            status: 'Present',
-            remarks: null
-          };
-        }
-      });
-      
-      console.log('All student attendance records:', allStudentAttendance);
       setStudentAttendance(allStudentAttendance);
-      
     } catch (error) {
       console.error('Error fetching student attendance:', error);
       setError('Failed to fetch student attendance data');
-      
-      // Use default attendance data for all students
-      const defaultStudentAttendance = students.map(student => ({
-        student: student.id,
-        student_name: student.student_name,
-        student_id: student.student_id,
-        branch_name: student.branch_name,
-        date: selectedDate,
-        time_in: null,
-        time_out: null,
-        status: 'Present',
-        remarks: null
-      }));
-      
-      setStudentAttendance(defaultStudentAttendance);
+      setStudentAttendance([]);
     }
   };
 
@@ -558,7 +460,7 @@ const AttendancePage = () => {
     }
   };
 
-  // Handle status change for employee attendance
+  // Handle employee attendance status change
   const handleEmployeeStatusChange = async (employeeId: number, newStatus: string) => {
     const token = getAuthToken();
     if (!token) {
@@ -566,123 +468,60 @@ const AttendancePage = () => {
       return;
     }
     
+    // Find the existing attendance record
+    const attendanceRecord = employeeAttendance.find(record => 
+      record.employee === employeeId && 
+      new Date(record.date).toISOString().split('T')[0] === selectedDate
+    );
+    
     try {
-      console.log(`Updating employee attendance ${employeeId} to status: ${newStatus}`);
-      
-      // Find the attendance record for this employee
-      const attendanceRecord = employeeAttendance.find(item => item.employee === employeeId);
-      
-      let response;
-      
-      if (attendanceRecord?.id) {
-        // This is an existing record, update it
-        console.log(`Updating existing record for employee ${employeeId}`);
-        response = await axios.patch(
-          `${API_BASE_URL}/employee-attendance/${attendanceRecord.id}/`,
+      if (attendanceRecord && attendanceRecord.id) {
+        // Update existing record
+        await axios.patch(
+          `${API_BASE_URL}/employee-attendances/${attendanceRecord.id}/`,
           { status: newStatus },
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        console.log('Update employee attendance response:', response.data);
+        // Update local state
+        setEmployeeAttendance(prevAttendance => 
+          prevAttendance.map(record => 
+            record.employee === employeeId && new Date(record.date).toISOString().split('T')[0] === selectedDate
+              ? { ...record, status: newStatus }
+              : record
+          )
+        );
       } else {
-        // This is a new record, create it
-        console.log(`Creating new record for employee ${employeeId}`);
-        const newRecord = {
-          employee: employeeId,
-          date: selectedDate,
-          status: newStatus,
-          // Include any other required fields from the employee data
-          remarks: null
-        };
-        
-        response = await axios.post(
-          `${API_BASE_URL}/employee-attendance/`,
-          newRecord,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
+        // Create new record using the bulk update endpoint
+        await axios.post(
+          `${API_BASE_URL}/employee-attendances/bulk_update/`,
+          [{
+            employee: employeeId,
+            date: selectedDate,
+            status: newStatus
+          }],
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        console.log('Create employee attendance response:', response.data);
-      }
-      
-      // Update local state with the response data
-      const updatedRecord = response?.data;
-      
-      if (updatedRecord) {
-        setEmployeeAttendance(prev => {
-          if (!Array.isArray(prev)) {
-            console.warn('employeeAttendance is not an array when updating');
-            return [];
-          }
-          
-          // Find the index of the record to update
-          const recordIndex = prev.findIndex(item => item.employee === employeeId);
-          
-          // Get the employee data to ensure we maintain all required display fields
-          const employeeData = employees.find(emp => emp.id === employeeId);
-          
-          if (recordIndex === -1) {
-            // Record not found, add it to the array with employee data
-            return [...prev, {
-              ...updatedRecord,
-              employee_name: employeeData?.employee_name || `Employee #${employeeId}`,
-              employee_id: employeeData?.employee_id || `ID-${employeeId}`,
-              employee_role: employeeData?.employee_role || 'Unknown',
-              branch_name: employeeData?.branch_name || 'Unknown'
-            }];
-          } else {
-            // Update the existing record
-            const updatedAttendance = [...prev];
-            updatedAttendance[recordIndex] = {
-              ...updatedAttendance[recordIndex],
-              ...updatedRecord,
-              status: newStatus
-            };
-            return updatedAttendance;
-          }
-        });
-      } else {
-        // If we don't have a response, just update the status in the local state
-        setEmployeeAttendance(prev => {
-          if (!Array.isArray(prev)) {
-            console.warn('employeeAttendance is not an array when updating');
-            return [];
-          }
-          return prev.map(item => 
-            item.employee === employeeId ? { ...item, status: newStatus } : item
-          );
-        });
+        // Fetch attendance data again to get the updated record
+        fetchAttendanceData(token);
       }
       
       setUpdateSuccess(true);
       setTimeout(() => setUpdateSuccess(false), 3000);
-      
     } catch (err: any) {
       console.error('Error updating employee attendance:', err);
-      console.error('Response data:', err.response?.data);
-      console.error('Response status:', err.response?.status);
-      setError('Failed to update employee attendance status');
+      const errorDetail = err.response?.data?.detail || 'Unknown error';
+      setError(`Failed to update attendance: ${errorDetail}`);
+      
       // If unauthorized (401), redirect to login
       if (err.response?.status === 401) {
         navigate('/login');
       }
-      
-      // Update local state anyway to provide immediate feedback
-      setEmployeeAttendance(prev => {
-        if (!Array.isArray(prev)) {
-          return [];
-        }
-        return prev.map(item => 
-          item.employee === employeeId ? { ...item, status: newStatus } : item
-        );
-      });
     }
   };
 
-  // Handle status change for student attendance
+  // Handle student attendance status change
   const handleStudentStatusChange = async (studentId: number, newStatus: string) => {
     const token = getAuthToken();
     if (!token) {
@@ -690,118 +529,56 @@ const AttendancePage = () => {
       return;
     }
     
+    // Find the existing attendance record
+    const attendanceRecord = studentAttendance.find(record => 
+      record.student === studentId && 
+      new Date(record.date).toISOString().split('T')[0] === selectedDate
+    );
+    
     try {
-      console.log(`Updating student attendance ${studentId} to status: ${newStatus}`);
-      
-      // Find the attendance record for this student
-      const attendanceRecord = studentAttendance.find(item => item.student === studentId);
-      
-      let response;
-      
-      if (attendanceRecord?.id) {
-        // This is an existing record, update it
-        console.log(`Updating existing record for student ${studentId}`);
-        response = await axios.patch(
-          `${API_BASE_URL}/student-attendance/${attendanceRecord.id}/`,
+      if (attendanceRecord && attendanceRecord.id) {
+        // Update existing record
+        await axios.patch(
+          `${API_BASE_URL}/student-attendances/${attendanceRecord.id}/`,
           { status: newStatus },
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        console.log('Update student attendance response:', response.data);
+        // Update local state
+        setStudentAttendance(prevAttendance => 
+          prevAttendance.map(record => 
+            record.student === studentId && new Date(record.date).toISOString().split('T')[0] === selectedDate
+              ? { ...record, status: newStatus }
+              : record
+          )
+        );
       } else {
-        // This is a new record, create it
-        console.log(`Creating new record for student ${studentId}`);
-        const newRecord = {
-          student: studentId,
-          date: selectedDate,
-          status: newStatus,
-          // Include any other required fields from the student data
-          remarks: null
-        };
-        
-        response = await axios.post(
-          `${API_BASE_URL}/student-attendance/`,
-          newRecord,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
+        // Create new record using the bulk update endpoint
+        await axios.post(
+          `${API_BASE_URL}/student-attendances/bulk_update/`,
+          [{
+            student: studentId,
+            date: selectedDate,
+            status: newStatus
+          }],
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         
-        console.log('Create student attendance response:', response.data);
-      }
-      
-      // Update local state with the response data
-      const updatedRecord = response?.data;
-      
-      if (updatedRecord) {
-        setStudentAttendance(prev => {
-          if (!Array.isArray(prev)) {
-            console.warn('studentAttendance is not an array when updating');
-            return [];
-          }
-          
-          // Find the index of the record to update
-          const recordIndex = prev.findIndex(item => item.student === studentId);
-          
-          // Get the student data to ensure we maintain all required display fields
-          const studentData = students.find(stu => stu.id === studentId);
-          
-          if (recordIndex === -1) {
-            // Record not found, add it to the array with student data
-            return [...prev, {
-              ...updatedRecord,
-              student_name: studentData?.student_name || `Student #${studentId}`,
-              student_id: studentData?.student_id || `ID-${studentId}`,
-              branch_name: studentData?.branch_name || 'Unknown'
-            }];
-          } else {
-            // Update the existing record
-            const updatedAttendance = [...prev];
-            updatedAttendance[recordIndex] = {
-              ...updatedAttendance[recordIndex],
-              ...updatedRecord,
-              status: newStatus
-            };
-            return updatedAttendance;
-          }
-        });
-      } else {
-        // If we don't have a response, just update the status in the local state
-        setStudentAttendance(prev => {
-          if (!Array.isArray(prev)) {
-            console.warn('studentAttendance is not an array when updating');
-            return [];
-          }
-          return prev.map(item => 
-            item.student === studentId ? { ...item, status: newStatus } : item
-          );
-        });
+        // Fetch attendance data again to get the updated record
+        fetchStudentAttendanceData(token);
       }
       
       setUpdateSuccess(true);
       setTimeout(() => setUpdateSuccess(false), 3000);
-      
     } catch (err: any) {
       console.error('Error updating student attendance:', err);
-      console.error('Response data:', err.response?.data);
-      console.error('Response status:', err.response?.status);
-      setError('Failed to update student attendance status');
+      const errorDetail = err.response?.data?.detail || 'Unknown error';
+      setError(`Failed to update attendance: ${errorDetail}`);
+      
       // If unauthorized (401), redirect to login
       if (err.response?.status === 401) {
         navigate('/login');
       }
-      
-      // Update local state anyway to provide immediate feedback
-      setStudentAttendance(prev => {
-        if (!Array.isArray(prev)) {
-          return [];
-        }
-        return prev.map(item => 
-          item.student === studentId ? { ...item, status: newStatus } : item
-        );
-      });
     }
   };
 

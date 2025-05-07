@@ -25,9 +25,14 @@ const CounsellorLeadList = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const { user } = useAuth();
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const fetchLeads = async () => {
+    // If data already loaded, don't fetch again
+    if (dataLoaded) return;
+    
     try {
+      setLoading(true);
       const accessToken = localStorage.getItem('access_token');
       if (!accessToken) {
         setError('You are not authenticated');
@@ -47,6 +52,7 @@ const CounsellorLeadList = () => {
 
       setLeads(filteredLeads);
       setLoading(false);
+      setDataLoaded(true);
     } catch (err: any) {
       console.error('Error fetching leads:', err);
       setError(err.response?.data?.detail || 'Failed to fetch leads');
@@ -59,6 +65,8 @@ const CounsellorLeadList = () => {
   }, [user]);
 
   const handleAddSuccess = () => {
+    // Reset data loaded flag to force refresh
+    setDataLoaded(false);
     // Refresh the lead list after adding a new lead
     fetchLeads();
   };

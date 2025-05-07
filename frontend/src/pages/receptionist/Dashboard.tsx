@@ -15,7 +15,7 @@ import {
   LineElement
 } from 'chart.js';
 import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
-import { API_URL } from '../../lib/api';
+import { API_BASE_URL } from '../../lib/apiConfig';
 
 // Register ChartJS components
 ChartJS.register(
@@ -98,7 +98,7 @@ const ReceptionistDashboard = () => {
       setError(null);
       
       try {
-        const response = await axios.get(`${API_URL}/receptionist/stats`, {
+        const response = await axios.get(`${API_BASE_URL}/receptionist/stats`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         

@@ -23,6 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 from api.models import StudentAttendance, EmployeeAttendance, Employee, Student, User
+from django.db import IntegrityError, transaction
 
 def push_attendance_data():
     """
@@ -40,7 +41,12 @@ def push_attendance_data():
         admin_user = User.objects.filter(role='SuperAdmin').first()
         if not admin_user:
             logger.error("No SuperAdmin user found to create attendance records")
-            return
+            # Use any user as fallback
+            admin_user = User.objects.first()
+            if not admin_user:
+                logger.error("No users found in the database")
+                return
+            logger.info(f"Using {admin_user.email} as fallback for attendance creation")
     except Exception as e:
         logger.error(f"Error finding SuperAdmin user: {str(e)}")
         return
@@ -57,39 +63,62 @@ def process_employee_attendance(today, admin_user):
     """Process all employee attendance records for today"""
     # Get all employees
     try:
-        employees = Employee.objects.all()
-        logger.info(f"Found {len(employees)} employees to process")
-        
-        employee_count = 0
-        updated_count = 0
-        
-        for employee in employees:
-            # Check if record already exists for today
-            attendance_record = EmployeeAttendance.objects.filter(
-                employee=employee, 
-                date=today
-            ).first()
+        with transaction.atomic():
+            employees = Employee.objects.select_related('user', 'branch').all()
+            logger.info(f"Found {len(employees)} employees to process")
             
-            if attendance_record:
-                # Update the record if needed (time_out field)
-                if not attendance_record.time_out:
-                    attendance_record.time_out = datetime.now().time()
-                    attendance_record.updated_by = admin_user
-                    attendance_record.save()
-                    updated_count += 1
-            else:
-                # Create a new attendance record with default 'Present' status
-                EmployeeAttendance.objects.create(
-                    employee=employee,
-                    date=today,
-                    status='Present',  # Default to present
-                    time_in = "09:00:00",  # Default time in
-                    time_out = "17:00:00",  # Default time out
-                    created_by=admin_user
-                )
-                employee_count += 1
-                
-        logger.info(f"Created {employee_count} new employee attendance records and updated {updated_count} existing records")
+            if not employees.exists():
+                logger.warning("No employees found in database")
+                return
+            
+            employee_count = 0
+            updated_count = 0
+            
+            for employee in employees:
+                try:
+                    # Skip if employee doesn't have a user
+                    if not hasattr(employee, 'user') or not employee.user:
+                        logger.warning(f"Employee {employee.id} has no associated user, skipping")
+                        continue
+                    
+                    # Check if record already exists for today
+                    attendance_record = EmployeeAttendance.objects.filter(
+                        employee=employee, 
+                        date=today
+                    ).first()
+                    
+                    if attendance_record:
+                        # Log existing record
+                        logger.debug(f"Found existing attendance for employee {employee.user.email} ({employee.employee_id})")
+                        # Only update if status is not already set
+                        if not attendance_record.status:
+                            attendance_record.status = 'Present'
+                            attendance_record.updated_by = admin_user
+                            attendance_record.save(update_fields=['status', 'updated_by'])
+                            updated_count += 1
+                    else:
+                        # Create a new attendance record with default 'Present' status
+                        # Use Nepal time for time_in and time_out
+                        nepal_tz = pytz.timezone('Asia/Kathmandu')
+                        time_in = datetime.now(nepal_tz).replace(hour=9, minute=0, second=0, microsecond=0).time()
+                        time_out = datetime.now(nepal_tz).replace(hour=17, minute=0, second=0, microsecond=0).time()
+                        
+                        EmployeeAttendance.objects.create(
+                            employee=employee,
+                            date=today,
+                            status='Present',  # Default to present
+                            time_in=time_in,
+                            time_out=time_out,
+                            created_by=admin_user
+                        )
+                        employee_count += 1
+                        logger.debug(f"Created attendance for employee {employee.user.email} ({employee.employee_id})")
+                except IntegrityError as e:
+                    logger.warning(f"IntegrityError for employee {employee.id}: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error processing employee {employee.id}: {str(e)}")
+                    
+            logger.info(f"Created {employee_count} new employee attendance records and updated {updated_count} existing records")
     except Exception as e:
         logger.error(f"Error processing employee attendance: {str(e)}")
 
@@ -97,39 +126,62 @@ def process_student_attendance(today, admin_user):
     """Process all student attendance records for today"""
     # Get all students
     try:
-        students = Student.objects.all()
-        logger.info(f"Found {len(students)} students to process")
-        
-        student_count = 0
-        updated_count = 0
-        
-        for student in students:
-            # Check if record already exists for today
-            attendance_record = StudentAttendance.objects.filter(
-                student=student, 
-                date=today
-            ).first()
+        with transaction.atomic():
+            students = Student.objects.select_related('user', 'branch').all()
+            logger.info(f"Found {len(students)} students to process")
             
-            if attendance_record:
-                # Update the record if needed (time_out field)
-                if not attendance_record.time_out:
-                    attendance_record.time_out = datetime.now().time()
-                    attendance_record.updated_by = admin_user
-                    attendance_record.save()
-                    updated_count += 1
-            else:
-                # Create a new attendance record with default 'Present' status
-                StudentAttendance.objects.create(
-                    student=student,
-                    date=today,
-                    status='Present',  # Default to present
-                    time_in = "09:00:00",  # Default time in
-                    time_out = "17:00:00",  # Default time out
-                    created_by=admin_user
-                )
-                student_count += 1
-                
-        logger.info(f"Created {student_count} new student attendance records and updated {updated_count} existing records")
+            if not students.exists():
+                logger.warning("No students found in database")
+                return
+            
+            student_count = 0
+            updated_count = 0
+            
+            for student in students:
+                try:
+                    # Skip if student doesn't have a user
+                    if not hasattr(student, 'user') or not student.user:
+                        logger.warning(f"Student {student.id} has no associated user, skipping")
+                        continue
+                    
+                    # Check if record already exists for today
+                    attendance_record = StudentAttendance.objects.filter(
+                        student=student, 
+                        date=today
+                    ).first()
+                    
+                    if attendance_record:
+                        # Log existing record
+                        logger.debug(f"Found existing attendance for student {student.user.email} ({student.student_id})")
+                        # Only update if status is not already set
+                        if not attendance_record.status:
+                            attendance_record.status = 'Present'
+                            attendance_record.updated_by = admin_user
+                            attendance_record.save(update_fields=['status', 'updated_by'])
+                            updated_count += 1
+                    else:
+                        # Create a new attendance record with default 'Present' status
+                        # Use Nepal time for time_in and time_out
+                        nepal_tz = pytz.timezone('Asia/Kathmandu')
+                        time_in = datetime.now(nepal_tz).replace(hour=9, minute=0, second=0, microsecond=0).time()
+                        time_out = datetime.now(nepal_tz).replace(hour=17, minute=0, second=0, microsecond=0).time()
+                        
+                        StudentAttendance.objects.create(
+                            student=student,
+                            date=today,
+                            status='Present',  # Default to present
+                            time_in=time_in,
+                            time_out=time_out,
+                            created_by=admin_user
+                        )
+                        student_count += 1
+                        logger.debug(f"Created attendance for student {student.user.email} ({student.student_id})")
+                except IntegrityError as e:
+                    logger.warning(f"IntegrityError for student {student.id}: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error processing student {student.id}: {str(e)}")
+                    
+            logger.info(f"Created {student_count} new student attendance records and updated {updated_count} existing records")
     except Exception as e:
         logger.error(f"Error processing student attendance: {str(e)}")
 
@@ -139,11 +191,11 @@ def should_run_now():
     current_time = datetime.now(nepal_tz).time()
     
     # For testing, always return True
-    # return True
+    return True
     
     # In production, check if it's close to 9 PM (21:00)
-    target_hour = 21  # 9 PM
-    return current_time.hour == target_hour and 0 <= current_time.minute < 5
+    # target_hour = 21  # 9 PM
+    # return current_time.hour == target_hour and 0 <= current_time.minute < 5
 
 def main():
     """Main script function"""

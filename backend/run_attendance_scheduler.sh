@@ -1,46 +1,30 @@
 #!/bin/bash
 
-# Script to run the attendance scheduler as a background process
+# Load virtual environment
+source venv/bin/activate
 
-# Navigate to the project root directory
-cd "$(dirname "$0")"
+# Set script path
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+SCRIPT_PATH="$SCRIPT_DIR/scripts/daily_attendance_push.py"
 
-# Activate virtual environment if it exists
-if [ -d "venv" ]; then
-    source venv/bin/activate
-elif [ -d "../venv" ]; then
-    source ../venv/bin/activate
-elif [ -d ".venv" ]; then
-    source .venv/bin/activate
-elif [ -d "../.venv" ]; then
-    source ../.venv/bin/activate
-fi
+# Ensure script is executable
+chmod +x "$SCRIPT_PATH"
 
-# Make sure we're using the correct Python
-PYTHON=$(which python)
-echo "Using Python: $PYTHON"
+# Kill any existing processes
+pkill -f "python.*daily_attendance_push.py" || true
 
-# Check if we should run in test mode
-TEST_MODE=""
-if [ "$1" == "--test" ]; then
-    TEST_MODE="--test"
-    echo "Running in TEST mode (more frequent updates)"
-fi
+# Define the log file
+LOG_FILE="$SCRIPT_DIR/attendance_scheduler.log"
 
-# Create log directory if it doesn't exist
-mkdir -p logs
+# Start the process
+echo "$(date): Starting attendance scheduler" >> "$LOG_FILE"
 
-# Run the attendance scheduler in the background
-echo "Starting attendance scheduler in background mode..."
-nohup $PYTHON manage.py attendance_scheduler $TEST_MODE > logs/attendance_scheduler.out 2>&1 &
+# Run attendance push script immediately to ensure it works
+python "$SCRIPT_PATH" >> "$LOG_FILE" 2>&1
 
-# Save the process ID
-echo $! > .attendance_scheduler.pid
-echo "Attendance scheduler started with PID $(cat .attendance_scheduler.pid)"
-echo "Check logs/attendance_scheduler.out for output"
+# Set up cron job
+(crontab -l 2>/dev/null | grep -v "daily_attendance_push.py" ; echo "15 15 * * * cd $SCRIPT_DIR && python $SCRIPT_PATH >> $LOG_FILE 2>&1") | crontab -
 
-# Instructions for stopping
-echo ""
-echo "To stop the scheduler, run:"
-echo "kill \$(cat .attendance_scheduler.pid)"
-echo "" 
+echo "Attendance scheduler has been started and cron job installed." 
+echo "Script will run daily at 9:00 PM Nepal time (15:15 UTC)"
+echo "Logs are being written to $LOG_FILE" 

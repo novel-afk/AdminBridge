@@ -75,6 +75,7 @@ const LeadList = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
+  const [dataLoaded, setDataLoaded] = useState(false);
   
   // API base URL - should match your backend configuration
   const API_BASE_URL = 'http://localhost:8000/api';
@@ -111,6 +112,11 @@ const LeadList = () => {
 
   // Function to fetch leads from API
   const fetchLeads = async (showRefreshing = false) => {
+    // If already loaded and not refreshing, don't fetch again
+    if (dataLoaded && !showRefreshing) {
+      return;
+    }
+    
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       navigate('/login');
@@ -120,15 +126,14 @@ const LeadList = () => {
     try {
       if (showRefreshing) {
         setRefreshing(true);
-      } else {
+      } else if (!dataLoaded) {
         setLoading(true);
       }
       setError('');
       
-      // Make API call to backend
-      const response = await axios.get(`${API_BASE_URL}/leads/`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
+      // Use the centralized API
+      const { leadAPI } = await import('../../lib/api');
+      const response = await leadAPI.getAll();
       
       console.log('API Response:', response.data);
       
@@ -148,6 +153,7 @@ const LeadList = () => {
       setLeads(formattedLeads);
       setLoading(false);
       setRefreshing(false);
+      setDataLoaded(true);
     } catch (err: any) {
       console.error('Error fetching leads:', err);
       setError(err.response?.data?.detail || 'Failed to fetch leads. Please try again.');
