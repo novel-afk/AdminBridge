@@ -4,6 +4,7 @@ import axios from 'axios';
 import { UserIcon, PencilSquareIcon, EyeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../lib/AuthContext';
 import AddStudentModal from '../../components/counsellor/AddStudentModal';
+import ViewStudentModal from '../../components/ViewStudentModal';
 
 interface Student {
   id: number;
@@ -19,6 +20,15 @@ interface Student {
   nationality: string;
   enrollment_date: string;
   branch: number;
+  age: number;
+  gender: string;
+  emergency_contact: string;
+  father_name: string;
+  mother_name: string;
+  parent_number: string;
+  language_test: string;
+  profile_picture: string;
+  cv: string;
 }
 
 const CounsellorStudentList = () => {
@@ -27,6 +37,8 @@ const CounsellorStudentList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
 
   const fetchStudents = async () => {
     try {
@@ -155,13 +167,33 @@ const CounsellorStudentList = () => {
                     {student.contact_number}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 flex">
-                    <Link 
-                      to={`/counsellor/students/view/${student.id}`} 
+                    <button
+                      onClick={() => {
+                        // Map the student object to the shape expected by ViewStudentModal
+                        const mappedStudent = {
+                          name: student.user.first_name + ' ' + student.user.last_name,
+                          age: student.age,
+                          gender: student.gender,
+                          nationality: student.nationality,
+                          phone: student.contact_number,
+                          email: student.user.email,
+                          emergencyContact: student.emergency_contact || '',
+                          fatherName: student.father_name || '',
+                          motherName: student.mother_name || '',
+                          parentNumber: student.parent_number || '',
+                          institute: student.institution_name || '',
+                          language: student.language_test || '',
+                          profilePicture: student.profile_image || '',
+                          cv: student.resume || '',
+                        };
+                        setSelectedStudent(mappedStudent);
+                        setIsViewModalOpen(true);
+                      }}
                       className="text-blue-600 hover:text-blue-900"
                       title="View"
                     >
                       <EyeIcon className="w-5 h-5" />
-                    </Link>
+                    </button>
                     <Link 
                       to={`/counsellor/edit-student/${student.id}`} 
                       className="text-indigo-600 hover:text-indigo-900"
@@ -183,6 +215,15 @@ const CounsellorStudentList = () => {
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={handleAddSuccess}
       />
+
+      {/* View Student Modal */}
+      {isViewModalOpen && selectedStudent && (
+        <ViewStudentModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          student={selectedStudent}
+        />
+      )}
     </div>
   );
 };
