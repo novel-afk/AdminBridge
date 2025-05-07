@@ -16,6 +16,7 @@ import {
 } from 'chart.js';
 import DefaultPasswordAlert from '../../components/DefaultPasswordAlert';
 import { API_BASE_URL } from '../../lib/apiConfig';
+import { useAuth } from '../../lib/AuthContext';
 
 // Register ChartJS components
 ChartJS.register(
@@ -67,71 +68,47 @@ const BranchManagerDashboard = () => {
       values: []
     }
   });
-  const [loading, setLoading] = useState(true);
+  const [loadingStats, setLoadingStats] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [userEmail, setUserEmail] = useState<string>('');
   const navigate = useNavigate();
+  const { user, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
-    // Check if user is logged in with access token
+    if (!loading && (!isAuthenticated || !user)) {
+      navigate('/login');
+      return;
+    }
+    if (!user) return;
+
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       navigate('/login');
       return;
     }
 
-    // Try to get user info from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (e) {
-        console.error('Error parsing user from localStorage:', e);
-      }
-    }
-
-    // Get user email as fallback
-    const email = localStorage.getItem('user_email');
-    if (email) {
-      setUserEmail(email);
-    }
-
     // Fetch real-time dashboard statistics from API
     const fetchStats = async () => {
-      setLoading(true);
+      setLoadingStats(true);
       setError(null);
-      
       try {
         const response = await axios.get(`${API_BASE_URL}/branch-manager/stats`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
-        
         if (response.data) {
-          console.log('Received branch manager stats:', response.data);
           setStats(response.data);
         } else {
           setError('No data received from server');
-          console.error('No data received from stats API');
         }
       } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
         setError('Failed to fetch data from server');
       } finally {
-        setLoading(false);
+        setLoadingStats(false);
       }
     };
-    
-    // Call the fetch function
     fetchStats();
-
-    // Set up interval to refresh data every 5 minutes (300000 ms)
     const intervalId = setInterval(fetchStats, 300000);
-    
-    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, [navigate]);
+  }, [loading, isAuthenticated, user, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
@@ -141,7 +118,7 @@ const BranchManagerDashboard = () => {
     navigate('/login');
   };
 
-  if (loading) {
+  if (loading || loadingStats) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
         <div className="flex flex-col items-center">
@@ -176,14 +153,10 @@ const BranchManagerDashboard = () => {
     );
   }
 
-  // User display name logic - if we have full user data, use first_name + last_name
-  // otherwise use the email or a default
-  const displayName = user ? 
-    `${user.first_name} ${user.last_name}` : 
-    (userEmail || 'Branch Manager');
-
+  // User display name logic
+  const displayName = user ? `${user.first_name} ${user.last_name}` : 'Branch Manager';
   // Extract branch name from user data if available, otherwise use from stats
-  const branchName = (user && user.branch) ? user.branch : stats.branchName;
+  const branchName = user?.branch_name || stats.branchName;
 
   // Chart data for course distribution
   const courseChartData = {

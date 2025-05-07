@@ -34,11 +34,20 @@ const Sidebar = () => {
   const { user } = useAuth();
   const userRole = user?.role || '';
 
+  // Explicit dashboard path for each role
+  let dashboardPath = '';
+  if (userRole === 'SuperAdmin') dashboardPath = '/admin/dashboard';
+  else if (userRole === 'BranchManager') dashboardPath = '/branch-manager/dashboard';
+  else if (userRole === 'Counsellor') dashboardPath = '/counsellor/dashboard';
+  else if (userRole === 'Receptionist') dashboardPath = '/receptionist/dashboard';
+  else if (userRole === 'BankManager') dashboardPath = '/bank-manager/dashboard';
+  else if (userRole === 'Student') dashboardPath = '/student/dashboard';
+
   // Define menu items based on user role
   const getMenuItems = () => {
     const baseItems = [
       { 
-        path: `/${userRole === 'SuperAdmin' ? 'admin' : userRole.toLowerCase()}/dashboard`, 
+        path: dashboardPath, 
         icon: HomeIcon, 
         label: 'Dashboard'
       }
@@ -103,6 +112,9 @@ const Sidebar = () => {
 
   const menuItems = getMenuItems();
 
+  // Only render sidebar if user is loaded
+  if (!user) return null;
+
   return (
     <div className="min-h-screen w-64 bg-[#153147] relative overflow-hidden">
       {/* Animated gradient overlay */}
@@ -142,6 +154,10 @@ const Sidebar = () => {
                   ? 'text-white shadow-lg shadow-[#0A1A2F]/40'
                   : 'text-[#7AA1D2] hover:text-white'
               }`}
+            onClick={item.label === 'Dashboard' ? (e) => {
+              e.preventDefault();
+              window.location.href = item.path;
+            } : undefined}
           >
             {/* Active/Hover background with gradient */}
             {(location.pathname === item.path || location.pathname.startsWith(item.path + '/')) && (
