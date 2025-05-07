@@ -1407,14 +1407,16 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
         queryset = self.get_queryset().filter(date=date)
         existing_attendance = {record.student_id: record for record in queryset}
         
-        # Create attendance data for all students
+        # Create attendance data for all students (as dicts)
         attendance_data = []
         for student in students:
             if student.id in existing_attendance:
-                # Use existing record
-                attendance_data.append(existing_attendance[student.id])
+                # Use existing record, serialize to dict
+                record = existing_attendance[student.id]
+                serializer = self.get_serializer(record)
+                attendance_data.append(serializer.data)
             else:
-                # Create a placeholder record (will not be saved to DB)
+                # Create a placeholder record as dict
                 attendance_data.append({
                     'student': student.id,
                     'student_name': f"{student.user.first_name} {student.user.last_name}",
@@ -1426,10 +1428,7 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
                     'status': 'Present',
                     'remarks': None
                 })
-        
-        # Serialize the data
-        serializer = self.get_serializer(attendance_data, many=True)
-        return Response(serializer.data)
+        return Response(attendance_data)
     
     @action(detail=False, methods=['get'])
     def by_student(self, request):
