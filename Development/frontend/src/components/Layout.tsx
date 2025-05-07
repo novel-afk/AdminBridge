@@ -154,6 +154,10 @@ const Sidebar = () => {
                   ? 'text-white shadow-lg shadow-[#0A1A2F]/40'
                   : 'text-[#7AA1D2] hover:text-white'
               }`}
+            onClick={item.label === 'Dashboard' ? (e) => {
+              e.preventDefault();
+              window.location.href = item.path;
+            } : undefined}
           >
             {/* Active/Hover background with gradient */}
             {(location.pathname === item.path || location.pathname.startsWith(item.path + '/')) && (
