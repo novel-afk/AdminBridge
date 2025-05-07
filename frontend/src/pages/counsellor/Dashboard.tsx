@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Bar, Pie, Line } from 'react-chartjs-2';
@@ -55,6 +55,33 @@ const CounsellorDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+  const [students, setStudents] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [employees, setEmployees] = useState([]);
+
+  const fetchBranchData = useCallback(async (branchId) => {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken || !branchId) return;
+    try {
+      // Fetch students
+      const studentsRes = await axios.get(`${API_BASE_URL}/students/?branch=${branchId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      setStudents(studentsRes.data.slice(0, 5));
+      // Fetch leads
+      const leadsRes = await axios.get(`${API_BASE_URL}/leads/?branch=${branchId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      setLeads(leadsRes.data.slice(0, 5));
+      // Fetch employees
+      const employeesRes = await axios.get(`${API_BASE_URL}/employees/?branch=${branchId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      setEmployees(employeesRes.data.slice(0, 5));
+    } catch (err) {
+      // Ignore errors for now
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || !user)) {
@@ -77,7 +104,20 @@ const CounsellorDashboard = () => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         if (response.data) {
-          setStats(response.data);
+          // Map backend fields to frontend expected fields
+          const mapped = {
+            branchName: response.data.branchName,
+            studentCount: response.data.assignedStudentCount,
+            leadCount: response.data.assignedLeadCount,
+            appointmentCount: response.data.upcomingAppointmentCount,
+            studentStatusCount: response.data.studentStatusDistribution,
+            leadStatusCount: response.data.leadStatusDistribution,
+            monthlyStudentRegistrations: response.data.monthlyStudentRegistrations || {},
+          };
+          setStats(mapped);
+          if (mapped.branchName) {
+            fetchBranchData(mapped.branchName);
+          }
         } else {
           setError('No data received from server');
         }
@@ -90,7 +130,15 @@ const CounsellorDashboard = () => {
     fetchStats();
     const intervalId = setInterval(fetchStats, 300000);
     return () => clearInterval(intervalId);
-  }, [authLoading, isAuthenticated, user, navigate]);
+  }, [authLoading, isAuthenticated, user, navigate, fetchBranchData]);
+
+  useEffect(() => {
+    // Use branch ID from user object if available
+    const branchId = user?.employee_profile?.branch || user?.branch;
+    if (branchId) {
+      fetchBranchData(branchId);
+    }
+  }, [user, fetchBranchData]);
 
   if (authLoading || loading) {
     return (
@@ -317,6 +365,81 @@ const CounsellorDashboard = () => {
                     <div className="h-80">
                       <Line data={registrationsLineChartData} options={{ maintainAspectRatio: false }} />
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+                {/* Students Table */}
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Students</h3>
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr>
+                          <th className="text-left font-semibold">Name</th>
+                          <th className="text-left font-semibold">Email</th>
+                          <th className="text-left font-semibold">Contact</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {students.map((s) => (
+                          <tr key={s.id} className="border-t">
+                            <td>{s.user?.first_name} {s.user?.last_name}</td>
+                            <td>{s.user?.email}</td>
+                            <td>{s.contact_number}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {/* Leads Table */}
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Leads</h3>
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr>
+                          <th className="text-left font-semibold">Name</th>
+                          <th className="text-left font-semibold">Email</th>
+                          <th className="text-left font-semibold">Phone</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leads.map((l) => (
+                          <tr key={l.id} className="border-t">
+                            <td>{l.name}</td>
+                            <td>{l.email}</td>
+                            <td>{l.phone}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {/* Employees Table */}
+                <div className="bg-white overflow-hidden shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Branch Employees</h3>
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr>
+                          <th className="text-left font-semibold">Name</th>
+                          <th className="text-left font-semibold">Role</th>
+                          <th className="text-left font-semibold">Email</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {employees.map((e) => (
+                          <tr key={e.id} className="border-t">
+                            <td>{e.user?.first_name} {e.user?.last_name}</td>
+                            <td>{e.role}</td>
+                            <td>{e.user?.email}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>

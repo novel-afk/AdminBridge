@@ -229,49 +229,49 @@ const LeadList = () => {
       message: 'Are you sure you want to export the leads data?',
       type: 'warning',
       onConfirm: () => {
-        const exportData = selectedLeads.length > 0
-          ? filteredLeads.filter(lead => selectedLeads.includes(lead.id))
-          : filteredLeads;
+    const exportData = selectedLeads.length > 0
+      ? filteredLeads.filter(lead => selectedLeads.includes(lead.id))
+      : filteredLeads;
 
-        let csvContent = "data:text/csv;charset=utf-8,";
-        const headers = [
-          "Name", "Email", "Phone", "Nationality", "Branch", 
-          "Interested Country", "Interested Degree", "Interested Course",
-          "Language Test", "Language Score", "Lead Source", "Created At",
-          "Notes", "Referred By", "Courses Studied", "GPA",
-          "Created By", "Assigned To"
-        ];
-        csvContent += headers.join(",") + "\n";
-        exportData.forEach(lead => {
-          const row = [
-            `"${lead.name || ''}"`,
-            `"${lead.email || ''}"`,
-            `"${lead.phone || ''}"`,
-            `"${lead.nationality || ''}"`,
-            `"${lead.branch_name || ''}"`,
-            `"${lead.interested_country || ''}"`,
-            `"${lead.interested_degree || ''}"`,
-            `"${lead.interested_course || ''}"`,
-            `"${lead.language_test || ''}"`,
-            `"${lead.language_score || ''}"`,
-            `"${lead.lead_source || ''}"`,
-            `"${lead.created_at ? formatDate(lead.created_at) : ''}"`,
-            `"${lead.notes || ''}"`,
-            `"${lead.referred_by || ''}"`,
-            `"${lead.courses_studied || ''}"`,
-            `"${lead.gpa || ''}"`,
-            `"${lead.created_by_name || ''}"`,
-            `"${lead.assigned_to_name || ''}"`,
-          ];
-          csvContent += row.join(",") + "\n";
-        });
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "leads_export.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    let csvContent = "data:text/csv;charset=utf-8,";
+    const headers = [
+      "Name", "Email", "Phone", "Nationality", "Branch", 
+      "Interested Country", "Interested Degree", "Interested Course",
+      "Language Test", "Language Score", "Lead Source", "Created At",
+      "Notes", "Referred By", "Courses Studied", "GPA",
+      "Created By", "Assigned To"
+    ];
+    csvContent += headers.join(",") + "\n";
+    exportData.forEach(lead => {
+      const row = [
+        `"${lead.name || ''}"`,
+        `"${lead.email || ''}"`,
+        `"${lead.phone || ''}"`,
+        `"${lead.nationality || ''}"`,
+        `"${lead.branch_name || ''}"`,
+        `"${lead.interested_country || ''}"`,
+        `"${lead.interested_degree || ''}"`,
+        `"${lead.interested_course || ''}"`,
+        `"${lead.language_test || ''}"`,
+        `"${lead.language_score || ''}"`,
+        `"${lead.lead_source || ''}"`,
+        `"${lead.created_at ? formatDate(lead.created_at) : ''}"`,
+        `"${lead.notes || ''}"`,
+        `"${lead.referred_by || ''}"`,
+        `"${lead.courses_studied || ''}"`,
+        `"${lead.gpa || ''}"`,
+        `"${lead.created_by_name || ''}"`,
+        `"${lead.assigned_to_name || ''}"`,
+      ];
+      csvContent += row.join(",") + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "leads_export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
       },
     });
   };
@@ -383,7 +383,7 @@ const LeadList = () => {
           <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
           <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
         </div>
-
+        
         <div className="flex justify-between items-center mt-8 pb-6">
           <Button 
             onClick={() => setIsAddModalOpen(true)} 
@@ -465,14 +465,14 @@ const LeadList = () => {
         <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
           {loading ? (
             <div className="flex flex-col h-full">
-              <div className="flex-1 flex justify-center items-center">
-                <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
-                  <div className="text-xl text-gray-600">Loading leads...</div>
-                  <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
-                </div>
-              </div>
-            </div>
+        <div className="flex-1 flex justify-center items-center">
+          <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1e1b4b] mb-4"></div>
+            <div className="text-xl text-gray-600">Loading leads...</div>
+            <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+          </div>
+        </div>
+      </div>
           ) : (!loading && leads.length === 0) ? (
             <div className="h-full bg-white rounded-lg border border-gray-200 flex items-center justify-center">
               <div className="text-center p-8 max-w-md">
@@ -748,50 +748,50 @@ const LeadList = () => {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-none">
-        <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
-        <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
+          <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your leads information</p>
       </div>
 
       <div className="flex justify-between items-center mt-8 pb-6">
-        <Button 
-          onClick={() => setIsAddModalOpen(true)} 
-          className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
-          disabled={refreshing}
-        >
-          <PlusIcon className="h-5 w-5" />
-          Add
-        </Button>
+            <Button 
+              onClick={() => setIsAddModalOpen(true)} 
+              className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+              disabled={refreshing}
+            >
+              <PlusIcon className="h-5 w-5" />
+              Add
+            </Button>
 
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => fetchLeads(true)}
-            disabled={refreshing}
-            className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-          >
-            {refreshing ? (
-              <>
-                <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
-                Refreshing...
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Refresh
-              </>
-            )}
-          </Button>
-          <Button 
-            variant="outline" 
-            onClick={handleExport} 
-            disabled={filteredLeads.length === 0 || refreshing}
-            className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
-          >
-            <ArrowDownTrayIcon className="h-5 w-5" />
-            Export
-          </Button>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => fetchLeads(true)}
+                disabled={refreshing}
+                className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+              >
+                {refreshing ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 border-2 border-[#1e1b4b] border-t-transparent rounded-full"></div>
+                    Refreshing...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                  </>
+                )}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={handleExport} 
+                disabled={filteredLeads.length === 0 || refreshing}
+                className="flex items-center gap-2 text-gray-700 hover:bg-gray-100"
+              >
+                <ArrowDownTrayIcon className="h-5 w-5" />
+                Export
+              </Button>
           <Button 
             onClick={handleDeleteSelected} 
             disabled={selectedLeads.length === 0 || refreshing}
@@ -800,35 +800,35 @@ const LeadList = () => {
           >
             <TrashIcon className="h-5 w-5" />
             Delete
-          </Button>
-          <div className="relative ml-2">
-            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="Search leads..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
-              disabled={refreshing}
-            />
+              </Button>
+              <div className="relative ml-2">
+                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none" />
+                <Input
+                  type="text"
+                  placeholder="Search leads..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-[300px] bg-white rounded-md border-gray-300 focus:border-[#1e1b4b] focus:ring-1 focus:ring-[#1e1b4b] transition-all duration-200"
+                  disabled={refreshing}
+                />
+            </div>
           </div>
         </div>
-      </div>
 
-      {error && (
-        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-          {error}
-          <button 
-            onClick={() => fetchLeads()} 
-            className="ml-auto text-sm text-red-700 hover:text-red-900 underline"
-          >
-            Try Again
-          </button>
-        </div>
-      )}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            {error}
+            <button 
+              onClick={() => fetchLeads()} 
+              className="ml-auto text-sm text-red-700 hover:text-red-900 underline"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
 
       <div className={`flex-1 flex flex-col ${getContainerClass()}`}>
         {loading ? (
@@ -864,7 +864,7 @@ const LeadList = () => {
                 <div className="inline-block min-w-full max-w-full">
                   <table className="w-full border-collapse table-auto">
                     <thead className="bg-[#153147] sticky top-0 z-10 shadow-sm">
-                      <tr>
+                <tr>
                         {columns.map((column) => (
                           <th
                             key={column.key}
@@ -886,18 +886,18 @@ const LeadList = () => {
                             style={{ position: 'sticky', top: 0 }}
                           >
                             {column.key === "select" ? (
-                              <Checkbox
+                    <Checkbox
                                 checked={paginatedLeads.length > 0 && selectedLeads.length === paginatedLeads.length}
-                                onCheckedChange={handleSelectAll}
+                      onCheckedChange={handleSelectAll}
                                 aria-label="Select all"
-                              />
+                    />
                             ) : (
                               column.label
                             )}
-                          </th>
+                  </th>
                         ))}
-                      </tr>
-                    </thead>
+                </tr>
+              </thead>
                     <tbody className={`divide-y divide-gray-100`}>
                       {paginatedLeads.map((lead, index) => (
                         <tr 
@@ -905,43 +905,43 @@ const LeadList = () => {
                           className="hover:bg-gray-50 transition-all duration-200 ease-in-out group relative even:bg-gray-50/30"
                         >
                           <td className="px-6 py-4 whitespace-nowrap first:pl-4 group-hover:bg-gray-50 transition-colors duration-200">
-                            <Checkbox
-                              checked={selectedLeads.includes(lead.id)}
-                              onCheckedChange={() => handleSelectLead(lead.id)}
+                        <Checkbox 
+                          checked={selectedLeads.includes(lead.id)} 
+                          onCheckedChange={() => handleSelectLead(lead.id)}
                               aria-label={`Select ${lead.name}`}
-                            />
-                          </td>
+                        />
+                      </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
-                            {startIndex + index + 1}
-                          </td>
+                        {startIndex + index + 1}
+                      </td>
                           <td className="px-6 py-4 text-sm text-gray-900 font-medium group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[200px]" title={lead.name}>
-                            {lead.name}
-                          </td>
+                        {lead.name}
+                      </td>
                           <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[150px]" title={lead.nationality}>
-                            {lead.nationality || '-'}
-                          </td>
+                        {lead.nationality || '-'}
+                      </td>
                           <td className="px-6 py-4 text-sm group-hover:bg-gray-50 transition-colors duration-200">
                             <div className="truncate max-w-[180px]" title={lead.email}>
                               <a href={`mailto:${lead.email}`} className="text-blue-600 hover:text-blue-800 transition-colors truncate inline-block max-w-full">
                                 {lead.email}
                               </a>
-                            </div>
+                        </div>
                             <div className="text-gray-600">{lead.phone}</div>
-                          </td>
+                      </td>
                           <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {lead.interested_country ? (
                               <Badge className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
                                 {lead.interested_country}
                               </Badge>
                             ) : "-"}
-                          </td>
+                      </td>
                           <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {lead.interested_degree ? (
                               <Badge className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
                                 {lead.interested_degree}
-                              </Badge>
+                        </Badge>
                             ) : "-"}
-                          </td>
+                      </td>
                           <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {lead.interested_course ? (
                               <div className="truncate max-w-[150px]" title={lead.interested_course}>
@@ -974,20 +974,20 @@ const LeadList = () => {
                             </Badge>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
-                            {formatDate(lead.created_at)}
-                          </td>
+                        {formatDate(lead.created_at)}
+                      </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 last:pr-4 group-hover:bg-gray-50 transition-colors duration-200">
                             <div className="flex items-center gap-2 opacity-80 group-hover:opacity-100 transition-opacity duration-200">
                               <button
-                                onClick={() => handleView(lead)}
+                          onClick={() => handleView(lead)} 
                                 className="text-blue-600 hover:text-blue-800 transition-colors p-1 hover:bg-blue-50 rounded-full"
                                 title="View"
                                 disabled={refreshing}
-                              >
+                        >
                                 <EyeIcon className="h-5 w-5" />
                               </button>
                               <button
-                                onClick={() => handleEdit(lead)}
+                          onClick={() => handleEdit(lead)} 
                                 className="text-green-600 hover:text-green-800 transition-colors p-1 hover:bg-green-50 rounded-full"
                                 title="Edit"
                                 disabled={refreshing}
@@ -999,17 +999,17 @@ const LeadList = () => {
                                 className="text-red-600 hover:text-red-800 transition-colors p-1 hover:bg-red-50 rounded-full"
                                 title="Delete"
                                 disabled={refreshing}
-                              >
+                        >
                                 <TrashIcon className="h-5 w-5" />
                               </button>
                             </div>
-                          </td>
-                        </tr>
+                      </td>
+                    </tr>
                       ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              </tbody>
+            </table>
+          </div>
+        </div>
             </div>
             {paginatedLeads.length > 0 && (
               <hr className="border-t border-gray-200 my-2" />
@@ -1017,26 +1017,26 @@ const LeadList = () => {
             {totalPages > 1 && (
               <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
                 <div className="flex-1 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700">
+              <div>
+                <p className="text-sm text-gray-700">
                       Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
                       <span className="font-medium">{Math.min(startIndex + itemsPerPage, filteredLeads.length)}</span> of{' '}
                       <span className="font-medium">{filteredLeads.length}</span> results
-                    </p>
-                  </div>
-                  <div>
+                </p>
+              </div>
+              <div>
                     <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                       <button
                         onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
+                    disabled={currentPage === 1}
                         className={`relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium ${
                           currentPage === 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
                         }`}
-                      >
-                        <span className="sr-only">Previous</span>
+                  >
+                    <span className="sr-only">Previous</span>
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                    </svg>
                       </button>
                       {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
                         <button
@@ -1046,60 +1046,60 @@ const LeadList = () => {
                             currentPage === pageNumber
                               ? 'z-10 bg-[#153147] border-[#153147] text-white'
                               : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
+                      }`}
+                    >
                           {pageNumber}
                         </button>
-                      ))}
+                  ))}
                       <button
                         onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
+                    disabled={currentPage === totalPages}
                         className={`relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium ${
                           currentPage === totalPages ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:bg-gray-50'
                         }`}
-                      >
-                        <span className="sr-only">Next</span>
+                  >
+                    <span className="sr-only">Next</span>
                         <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                           <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
+                    </svg>
                       </button>
-                    </nav>
-                  </div>
-                </div>
+                </nav>
+              </div>
+            </div>
               </div>
             )}
             <div className="absolute left-0 right-0 bottom-0 h-[3px] bg-gray-400" />
           </div>
         )}
       </div>
-      
+
       <div className="w-full border-t border-gray-200 my-2" />
       
-      <AddLeadModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)}
-        onSuccess={handleAddSuccess}
-      />
-      
-      <EditLeadModal 
-        isOpen={isEditModalOpen} 
+        <AddLeadModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={handleAddSuccess}
+        />
+
+        <EditLeadModal
+          isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setSelectedLead(null);
         }}
-        onSuccess={handleEditSuccess}
-        lead={selectedLead}
-      />
-      
-      <ViewLeadModal
-        isOpen={isViewModalOpen}
+          onSuccess={handleEditSuccess}
+          lead={selectedLead}
+        />
+
+        <ViewLeadModal
+          isOpen={isViewModalOpen}
         onClose={() => {
           setIsViewModalOpen(false);
           setSelectedLead(null);
         }}
-        lead={selectedLead}
-      />
-      
+          lead={selectedLead}
+        />
+
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
         onClose={() => setConfirmationModal({ ...confirmationModal, isOpen: false })}
