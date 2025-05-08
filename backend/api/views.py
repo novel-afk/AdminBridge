@@ -1176,52 +1176,34 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_date(self, request):
-        """Get attendance records for a specific date"""
-        import traceback
+        """
+        Get attendance records for a specific date or date range.
+        Accepts either 'date' or both 'start_date' and 'end_date' as query params.
+        """
+        from datetime import datetime
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
         date_str = request.query_params.get('date')
-        if not date_str:
-            return Response(
-                {"detail": "Date parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+
         try:
-            from datetime import datetime
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
-            # Get all employees first
-            user = self.request.user
-            employees = []
-            if user.role == 'SuperAdmin':
-                employees = Employee.objects.select_related('user', 'branch').all()
-            elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
-                user_branch = user.employee_profile.branch
-                employees = Employee.objects.select_related('user', 'branch').filter(branch=user_branch)
-            # Get existing attendance records for this date
-            queryset = self.get_queryset().filter(date=date)
-            existing_attendance = {record.employee_id: record for record in queryset}
-            # Create attendance data for all employees
-            attendance_data = []
-            for employee in employees:
-                if employee.id in existing_attendance:
-                    # Use existing record
-                    attendance_data.append(existing_attendance[employee.id])
-                else:
-                    # Create a placeholder EmployeeAttendance instance (not saved to DB)
-                    attendance_data.append(
-                        EmployeeAttendance(
-                            employee=employee,
-                            date=date,
-                            time_in='09:00:00',
-                            time_out='17:00:00',
-                            status='Present',
-                            remarks=None
-                        )
-                    )
-            # Serialize the data
-            serializer = self.get_serializer(attendance_data, many=True)
-            return Response(serializer.data)
+            if start_date_str and end_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                queryset = self.get_queryset().filter(date__range=(start_date, end_date))
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
+            elif date_str:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                queryset = self.get_queryset().filter(date=date)
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
+            else:
+                return Response(
+                    {"detail": "Provide either 'date' or both 'start_date' and 'end_date'."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
         except Exception as e:
-            print(traceback.format_exc())
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'])
     def by_employee(self, request):
@@ -1358,61 +1340,34 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def by_date(self, request):
-        """Get attendance records for a specific date"""
+        """
+        Get attendance records for a specific date or date range.
+        Accepts either 'date' or both 'start_date' and 'end_date' as query params.
+        """
+        from datetime import datetime
+        start_date_str = request.query_params.get('start_date')
+        end_date_str = request.query_params.get('end_date')
         date_str = request.query_params.get('date')
-        if not date_str:
-            return Response(
-                {"detail": "Date parameter is required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
+
         try:
-            from datetime import datetime
-            date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return Response(
-                {"detail": "Invalid date format. Use YYYY-MM-DD."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Get all students first
-        user = self.request.user
-        students = []
-        
-        if user.role == 'SuperAdmin':
-            students = Student.objects.select_related('user', 'branch').all()
-        elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
-            user_branch = user.employee_profile.branch
-            students = Student.objects.select_related('user', 'branch').filter(branch=user_branch)
-        elif user.role == 'Student' and hasattr(user, 'student_profile'):
-            students = [user.student_profile]
-        
-        # Get existing attendance records for this date
-        queryset = self.get_queryset().filter(date=date)
-        existing_attendance = {record.student_id: record for record in queryset}
-        
-        # Create attendance data for all students (as dicts)
-        attendance_data = []
-        for student in students:
-            if student.id in existing_attendance:
-                # Use existing record, serialize to dict
-                record = existing_attendance[student.id]
-                serializer = self.get_serializer(record)
-                attendance_data.append(serializer.data)
+            if start_date_str and end_date_str:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+                queryset = self.get_queryset().filter(date__range=(start_date, end_date))
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
+            elif date_str:
+                date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                queryset = self.get_queryset().filter(date=date)
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
             else:
-                # Create a placeholder record as dict
-                attendance_data.append({
-                    'student': student.id,
-                    'student_name': f"{student.user.first_name} {student.user.last_name}",
-                    'student_id': student.student_id,
-                    'branch_name': student.branch.name,
-                    'date': date,
-                    'time_in': '09:00:00',
-                    'time_out': '17:00:00',
-                    'status': 'Present',
-                    'remarks': None
-                })
-        return Response(attendance_data)
+                return Response(
+                    {"detail": "Provide either 'date' or both 'start_date' and 'end_date'."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     @action(detail=False, methods=['get'])
     def by_student(self, request):

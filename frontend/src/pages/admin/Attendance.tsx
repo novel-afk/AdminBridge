@@ -5,7 +5,7 @@ import axios from 'axios';
 import { useAuth } from '../../lib/AuthContext';
 import { Tabs, TabList, Tab, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-import { format } from 'date-fns';
+import { format, parseISO, isAfter, isBefore } from 'date-fns';
 import { API_BASE_URL } from '../../lib/apiConfig';
 
 // Types for attendance data
@@ -54,7 +54,8 @@ interface StudentAttendance {
 const AttendancePage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [startDate, setStartDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   const [employeeAttendance, setEmployeeAttendance] = useState<EmployeeAttendance[]>([]);
   const [studentAttendance, setStudentAttendance] = useState<StudentAttendance[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -246,7 +247,7 @@ const AttendancePage = () => {
       employee_id: employee.employee_id,
       employee_role: employee.employee_role,
       branch_name: employee.branch_name,
-      date: selectedDate,
+      date: startDate,
       time_in: null,
       time_out: null,
       status: 'Present',
@@ -379,7 +380,7 @@ const AttendancePage = () => {
       student_name: student.student_name,
       student_id: student.student_id,
       branch_name: student.branch_name,
-      date: selectedDate,
+      date: startDate,
       time_in: null,
       time_out: null,
       status: 'Present',
@@ -392,9 +393,9 @@ const AttendancePage = () => {
   // Fetch attendance data for the selected date or prepare default attendance
   const fetchAttendanceData = async (token: string) => {
     try {
-      // Fetch employee attendance for selected date
+      // Fetch employee attendance for selected date range
       const employeeAttendanceResponse = await axios.get(
-        `${API_BASE_URL}/employee-attendance/by_date/?date=${selectedDate}`,
+        `${API_BASE_URL}/employee-attendance/by_date/?start_date=${startDate}&end_date=${endDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -423,7 +424,7 @@ const AttendancePage = () => {
   const fetchStudentAttendanceData = async (token: string) => {
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/student-attendance/by_date/?date=${selectedDate}`,
+        `${API_BASE_URL}/student-attendance/by_date/?start_date=${startDate}&end_date=${endDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -446,9 +447,10 @@ const AttendancePage = () => {
     }
   };
 
-  // Handle date change
-  const handleDateChange = async (date: string) => {
-    setSelectedDate(date);
+  // Handle date range change
+  const handleDateRangeChange = async (newStart: string, newEnd: string) => {
+    setStartDate(newStart);
+    setEndDate(newEnd);
     const token = getAuthToken();
     if (token) {
       setEmployeeLoading(true);
@@ -471,7 +473,7 @@ const AttendancePage = () => {
     // Find the existing attendance record
     const attendanceRecord = employeeAttendance.find(record => 
       record.employee === employeeId && 
-      new Date(record.date).toISOString().split('T')[0] === selectedDate
+      new Date(record.date).toISOString().split('T')[0] === startDate
     );
     
     try {
@@ -486,7 +488,7 @@ const AttendancePage = () => {
         // Update local state
         setEmployeeAttendance(prevAttendance => 
           prevAttendance.map(record => 
-            record.employee === employeeId && new Date(record.date).toISOString().split('T')[0] === selectedDate
+            record.employee === employeeId && new Date(record.date).toISOString().split('T')[0] === startDate
               ? { ...record, status: newStatus }
               : record
           )
@@ -497,7 +499,7 @@ const AttendancePage = () => {
           `${API_BASE_URL}/employee-attendance/bulk_update/`,
           [{
             employee: employeeId,
-            date: selectedDate,
+            date: startDate,
             status: newStatus
           }],
           { headers: { Authorization: `Bearer ${token}` } }
@@ -532,7 +534,7 @@ const AttendancePage = () => {
     // Find the existing attendance record
     const attendanceRecord = studentAttendance.find(record => 
       record.student === studentId && 
-      new Date(record.date).toISOString().split('T')[0] === selectedDate
+      new Date(record.date).toISOString().split('T')[0] === startDate
     );
     
     try {
@@ -547,7 +549,7 @@ const AttendancePage = () => {
         // Update local state
         setStudentAttendance(prevAttendance => 
           prevAttendance.map(record => 
-            record.student === studentId && new Date(record.date).toISOString().split('T')[0] === selectedDate
+            record.student === studentId && new Date(record.date).toISOString().split('T')[0] === startDate
               ? { ...record, status: newStatus }
               : record
           )
@@ -558,7 +560,7 @@ const AttendancePage = () => {
           `${API_BASE_URL}/student-attendance/bulk_update/`,
           [{
             student: studentId,
-            date: selectedDate,
+            date: startDate,
             status: newStatus
           }],
           { headers: { Authorization: `Bearer ${token}` } }
@@ -599,14 +601,28 @@ const AttendancePage = () => {
             {/* Date Selector */}
             <div className="mb-10 flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
               <div>
-                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Date
+                <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date
                 </label>
                 <input
                   type="date"
-                  id="date"
-                  value={selectedDate}
-                  onChange={(e) => handleDateChange(e.target.value)}
+                  id="start-date"
+                  value={startDate}
+                  onChange={(e) => handleDateRangeChange(e.target.value, endDate)}
+                  className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  disabled={employeeLoading || studentLoading}
+                />
+              </div>
+              <div>
+                <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  id="end-date"
+                  value={endDate}
+                  min={startDate}
+                  onChange={(e) => handleDateRangeChange(startDate, e.target.value)}
                   className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
                   disabled={employeeLoading || studentLoading}
                 />
@@ -674,6 +690,7 @@ const AttendancePage = () => {
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">ID</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Role</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Branch</th>
+                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Date</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Status</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Actions</th>
                       </tr>
@@ -692,6 +709,7 @@ const AttendancePage = () => {
                             <td className="py-4 px-6 text-base text-gray-700">{record.employee_id}</td>
                             <td className="py-4 px-6 text-base text-gray-700">{record.employee_role}</td>
                             <td className="py-4 px-6 text-base text-gray-700">{record.branch_name}</td>
+                            <td className="py-4 px-6 text-base text-gray-700">{format(parseISO(record.date), 'yyyy-MM-dd')}</td>
                             <td className="py-4 px-6 text-base">
                               <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm transition-colors duration-200
                                 ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
@@ -732,6 +750,7 @@ const AttendancePage = () => {
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Name</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">ID</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Branch</th>
+                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Date</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Status</th>
                         <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Actions</th>
                       </tr>
@@ -749,6 +768,7 @@ const AttendancePage = () => {
                             <td className="py-4 px-6 text-base text-gray-900 font-semibold">{record.student_name}</td>
                             <td className="py-4 px-6 text-base text-gray-700">{record.student_id}</td>
                             <td className="py-4 px-6 text-base text-gray-700">{record.branch_name}</td>
+                            <td className="py-4 px-6 text-base text-gray-700">{format(parseISO(record.date), 'yyyy-MM-dd')}</td>
                             <td className="py-4 px-6 text-base">
                               <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm transition-colors duration-200
                                 ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
