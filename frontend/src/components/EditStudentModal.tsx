@@ -101,64 +101,13 @@ const EditStudentModal = ({ isOpen, onClose, onSuccess, student, hideBranch = fa
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!student) return;
-    
-    setLoading(true);
-    setError('');
-
+  const handleUpdate = async () => {
     try {
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        setError('Authentication token not found');
-        return;
-      }
-
-      // Direct database update to bypass validation
-      // Create FormData object
-      const formDataObj = new FormData();
-      
-      // Add user data
-      formDataObj.append('user.first_name', formData.user.first_name);
-      formDataObj.append('user.last_name', formData.user.last_name);
-      formDataObj.append('user.email', formData.user.email);
-      
-      // Create student data object
-      const studentData = {
-        branch: student.branch,
-        age: parseInt(formData.age),
-        gender: formData.gender,
-        nationality: formData.nationality,
-        contact_number: formData.contact_number,
-        address: formData.address,
-        institution_name: formData.institution_name,
-        language_test: formData.language_test,
-        emergency_contact: formData.emergency_contact || '',
-        mother_name: formData.mother_name || '',
-        father_name: formData.father_name || '',
-        parent_number: formData.parent_number || '',
-        comments: formData.comments || ''
-      };
-      
-      // Add student data as JSON string
-      formDataObj.append('student_data', JSON.stringify(studentData));
-      
-      await axios.patch(
-        `http://localhost:8000/api/students/${student.id}/`,
-        formDataObj,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }
-      );
-
-      onSuccess();
+      await studentAPI.update(student.id, formData);
       onClose();
-    } catch (error) {
-      console.error('Error updating student:', error);
+      onSuccess();
+    } catch (err) {
       setError('Failed to update student');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -180,7 +129,7 @@ const EditStudentModal = ({ isOpen, onClose, onSuccess, student, hideBranch = fa
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <form onSubmit={handleUpdate} className="p-4 space-y-4">
             {error && (
               <div className="bg-red-50 text-red-600 p-3 rounded-md">
                 {error}
@@ -406,10 +355,9 @@ const EditStudentModal = ({ isOpen, onClose, onSuccess, student, hideBranch = fa
               </button>
               <button
                 type="submit"
-                disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                {loading ? 'Saving...' : 'Save Changes'}
+                Update
               </button>
             </div>
           </form>

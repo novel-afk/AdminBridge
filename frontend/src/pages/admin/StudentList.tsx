@@ -17,6 +17,7 @@ import AddStudentModal from '../../components/AddStudentModal';
 import EditStudentModal from '../../components/EditStudentModal';
 import ViewStudentModal from '../../components/ViewStudentModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { toast } from 'react-toastify';
 
 interface Student {
   id: number;
@@ -146,8 +147,8 @@ const StudentList = () => {
     try {
       if (showRefreshing) {
         setRefreshing(true);
-      } else {
-        setLoading(true);
+      } else if (students.length === 0) {
+        setLoading(true); // Only show full-page spinner if no students loaded yet
       }
       setError('');
       
@@ -434,6 +435,18 @@ const StudentList = () => {
         // No need to fetch again
       },
     });
+  };
+
+  const handleEditStudent = async (studentData) => {
+    try {
+      await studentAPI.update(studentData.id, studentData);
+      toast.success('Student updated');
+      setIsEditModalOpen(false);
+      setSelectedStudent(null);
+      fetchStudents(true); // Use refreshing, not loading
+    } catch (err) {
+      toast.error('Failed to update student');
+    }
   };
 
   if (loading) {
