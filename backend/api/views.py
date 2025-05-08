@@ -1116,10 +1116,8 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
     serializer_class = EmployeeAttendanceSerializer
     
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'create', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsSuperAdmin | BranchManagerPermission]
-        elif self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [IsSuperAdmin]
         else:
             permission_classes = [IsSuperAdmin]
         return [permission() for permission in permission_classes]
@@ -1147,60 +1145,51 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def by_date(self, request):
         """Get attendance records for a specific date"""
+        import traceback
         date_str = request.query_params.get('date')
         if not date_str:
             return Response(
                 {"detail": "Date parameter is required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
         try:
             from datetime import datetime
             date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return Response(
-                {"detail": "Invalid date format. Use YYYY-MM-DD."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Get all employees first
-        user = self.request.user
-        employees = []
-        
-        if user.role == 'SuperAdmin':
-            employees = Employee.objects.select_related('user', 'branch').all()
-        elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
-            user_branch = user.employee_profile.branch
-            employees = Employee.objects.select_related('user', 'branch').filter(branch=user_branch)
-        
-        # Get existing attendance records for this date
-        queryset = self.get_queryset().filter(date=date)
-        existing_attendance = {record.employee_id: record for record in queryset}
-        
-        # Create attendance data for all employees
-        attendance_data = []
-        for employee in employees:
-            if employee.id in existing_attendance:
-                # Use existing record
-                attendance_data.append(existing_attendance[employee.id])
-            else:
-                # Create a placeholder record (will not be saved to DB)
-                attendance_data.append({
-                    'employee': employee.id,
-                    'employee_name': f"{employee.user.first_name} {employee.user.last_name}",
-                    'employee_id': employee.employee_id,
-                    'employee_role': employee.user.role,
-                    'branch_name': employee.branch.name,
-                    'date': date,
-                    'time_in': '09:00:00',
-                    'time_out': '17:00:00',
-                    'status': 'Present',
-                    'remarks': None
-                })
-        
-        # Serialize the data
-        serializer = self.get_serializer(attendance_data, many=True)
-        return Response(serializer.data)
+            # Get all employees first
+            user = self.request.user
+            employees = []
+            if user.role == 'SuperAdmin':
+                employees = Employee.objects.select_related('user', 'branch').all()
+            elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
+                user_branch = user.employee_profile.branch
+                employees = Employee.objects.select_related('user', 'branch').filter(branch=user_branch)
+            # Get existing attendance records for this date
+            queryset = self.get_queryset().filter(date=date)
+            existing_attendance = {record.employee_id: record for record in queryset}
+            # Create attendance data for all employees
+            attendance_data = []
+            for employee in employees:
+                if employee.id in existing_attendance:
+                    # Use existing record
+                    attendance_data.append(existing_attendance[employee.id])
+                else:
+                    # Create a placeholder EmployeeAttendance instance (not saved to DB)
+                    attendance_data.append(
+                        EmployeeAttendance(
+                            employee=employee,
+                            date=date,
+                            time_in='09:00:00',
+                            time_out='17:00:00',
+                            status='Present',
+                            remarks=None
+                        )
+                    )
+            # Serialize the data
+            serializer = self.get_serializer(attendance_data, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            print(traceback.format_exc())
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=False, methods=['get'])
     def by_employee(self, request):

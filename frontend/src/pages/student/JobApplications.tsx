@@ -117,4 +117,4 @@ const JobApplications: React.FC = () => {
   );
 };
 
-export default JobApplications; 
+export default JobApplications;

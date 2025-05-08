@@ -478,7 +478,7 @@ const AttendancePage = () => {
       if (attendanceRecord && attendanceRecord.id) {
         // Update existing record
         await axios.patch(
-          `${API_BASE_URL}/employee-attendances/${attendanceRecord.id}/`,
+          `${API_BASE_URL}/employee-attendance/${attendanceRecord.id}/`,
           { status: newStatus },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -494,7 +494,7 @@ const AttendancePage = () => {
       } else {
         // Create new record using the bulk update endpoint
         await axios.post(
-          `${API_BASE_URL}/employee-attendances/bulk_update/`,
+          `${API_BASE_URL}/employee-attendance/bulk_update/`,
           [{
             employee: employeeId,
             date: selectedDate,
@@ -539,7 +539,7 @@ const AttendancePage = () => {
       if (attendanceRecord && attendanceRecord.id) {
         // Update existing record
         await axios.patch(
-          `${API_BASE_URL}/student-attendances/${attendanceRecord.id}/`,
+          `${API_BASE_URL}/student-attendance/${attendanceRecord.id}/`,
           { status: newStatus },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -555,7 +555,7 @@ const AttendancePage = () => {
       } else {
         // Create new record using the bulk update endpoint
         await axios.post(
-          `${API_BASE_URL}/student-attendances/bulk_update/`,
+          `${API_BASE_URL}/student-attendance/bulk_update/`,
           [{
             student: studentId,
             date: selectedDate,
@@ -583,219 +583,225 @@ const AttendancePage = () => {
   };
 
   return (
-    <Layout showHeader={false}>
-      <div className="container mx-auto px-4 py-8 mt-6">
-        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">Attendance Management</h1>
-          
-          {/* Date Selector */}
-          <div className="mb-6">
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
-              Select Date
-            </label>
-            <input
-              type="date"
-              id="date"
-              value={selectedDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="border border-gray-300 rounded-md p-2 w-full md:w-64"
-              disabled={employeeLoading || studentLoading}
-            />
-          </div>
-          
-          {updateSuccess && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-              Attendance updated successfully
-            </div>
-          )}
-          
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-          
-          {/* Tabs for different attendance types */}
-          <Tabs selectedIndex={tabIndex} onSelect={(index: number) => setTabIndex(index)} className="mt-6">
-            <TabList className="flex border-b mb-4">
-              <Tab className="px-4 py-2 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-medium">
-                Employee Attendance
-              </Tab>
-              <Tab className="px-4 py-2 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-medium">
-                Student Attendance
-              </Tab>
-            </TabList>
-
-            {/* Employee Attendance Summary */}
-            <div className="mb-6 grid grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">Employee Summary</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-green-50 p-3 rounded">
-                    <p className="text-sm text-green-600">Present</p>
-                    <p className="text-2xl font-bold text-green-700">
-                      {employeeAttendance.filter(e => e.status === 'Present').length}
-                    </p>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded">
-                    <p className="text-sm text-red-600">Absent</p>
-                    <p className="text-2xl font-bold text-red-700">
-                      {employeeAttendance.filter(e => e.status === 'Absent').length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow">
-                <h3 className="text-lg font-semibold mb-2">Student Summary</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-green-50 p-3 rounded">
-                    <p className="text-sm text-green-600">Present</p>
-                    <p className="text-2xl font-bold text-green-700">
-                      {studentAttendance.filter(s => s.status === 'Present').length}
-                    </p>
-                  </div>
-                  <div className="bg-red-50 p-3 rounded">
-                    <p className="text-sm text-red-600">Absent</p>
-                    <p className="text-2xl font-bold text-red-700">
-                      {studentAttendance.filter(s => s.status === 'Absent').length}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Employee Attendance Tab */}
-            <TabPanel>
-              {employeeLoading ? (
-                <div className="flex justify-center items-center py-10">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white border border-gray-200">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Name</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">ID</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Role</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Branch</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Status</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {!employeeAttendance || employeeAttendance.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-4 px-4 text-center text-gray-500">
-                            No employees found
-                          </td>
-                        </tr>
-                      ) : (
-                        Array.isArray(employeeAttendance) && employeeAttendance.map((record) => (
-                          <tr key={`emp-${record.employee}`} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.employee_name}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.employee_id}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.employee_role}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.branch_name}</td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                record.status === 'Present' ? 'bg-green-100 text-green-800' :
-                                record.status === 'Absent' ? 'bg-red-100 text-red-800' :
-                                record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
-                                record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
-                                'bg-blue-100 text-blue-800'
-                              }`}>
-                                {record.status}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <select
-                                value={record.status}
-                                onChange={(e) => handleEmployeeStatusChange(record.employee, e.target.value)}
-                                className="border border-gray-300 rounded p-1 text-sm"
-                              >
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                                <option value="Late">Late</option>
-                                <option value="Half Day">Half Day</option>
-                                <option value="On Leave">On Leave</option>
-                              </select>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </TabPanel>
-
-            {/* Student Attendance Tab */}
-            <TabPanel>
-              {studentLoading ? (
-                <div className="flex justify-center items-center py-10">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full bg-white border border-gray-200">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Name</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">ID</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Branch</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Status</th>
-                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {!studentAttendance || studentAttendance.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
-                            No students found
-                          </td>
-                        </tr>
-                      ) : (
-                        Array.isArray(studentAttendance) && studentAttendance.map((record) => (
-                          <tr key={`stud-${record.student}`} className="border-b hover:bg-gray-50">
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.student_name}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.student_id}</td>
-                            <td className="py-3 px-4 text-sm text-gray-700">{record.branch_name}</td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                record.status === 'Present' ? 'bg-green-100 text-green-800' :
-                                record.status === 'Absent' ? 'bg-red-100 text-red-800' :
-                                record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
-                                record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
-                                'bg-blue-100 text-blue-800'
-                              }`}>
-                                {record.status}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <select
-                                value={record.status}
-                                onChange={(e) => handleStudentStatusChange(record.student, e.target.value)}
-                                className="border border-gray-300 rounded p-1 text-sm"
-                              >
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                                <option value="Late">Late</option>
-                                <option value="Half Day">Half Day</option>
-                                <option value="On Leave">On Leave</option>
-                              </select>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </TabPanel>
-          </Tabs>
+    <Layout>
+      {(employeeLoading || studentLoading) ? (
+        <div className="flex justify-center items-center h-96">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-700"></div>
         </div>
-      </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">Attendance Management</h1>
+            
+            {/* Date Selector */}
+            <div className="mb-6">
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+                Select Date
+              </label>
+              <input
+                type="date"
+                id="date"
+                value={selectedDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 w-full md:w-64"
+                disabled={employeeLoading || studentLoading}
+              />
+            </div>
+            
+            {updateSuccess && (
+              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+                Attendance updated successfully
+              </div>
+            )}
+            
+            {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {error}
+              </div>
+            )}
+            
+            {/* Tabs for different attendance types */}
+            <Tabs selectedIndex={tabIndex} onSelect={(index: number) => setTabIndex(index)} className="mt-6">
+              <TabList className="flex border-b mb-4">
+                <Tab className="px-4 py-2 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-medium">
+                  Employee Attendance
+                </Tab>
+                <Tab className="px-4 py-2 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-medium">
+                  Student Attendance
+                </Tab>
+              </TabList>
+
+              {/* Employee Attendance Summary */}
+              <div className="mb-6 grid grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold mb-2">Employee Summary</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-green-50 p-3 rounded">
+                      <p className="text-sm text-green-600">Present</p>
+                      <p className="text-2xl font-bold text-green-700">
+                        {employeeAttendance.filter(e => e.status === 'Present').length}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 p-3 rounded">
+                      <p className="text-sm text-red-600">Absent</p>
+                      <p className="text-2xl font-bold text-red-700">
+                        {employeeAttendance.filter(e => e.status === 'Absent').length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg shadow">
+                  <h3 className="text-lg font-semibold mb-2">Student Summary</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-green-50 p-3 rounded">
+                      <p className="text-sm text-green-600">Present</p>
+                      <p className="text-2xl font-bold text-green-700">
+                        {studentAttendance.filter(s => s.status === 'Present').length}
+                      </p>
+                    </div>
+                    <div className="bg-red-50 p-3 rounded">
+                      <p className="text-sm text-red-600">Absent</p>
+                      <p className="text-2xl font-bold text-red-700">
+                        {studentAttendance.filter(s => s.status === 'Absent').length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Employee Attendance Tab */}
+              <TabPanel>
+                {employeeLoading ? (
+                  <div className="flex justify-center items-center py-10">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Name</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">ID</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Role</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Branch</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Status</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {!employeeAttendance || employeeAttendance.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-4 px-4 text-center text-gray-500">
+                              No employees found
+                            </td>
+                          </tr>
+                        ) : (
+                          Array.isArray(employeeAttendance) && employeeAttendance.map((record) => (
+                            <tr key={`emp-${record.employee}`} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.employee_name}</td>
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.employee_id}</td>
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.employee_role}</td>
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.branch_name}</td>
+                              <td className="py-3 px-4 text-sm">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  record.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                  record.status === 'Absent' ? 'bg-red-100 text-red-800' :
+                                  record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
+                                  record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {record.status}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-sm">
+                                <select
+                                  value={record.status}
+                                  onChange={(e) => handleEmployeeStatusChange(record.employee, e.target.value)}
+                                  className="border border-gray-300 rounded p-1 text-sm"
+                                >
+                                  <option value="Present">Present</option>
+                                  <option value="Absent">Absent</option>
+                                  <option value="Late">Late</option>
+                                  <option value="Half Day">Half Day</option>
+                                  <option value="On Leave">On Leave</option>
+                                </select>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </TabPanel>
+
+              {/* Student Attendance Tab */}
+              <TabPanel>
+                {studentLoading ? (
+                  <div className="flex justify-center items-center py-10">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-200">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Name</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">ID</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Branch</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Status</th>
+                          <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 border-b">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {!studentAttendance || studentAttendance.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="py-4 px-4 text-center text-gray-500">
+                              No students found
+                            </td>
+                          </tr>
+                        ) : (
+                          Array.isArray(studentAttendance) && studentAttendance.map((record) => (
+                            <tr key={`stud-${record.student}`} className="border-b hover:bg-gray-50">
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.student_name}</td>
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.student_id}</td>
+                              <td className="py-3 px-4 text-sm text-gray-700">{record.branch_name}</td>
+                              <td className="py-3 px-4 text-sm">
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  record.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                  record.status === 'Absent' ? 'bg-red-100 text-red-800' :
+                                  record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
+                                  record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {record.status}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-sm">
+                                <select
+                                  value={record.status}
+                                  onChange={(e) => handleStudentStatusChange(record.student, e.target.value)}
+                                  className="border border-gray-300 rounded p-1 text-sm"
+                                >
+                                  <option value="Present">Present</option>
+                                  <option value="Absent">Absent</option>
+                                  <option value="Late">Late</option>
+                                  <option value="Half Day">Half Day</option>
+                                  <option value="On Leave">On Leave</option>
+                                </select>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </TabPanel>
+            </Tabs>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
