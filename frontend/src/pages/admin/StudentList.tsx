@@ -341,11 +341,10 @@ const StudentList = () => {
             { ids: selectedStudents },
             { headers: { Authorization: `Bearer ${accessToken}` } }
           );
-          
           // Clear selection and refresh data
           setSelectedStudents([]);
-          fetchStudents();
-          
+          fetchStudents(true);
+          toast.success('Student(s) deleted successfully');
           // Show success message
           showConfirmation({
             title: 'Success',
@@ -354,7 +353,6 @@ const StudentList = () => {
             confirmText: 'OK',
             onConfirm: () => {},
           });
-          
         } catch (err: any) {
           console.error('Error deleting students:', err);
           showConfirmation({
@@ -381,10 +379,9 @@ const StudentList = () => {
           await axios.delete(`${API_BASE_URL}/students/${student.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
           // Refresh data after deletion
-          fetchStudents();
-          
+          fetchStudents(true);
+          toast.success('Student deleted successfully');
         } catch (err) {
           console.error('Error deleting student:', err);
           setError('Failed to delete student. Please try again.');

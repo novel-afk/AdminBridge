@@ -18,6 +18,7 @@ import AddLeadModal from '../../components/AddLeadModal';
 import EditLeadModal from '../../components/EditLeadModal';
 import ViewLeadModal from '../../components/ViewLeadModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { toast } from 'react-toastify';
 
 interface Lead {
   id: number;
@@ -351,7 +352,8 @@ const LeadList = () => {
           
           // Clear selection and refresh data
           setSelectedLeads([]);
-          fetchLeads();
+          fetchLeads(true);
+          toast.success('Lead(s) deleted successfully');
           
         } catch (err) {
           console.error('Error deleting leads:', err);
@@ -375,7 +377,8 @@ const LeadList = () => {
           });
           
           // Refresh data after deletion
-          fetchLeads();
+          fetchLeads(true);
+          toast.success('Lead deleted successfully');
           
         } catch (err) {
           console.error('Error deleting lead:', err);
