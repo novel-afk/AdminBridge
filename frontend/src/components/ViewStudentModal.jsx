@@ -18,6 +18,33 @@ const InfoField = ({ label, value }) => (
 const ViewStudentModal = ({ isOpen, onClose, student }) => {
   if (!isOpen || !student) return null;
 
+  // Debug log
+  console.log('ViewStudentModal student:', student);
+
+  // Helper to check if a string is a valid URL
+  const isValidUrl = (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Fallback for broken images
+  const [imgError, setImgError] = React.useState(false);
+
+  // Helper for date formatting
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
   const getFileExtension = (filename) => {
     return filename?.split('.').pop()?.toLowerCase() || '';
   };
@@ -48,14 +75,14 @@ const ViewStudentModal = ({ isOpen, onClose, student }) => {
               <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
-          
           <div className="flex flex-col items-center pb-6">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-4 border-[#1e1b4b] mb-4">
-              {student.profilePicture ? (
+              {student.profilePicture && isValidUrl(student.profilePicture) && !imgError ? (
                 <img
-                  src={typeof student.profilePicture === 'string' ? student.profilePicture : URL.createObjectURL(student.profilePicture)}
+                  src={student.profilePicture}
                   alt={`${student.name}'s profile`}
                   className="w-full h-full object-cover"
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-[#1e1b4b]/10 text-[#1e1b4b]">
@@ -67,9 +94,25 @@ const ViewStudentModal = ({ isOpen, onClose, student }) => {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">{student.name}</h1>
             <p className="text-sm text-gray-500 mt-1">Student Profile</p>
+            <div className="flex flex-wrap gap-4 mt-2 justify-center">
+              {student.branch_name && (
+                <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">
+                  Branch: {student.branch_name}
+                </span>
+              )}
+              {student.student_id && (
+                <span className="bg-green-50 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                  Student ID: {student.student_id}
+                </span>
+              )}
+              {student.enrollment_date && (
+                <span className="bg-yellow-50 text-yellow-700 px-3 py-1 rounded-full text-xs font-medium">
+                  Enrolled: {formatDate(student.enrollment_date)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
-        
         <div className="p-6 space-y-8">
           <InfoSection title="Personal Information">
             <InfoField label="Age" value={student.age} />
@@ -78,26 +121,24 @@ const ViewStudentModal = ({ isOpen, onClose, student }) => {
             <InfoField label="Phone Number" value={student.phone} />
             <InfoField label="Email" value={student.email} />
             <InfoField label="Emergency Contact" value={student.emergencyContact || 'Not provided'} />
+            <InfoField label="Address" value={student.address || 'Not provided'} />
           </InfoSection>
-
           <InfoSection title="Family Information">
             <InfoField label="Father's Name" value={student.fatherName} />
             <InfoField label="Mother's Name" value={student.motherName} />
             <InfoField label="Parent's Contact" value={student.parentNumber || 'Not provided'} />
           </InfoSection>
-
           <InfoSection title="Education Information">
             <InfoField label="Educational Institute" value={student.institute || 'Not provided'} />
             <InfoField label="Language Test" value={student.language || 'Not provided'} />
           </InfoSection>
-
           <InfoSection title="Documents">
             <div className="col-span-2">
-              {student.cv ? (
+              {student.cv && isValidUrl(student.cv) ? (
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      {getDocumentIcon(student.cv)}
+                      <DocumentTextIcon className="h-5 w-5 text-blue-500" />
                       <div>
                         <h4 className="font-medium text-gray-900">CV/Resume</h4>
                         <p className="text-sm text-gray-500 mt-0.5 max-w-sm truncate">
@@ -107,16 +148,14 @@ const ViewStudentModal = ({ isOpen, onClose, student }) => {
                         </p>
                       </div>
                     </div>
-                    {typeof student.cv === 'string' && (
-                      <a 
-                        href={student.cv}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#1e1b4b] hover:bg-[#1e1b4b]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e1b4b] transition-colors"
-                      >
-                        View Document
-                      </a>
-                    )}
+                    <a 
+                      href={student.cv}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#1e1b4b] hover:bg-[#1e1b4b]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1e1b4b] transition-colors"
+                    >
+                      View Document
+                    </a>
                   </div>
                 </div>
               ) : (
