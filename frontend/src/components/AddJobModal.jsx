@@ -8,6 +8,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
 import { useAuth } from '../lib/AuthContext';
+import { toast } from 'react-toastify';
 
 // Form Field component to handle label, input, and error messages
 const FormField = ({ label, children, error }) => {
@@ -119,40 +120,50 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
 
   const validateForm = () => {
     const newErrors = {};
+    let toastError = null;
     
     if (!formData.title.trim()) {
       newErrors.title = 'Job title is required';
+      if (!toastError) toastError = newErrors.title;
     }
-    
     if (!formData.description.trim()) {
       newErrors.description = 'Job description is required';
+      if (!toastError) toastError = newErrors.description;
     }
-    
     if (!formData.requirements.trim()) {
       newErrors.requirements = 'Job requirements are required';
+      if (!toastError) toastError = newErrors.requirements;
     }
-    
     if (!formData.location.trim()) {
       newErrors.location = 'Location is required';
+      if (!toastError) toastError = newErrors.location;
     }
-
     if (!formData.job_type.trim()) {
       newErrors.job_type = 'Job type is required';
+      if (!toastError) toastError = newErrors.job_type;
     }
-    
     if (!formData.required_experience.trim()) {
       newErrors.required_experience = 'Required experience is required';
+      if (!toastError) toastError = newErrors.required_experience;
+    } else if (isNaN(formData.required_experience)) {
+      newErrors.required_experience = 'Required experience must be a number';
+      if (!toastError) toastError = newErrors.required_experience;
     }
-
     if (!formData.salary_range.trim()) {
       newErrors.salary_range = 'Salary range is required';
+      if (!toastError) toastError = newErrors.salary_range;
+    } else if (isNaN(formData.salary_range)) {
+      newErrors.salary_range = 'Salary range must be a number';
+      if (!toastError) toastError = newErrors.salary_range;
     }
-    
     if (!formData.branch) {
       newErrors.branch = 'Branch is required';
+      if (!toastError) toastError = newErrors.branch;
     }
-    
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0 && toastError) {
+      toast.error(toastError);
+    }
     return Object.keys(newErrors).length === 0;
   };
 

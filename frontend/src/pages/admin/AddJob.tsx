@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface Branch {
   id: number;
@@ -19,6 +20,7 @@ const AddJob = () => {
     is_active: true,
     location: '',
     required_experience: '',
+    salary_range: '',
   });
   
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -90,8 +92,17 @@ const AddJob = () => {
     setError('');
 
     // Basic validation
-    if (!formData.title || !formData.description || !formData.requirements || !formData.branch) {
-      setError('Please fill in all required fields');
+    let validationError = '';
+    if (!formData.title || !formData.description || !formData.requirements || !formData.branch || !formData.location || !formData.required_experience) {
+      validationError = 'Please fill in all required fields';
+    } else if (isNaN(formData.required_experience)) {
+      validationError = 'Required experience must be a number';
+    } else if (formData.salary_range !== undefined && formData.salary_range !== '' && isNaN(formData.salary_range as any)) {
+      validationError = 'Salary range must be a number';
+    }
+    if (validationError) {
+      setError(validationError);
+      toast.error(validationError);
       setLoading(false);
       return;
     }
@@ -113,6 +124,7 @@ const AddJob = () => {
         is_active: formData.is_active,
         location: formData.location,
         required_experience: formData.required_experience,
+        salary_range: formData.salary_range,
       };
       
       // Send to API
