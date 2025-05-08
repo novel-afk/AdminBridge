@@ -226,57 +226,61 @@ def counsellor_stats(request):
         if hasattr(request.user, 'employee_profile'):
             branch = request.user.employee_profile.branch
             branch_name = branch.name
-            
-        # Count assigned students and leads
-        assigned_student_count = random.randint(15, 40)
-        assigned_lead_count = random.randint(5, 15)
-        upcoming_appointment_count = random.randint(3, 8)
-            
-        # Generate mock data for charts
-        student_status_distribution = {
-            "Active": random.randint(10, 30),
-            "Completed": random.randint(5, 15),
-            "On Hold": random.randint(2, 8),
-            "Graduated": random.randint(5, 10)
-        }
         
-        lead_status_distribution = {
-            "New": random.randint(2, 5),
-            "Contacted": random.randint(2, 7),
-            "Interested": random.randint(2, 5),
-            "Not Interested": random.randint(1, 3),
-            "Converted": random.randint(1, 4)
-        }
+        from .models import Student, Lead, Employee
+        from django.db.models import Count
+        # Only count students, leads, and employees in the same branch
+        student_count = Student.objects.filter(branch=branch).count() if branch else 0
+        lead_count = Lead.objects.filter(branch=branch).count() if branch else 0
+        employee_count = Employee.objects.filter(branch=branch).count() if branch else 0
         
-        # Mock data for performance metrics
-        performance_metrics = {
-            "Student Success Rate": random.randint(75, 95),
-            "Lead Conversion Rate": random.randint(40, 75),
-            "Appointment Completion": random.randint(80, 98),
-            "Student Satisfaction": random.randint(85, 98)
-        }
+        # Real student status distribution for this branch
+        student_status_distribution = {}
+        if branch:
+            statuses = Student.objects.filter(branch=branch).values('gender').annotate(count=Count('gender'))
+            for item in statuses:
+                student_status_distribution[item['gender']] = item['count']
         
-        # Mock data for weekly schedule
-        weekly_schedule = {
-            "Monday": random.randint(1, 5),
-            "Tuesday": random.randint(1, 5),
-            "Wednesday": random.randint(1, 5),
-            "Thursday": random.randint(1, 5),
-            "Friday": random.randint(1, 5)
-        }
+        # Real lead status distribution for this branch
+        lead_status_distribution = {}
+        if branch:
+            statuses = Lead.objects.filter(branch=branch).values('lead_source').annotate(count=Count('lead_source'))
+            for item in statuses:
+                lead_status_distribution[item['lead_source']] = item['count']
+        
+        # Real monthly student registrations for this branch (last 6 months)
+        from django.utils import timezone
+        from datetime import datetime, timedelta
+        monthly_student_registrations = {}
+        current_date = timezone.now()
+        for i in range(6):
+            month = (current_date.month - i) % 12
+            if month == 0:
+                month = 12
+            year = current_date.year
+            if current_date.month - i <= 0:
+                year -= 1
+            month_name = datetime(year, month, 1).strftime('%b')
+            start_date = datetime(year, month, 1)
+            if month == 12:
+                end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+            else:
+                end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+            month_count = Student.objects.filter(branch=branch, enrollment_date__range=[start_date, end_date]).count() if branch else 0
+            monthly_student_registrations[month_name] = month_count
+        monthly_student_registrations = dict(reversed(list(monthly_student_registrations.items())))
         
         stats = {
             "counsellorName": counsellor_name,
             "branchName": branch_name,
-            "assignedStudentCount": assigned_student_count,
-            "assignedLeadCount": assigned_lead_count,
-            "upcomingAppointmentCount": upcoming_appointment_count,
+            "assignedStudentCount": student_count,
+            "assignedLeadCount": lead_count,
+            "employeeCount": employee_count,
+            "upcomingAppointmentCount": 0,  # You can add real logic if you have appointments
             "studentStatusDistribution": student_status_distribution,
             "leadStatusDistribution": lead_status_distribution,
-            "performanceMetrics": performance_metrics,
-            "weeklySchedule": weekly_schedule
+            "monthlyStudentRegistrations": monthly_student_registrations,
         }
-        
         return Response(stats)
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

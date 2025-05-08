@@ -35,6 +35,7 @@ interface DashboardStats {
   branchName: string;
   studentCount: number;
   leadCount: number;
+  employeeCount?: number;
   appointmentCount?: number;
   studentStatusCount?: Record<string, number>;
   leadStatusCount?: Record<string, number>;
@@ -175,19 +176,6 @@ const CounsellorDashboard = () => {
     );
   }
 
-  // Students by Branch (only this branch)
-  const branchBarChartData = {
-    labels: [stats.branchName],
-    datasets: [
-      {
-        label: 'Number of Students',
-        data: [stats.studentCount],
-        backgroundColor: ['rgba(54, 162, 235, 0.6)'],
-        borderColor: ['rgba(54, 162, 235, 1)'],
-        borderWidth: 1,
-      },
-    ],
-  };
 
   // Student Status Distribution
   const studentStatusPieChartData = {
@@ -315,34 +303,27 @@ const CounsellorDashboard = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
                         <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Upcoming Appointments</dt>
-                          <dd className="text-3xl font-semibold text-gray-900">{stats.appointmentCount}</dd>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Branch Employees</dt>
+                          <dd className="text-3xl font-semibold text-gray-900">{stats.employeeCount ?? '-'}</dd>
                         </dl>
                       </div>
                     </div>
                   </div>
                   <div className="bg-gray-50 px-4 py-4 sm:px-6">
                     <div className="text-sm">
-                      <a href="/counsellor/calendar" className="font-medium text-green-600 hover:text-green-500">View calendar</a>
+                      <a href="/counsellor/employees" className="font-medium text-green-600 hover:text-green-500">View all employees</a>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Students by Branch</h3>
-                    <div className="h-64">
-                      <Bar data={branchBarChartData} options={{ maintainAspectRatio: false }} />
-                    </div>
-                  </div>
-                </div>
+                
                 <div className="bg-white overflow-hidden shadow rounded-lg">
                   <div className="px-4 py-5 sm:p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Student Status Distribution</h3>
@@ -379,7 +360,6 @@ const CounsellorDashboard = () => {
                         <tr>
                           <th className="text-left font-semibold">Name</th>
                           <th className="text-left font-semibold">Email</th>
-                          <th className="text-left font-semibold">Contact</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -387,7 +367,6 @@ const CounsellorDashboard = () => {
                           <tr key={s.id} className="border-t">
                             <td>{s.user?.first_name} {s.user?.last_name}</td>
                             <td>{s.user?.email}</td>
-                            <td>{s.contact_number}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -403,7 +382,6 @@ const CounsellorDashboard = () => {
                         <tr>
                           <th className="text-left font-semibold">Name</th>
                           <th className="text-left font-semibold">Email</th>
-                          <th className="text-left font-semibold">Phone</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -411,7 +389,6 @@ const CounsellorDashboard = () => {
                           <tr key={l.id} className="border-t">
                             <td>{l.name}</td>
                             <td>{l.email}</td>
-                            <td>{l.phone}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -427,7 +404,6 @@ const CounsellorDashboard = () => {
                         <tr>
                           <th className="text-left font-semibold">Name</th>
                           <th className="text-left font-semibold">Role</th>
-                          <th className="text-left font-semibold">Email</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -435,7 +411,6 @@ const CounsellorDashboard = () => {
                           <tr key={e.id} className="border-t">
                             <td>{e.user?.first_name} {e.user?.last_name}</td>
                             <td>{e.role}</td>
-                            <td>{e.user?.email}</td>
                           </tr>
                         ))}
                       </tbody>
