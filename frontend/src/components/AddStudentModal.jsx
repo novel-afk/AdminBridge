@@ -466,7 +466,7 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
       // Add user data fields
       formDataToSend.append('user.first_name', formData.firstName);
       formDataToSend.append('user.last_name', formData.lastName);
-      formData.append('user.email', formData.email);
+      formDataToSend.append('user.email', formData.email);
       formDataToSend.append('user.password', 'Student@123'); // Default password
       
       // Add files if they exist
