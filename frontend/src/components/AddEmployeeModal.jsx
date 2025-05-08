@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { useAuth } from '../lib/AuthContext';
 
 const FormField = ({ label, error, children, required }) => (
@@ -320,6 +320,36 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
   // Check if the current user is an admin
   const isAdmin = user?.role === 'SuperAdmin';
 
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const emailRef = useRef(null);
+  const roleRef = useRef(null);
+  const genderRef = useRef(null);
+  const nationalityRef = useRef(null);
+  const phoneRef = useRef(null);
+  const dobRef = useRef(null);
+  const salaryRef = useRef(null);
+  const addressRef = useRef(null);
+
+  // Initial state for formData and errors
+  const initialFormData = {
+    firstName: '',
+    lastName: '',
+    role: '',
+    gender: '',
+    nationality: '',
+    phone: '',
+    email: '',
+    branch: '',
+    emergencyContact: '',
+    dob: '',
+    salary: '',
+    address: '',
+    profilePicture: null,
+    citizenshipDocument: null,
+  };
+  const initialErrors = {};
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -468,75 +498,52 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
         } else {
           onClose();
         }
-      } catch (error) {
-        console.error('Error creating employee:', error);
-        
-        // Handle different types of API errors
-        let errorMessage = 'Failed to save employee. Please try again.';
-        
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Error response data:', error.response.data);
-          
-          const newErrors = {};
-          
-          if (error.response.data.detail) {
-            newErrors.submit = error.response.data.detail;
-            toast.error(error.response.data.detail);
-          } else if (typeof error.response.data === 'object') {
-            // Map backend field errors to form fields
-            const processErrors = (obj, prefix = '') => {
-              Object.entries(obj).forEach(([key, value]) => {
-                // If value is an object and not an array, recurse
-                if (value && typeof value === 'object' && !Array.isArray(value)) {
-                  processErrors(value, `${prefix}${key}.`);
-                  return;
-                }
-                
-                const errorMessage = Array.isArray(value) ? value.join(', ') : value;
-                const fullKey = `${prefix}${key}`;
-                
-                // Map user.email errors to email field
-                if (fullKey === 'user.email' || key === 'email') {
-                  newErrors.email = errorMessage;
-                  toast.error('Email already exists');
-                }
-                // Map phone_number errors to phoneNumber field
-                else if (key === 'phone_number') {
-                  newErrors.phoneNumber = errorMessage;
-                  toast.error('Phone number already exists');
-                }
-                // Keep other field errors as is
-                else {
-                  newErrors[key] = errorMessage;
-                }
-              });
-            };
-            
-            processErrors(error.response.data);
-            
-            // If we have field-specific errors but no submit error, add a general error
-            if (Object.keys(newErrors).length > 0 && !newErrors.submit) {
-              newErrors.submit = 'Please correct the errors below.';
-            }
-          }
-          
-          // If no specific errors were mapped, use the generic error message
-          if (Object.keys(newErrors).length === 0) {
-            newErrors.submit = errorMessage;
-            toast.error(errorMessage);
-       }
-          
-          setErrors(newErrors);
-        } else if (error.request) {
-          // The request was made but no response was received
-          setErrors({ submit: 'No response received from server. Please check your connection.' });
-        }
-      } finally {
+      } catch (err) {
         setIsSubmitting(false);
+        if (err.response && err.response.data) {
+          const errors = err.response.data;
+          setErrors(errors);
+          // Show toast for the first error, including nested errors
+          function extractFirstError(obj) {
+            if (!obj) return null;
+            if (typeof obj === 'string') return obj;
+            if (Array.isArray(obj) && obj.length > 0) return obj[0];
+            if (typeof obj === 'object') {
+              for (const key in obj) {
+                const errMsg = extractFirstError(obj[key]);
+                if (errMsg) return errMsg;
+              }
+            }
+            return null;
+          }
+          const firstError = extractFirstError(errors);
+          if (firstError) toast.error(firstError);
+          // Focus the first field with an error
+          if (errors.first_name && firstNameRef.current) firstNameRef.current.focus();
+          else if (errors.last_name && lastNameRef.current) lastNameRef.current.focus();
+          else if (errors.email && emailRef.current) emailRef.current.focus();
+          else if (errors.role && roleRef.current) roleRef.current.focus();
+          else if (errors.gender && genderRef.current) genderRef.current.focus();
+          else if (errors.nationality && nationalityRef.current) nationalityRef.current.focus();
+          else if (errors.contact_number && phoneRef.current) phoneRef.current.focus();
+          else if (errors.dob && dobRef.current) dobRef.current.focus();
+          else if (errors.salary && salaryRef.current) salaryRef.current.focus();
+          else if (errors.address && addressRef.current) addressRef.current.focus();
+          return;
+        }
+        toast.error('Failed to add employee. Please try again.');
+        return;
       }
     }
+  };
+
+  // Reset modal state on close
+  const handleClose = () => {
+    setFormData(initialFormData);
+    setErrors(initialErrors);
+    setStep(1);
+    setIsSubmitting(false);
+    if (onClose) onClose();
   };
 
   if (!isOpen) return null;
@@ -553,7 +560,7 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <XMarkIcon className="h-6 w-6" />
@@ -570,6 +577,16 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
               branches={branches}
               userBranch={user?.branch}
               isAdmin={isAdmin}
+              firstNameRef={firstNameRef}
+              lastNameRef={lastNameRef}
+              emailRef={emailRef}
+              roleRef={roleRef}
+              genderRef={genderRef}
+              nationalityRef={nationalityRef}
+              phoneRef={phoneRef}
+              dobRef={dobRef}
+              salaryRef={salaryRef}
+              addressRef={addressRef}
             />
           ) : (
             <EmploymentDetailsForm

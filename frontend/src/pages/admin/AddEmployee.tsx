@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 interface Branch {
   id: number;
@@ -37,6 +38,17 @@ const AddEmployee = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const emailRef = useRef(null);
+  const roleRef = useRef(null);
+  const genderRef = useRef(null);
+  const nationalityRef = useRef(null);
+  const phoneRef = useRef(null);
+  const dobRef = useRef(null);
+  const salaryRef = useRef(null);
+  const addressRef = useRef(null);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     // Fetch branches for the dropdown
@@ -117,6 +129,7 @@ const AddEmployee = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setFieldErrors({});
 
     // Basic validation
     if (!formData.user.first_name || !formData.user.last_name || !formData.user.email) {
@@ -205,41 +218,42 @@ const AddEmployee = () => {
       // Redirect to employees list
       navigate('/admin/employees');
     } catch (err: any) {
-      console.error('Error adding employee:', err);
-      if (err.response?.data) {
-        console.log('Error details:', err.response.data);
-        
-        // Handle structured error responses
-        if (typeof err.response.data === 'object') {
-          const errorMessages = [];
-          
-          // Process nested errors (like user.email)
-          Object.entries(err.response.data).forEach(([key, value]) => {
-            if (typeof value === 'object') {
-              Object.entries(value as any).forEach(([nestedKey, nestedValue]) => {
-                errorMessages.push(`${key}.${nestedKey}: ${nestedValue}`);
-              });
-            } else {
-              errorMessages.push(`${key}: ${value}`);
-            }
-          });
-          
-          if (errorMessages.length > 0) {
-            setError(`Validation errors: ${errorMessages.join(', ')}`);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-      
-      setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
-        'Failed to add employee. Please try again.'
-      );
-    } finally {
       setLoading(false);
+      if (err.response && err.response.data) {
+        const errors = err.response.data;
+        setFieldErrors(errors);
+        // Show toast for the first error, including nested errors
+        function extractFirstError(obj) {
+          if (!obj) return null;
+          if (typeof obj === 'string') return obj;
+          if (Array.isArray(obj) && obj.length > 0) return obj[0];
+          if (typeof obj === 'object') {
+            for (const key in obj) {
+              const errMsg = extractFirstError(obj[key]);
+              if (errMsg) return errMsg;
+            }
+          }
+          return null;
+        }
+        const firstError = extractFirstError(errors);
+        if (firstError) toast.error(firstError);
+        // Focus the first field with an error
+        if (errors.first_name && firstNameRef.current) firstNameRef.current.focus();
+        else if (errors.last_name && lastNameRef.current) lastNameRef.current.focus();
+        else if (errors.email && emailRef.current) emailRef.current.focus();
+        else if (errors.role && roleRef.current) roleRef.current.focus();
+        else if (errors.gender && genderRef.current) genderRef.current.focus();
+        else if (errors.nationality && nationalityRef.current) nationalityRef.current.focus();
+        else if (errors.contact_number && phoneRef.current) phoneRef.current.focus();
+        else if (errors.dob && dobRef.current) dobRef.current.focus();
+        else if (errors.salary && salaryRef.current) salaryRef.current.focus();
+        else if (errors.address && addressRef.current) addressRef.current.focus();
+        return;
+      }
+      setError('Failed to add employee. Please try again.');
+      return;
     }
+    setLoading(false);
   };
 
   return (
@@ -273,7 +287,9 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  ref={firstNameRef}
                 />
+                {fieldErrors.first_name && <span className="text-red-500 text-sm">{fieldErrors.first_name}</span>}
               </div>
 
               <div>
@@ -288,7 +304,9 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  ref={lastNameRef}
                 />
+                {fieldErrors.last_name && <span className="text-red-500 text-sm">{fieldErrors.last_name}</span>}
               </div>
             </div>
 
@@ -305,7 +323,9 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  ref={emailRef}
                 />
+                {fieldErrors.email && <span className="text-red-500 text-sm">{fieldErrors.email}</span>}
               </div>
 
               <div>
@@ -320,7 +340,9 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  ref={phoneRef}
                 />
+                {fieldErrors.contact_number && <span className="text-red-500 text-sm">{fieldErrors.contact_number}</span>}
               </div>
             </div>
             
@@ -336,7 +358,9 @@ const AddEmployee = () => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="e.g. British, American, Indian"
+                ref={nationalityRef}
               />
+              {fieldErrors.nationality && <span className="text-red-500 text-sm">{fieldErrors.nationality}</span>}
             </div>
             
             <div className="mb-6">
@@ -349,11 +373,13 @@ const AddEmployee = () => {
                 value={formData.gender}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                ref={genderRef}
               >
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
               </select>
+              {fieldErrors.gender && <span className="text-red-500 text-sm">{fieldErrors.gender}</span>}
             </div>
             
             <div className="mb-6">
@@ -367,8 +393,10 @@ const AddEmployee = () => {
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                ref={dobRef}
               />
               <p className="text-xs text-gray-500 mt-1">Format: YYYY-MM-DD</p>
+              {fieldErrors.dob && <span className="text-red-500 text-sm">{fieldErrors.dob}</span>}
             </div>
 
             <div className="mb-6">
@@ -436,7 +464,9 @@ const AddEmployee = () => {
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
+                ref={addressRef}
               ></textarea>
+              {fieldErrors.address && <span className="text-red-500 text-sm">{fieldErrors.address}</span>}
             </div>
 
             <div className="mb-6">
@@ -469,6 +499,7 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  ref={branchRef}
                 >
                   <option value="">Select Branch</option>
                   {branches.map(branch => (
@@ -477,6 +508,7 @@ const AddEmployee = () => {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.branch && <span className="text-red-500 text-sm">{fieldErrors.branch}</span>}
               </div>
 
               <div>
@@ -493,7 +525,9 @@ const AddEmployee = () => {
                   required
                   min="0"
                   step="0.01"
+                  ref={salaryRef}
                 />
+                {fieldErrors.salary && <span className="text-red-500 text-sm">{fieldErrors.salary}</span>}
               </div>
             </div>
 
@@ -509,12 +543,14 @@ const AddEmployee = () => {
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
+                  ref={roleRef}
                 >
                   <option value="">Select Role</option>
                   <option value="BranchManager">Branch Manager</option>
                   <option value="Counsellor">Counsellor</option>
                   <option value="Receptionist">Receptionist</option>
                 </select>
+                {fieldErrors.role && <span className="text-red-500 text-sm">{fieldErrors.role}</span>}
               </div>
             </div>
 

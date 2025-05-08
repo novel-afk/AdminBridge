@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { XMarkIcon, ArrowUpTrayIcon, CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
-import toast from 'react-hot-toast';
+import { toast } from 'react-toastify';
 import { useAuth } from '../lib/AuthContext';
 
 const FormField = ({ label, error, children, required }) => (
@@ -184,26 +184,6 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
             value={formData.emergencyContact}
             onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
-          />
-        </FormField>
-
-        <FormField label="Father Name" error={errors.fatherName} required>
-          <input
-            type="text"
-            required
-            value={formData.fatherName}
-            onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })}
-            className={`w-full px-4 py-2.5 border ${errors.fatherName ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
-          />
-        </FormField>
-
-        <FormField label="Mother Name" error={errors.motherName} required>
-          <input
-            type="text"
-            required
-            value={formData.motherName}
-            onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
-            className={`w-full px-4 py-2.5 border ${errors.motherName ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
           />
         </FormField>
 
@@ -390,8 +370,6 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
     if (!formData.branch) newErrors.branch = 'Branch is required';
-    if (!formData.fatherName.trim()) newErrors.fatherName = 'Father name is required';
-    if (!formData.motherName.trim()) newErrors.motherName = 'Mother name is required';
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -411,6 +389,9 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
     }
 
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -433,6 +414,9 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
     }
 
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -482,7 +466,7 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
       // Add user data fields
       formDataToSend.append('user.first_name', formData.firstName);
       formDataToSend.append('user.last_name', formData.lastName);
-      formDataToSend.append('user.email', formData.email);
+      formData.append('user.email', formData.email);
       formDataToSend.append('user.password', 'Student@123'); // Default password
       
       // Add files if they exist

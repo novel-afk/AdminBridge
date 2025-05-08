@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { XMarkIcon, ExclamationCircleIcon, ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 import { useAuth } from '../lib/AuthContext';
+import { toast } from 'react-toastify';
 
 const FormField = ({ label, error, children, required }) => (
   <div>
@@ -49,6 +50,26 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   // Check if the current user is an admin
   const isAdmin = user?.role === 'SuperAdmin';
 
+  // Initial state for formData and errors
+  const initialFormData = {
+    name: '',
+    email: '',
+    phone: '',
+    nationality: '',
+    branch: '',
+    interested_country: '',
+    interested_degree: '',
+    interested_course: '',
+    language_test: 'None',
+    language_score: '',
+    lead_source: 'Other',
+    referred_by: '',
+    courses_studied: '',
+    gpa: '',
+    notes: '',
+  };
+  const initialErrors = {};
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -79,9 +100,9 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     const newErrors = {};
     
     // Required fields validation
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.name.trim()) newErrors.name = 'Full Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.nationality.trim()) newErrors.nationality = 'Nationality is required';
     if (!formData.branch) newErrors.branch = 'Branch is required';
     
@@ -98,14 +119,18 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     }
     
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]);
+    }
     return Object.keys(newErrors).length === 0;
   };
   
   const validateStep2 = () => {
     const newErrors = {};
     
-    // GPA validation
-    if (formData.gpa && (isNaN(formData.gpa) || parseFloat(formData.gpa) < 0 || parseFloat(formData.gpa) > 4.0)) {
+    // GPA validation (required)
+    if (!formData.gpa.trim()) newErrors.gpa = 'GPA is required';
+    else if (isNaN(formData.gpa) || parseFloat(formData.gpa) < 0 || parseFloat(formData.gpa) > 4.0) {
       newErrors.gpa = 'GPA should be between 0 and 4.0';
     }
     
@@ -115,6 +140,9 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     }
     
     setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error(Object.values(newErrors)[0]);
+    }
     return Object.keys(newErrors).length === 0;
   };
 
@@ -174,18 +202,22 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
       if (error.response) {
         if (error.response.data.detail) {
           newErrors.submit = error.response.data.detail;
+          toast.error(error.response.data.detail);
         } else if (typeof error.response.data === 'object') {
           Object.entries(error.response.data).forEach(([key, value]) => {
             if (key === 'user.email' || key === 'email') {
               newErrors.email = 'Email already exists';
               newErrors.submit = 'Email already exists. Please use a different email.';
+              toast.error('Email already exists. Please use a different email.');
             } else {
               newErrors[key] = Array.isArray(value) ? value[0] : value;
+              toast.error(Array.isArray(value) ? value[0] : value);
             }
           });
         }
       } else {
         newErrors.submit = 'Failed to create lead. Please try again.';
+        toast.error('Failed to create lead. Please try again.');
       }
       
       setErrors(newErrors);
@@ -495,6 +527,15 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     );
   };
   
+  // Reset modal state on close
+  const handleClose = () => {
+    setFormData(initialFormData);
+    setErrors(initialErrors);
+    setCurrentStep(1);
+    setIsSubmitting(false);
+    if (onClose) onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -505,7 +546,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
             {currentStep === 1 ? 'Add New Lead - Personal Info' : 'Add New Lead - Educational Info'}
           </h1>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-500 hover:text-gray-700 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <XMarkIcon className="h-6 w-6" />

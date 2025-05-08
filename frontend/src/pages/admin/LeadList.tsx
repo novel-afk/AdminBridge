@@ -49,7 +49,8 @@ const columns = [
   { key: "sNo", label: "S.No" },
   { key: "name", label: "Name" },
   { key: "nationality", label: "Nationality" },
-  { key: "contact", label: "Contact Info" },
+  { key: "phone", label: "Number" },
+  { key: "email", label: "Email" },
   { key: "interestedCountry", label: "Country" },
   { key: "interestedDegree", label: "Degree" },
   { key: "interestedCourse", label: "Course" },
@@ -555,7 +556,8 @@ const LeadList = () => {
                               column.key === "sNo" ? "min-w-[60px] w-16" :
                               column.key === "name" ? "min-w-[160px]" :
                               column.key === "nationality" ? "min-w-[120px]" :
-                              column.key === "contact" ? "min-w-[180px]" :
+                              column.key === "phone" ? "min-w-[120px]" :
+                              column.key === "email" ? "min-w-[180px]" :
                               column.key === "interestedCountry" ? "min-w-[120px]" :
                               column.key === "interestedDegree" ? "min-w-[120px]" :
                               column.key === "interestedCourse" ? "min-w-[120px]" :
@@ -602,13 +604,13 @@ const LeadList = () => {
                           <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[150px]" title={lead.nationality}>
                             {lead.nationality}
                           </td>
-                          <td className="px-6 py-4 text-sm group-hover:bg-gray-50 transition-colors duration-200">
-                            <div className="truncate max-w-[180px]" title={lead.email}>
-                              <a href={`mailto:${lead.email}`} className="text-blue-600 hover:text-blue-800 transition-colors truncate inline-block max-w-full">
-                                {lead.email}
-                              </a>
-                            </div>
-                            <div className="text-gray-600">{lead.phone}</div>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200" title={lead.phone}>
+                            {lead.phone}
+                          </td>
+                          <td className="px-6 py-4 text-sm group-hover:bg-gray-50 transition-colors duration-200" title={lead.email}>
+                            <a href={`mailto:${lead.email}`} className="text-blue-600 hover:text-blue-800 transition-colors">
+                              {lead.email}
+                            </a>
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {lead.interested_country ? (

@@ -64,7 +64,26 @@ class EmployeeSerializer(serializers.ModelSerializer):
         user_data = data.get('user', {})
         role = user_data.get('role')
         branch = data.get('branch')
-        
+
+        # Required fields
+        required_user_fields = ['first_name', 'last_name', 'role', 'email']
+        for field in required_user_fields:
+            if not user_data.get(field):
+                raise serializers.ValidationError({field: f'{field.replace("_", " ").capitalize()} is required.'})
+        required_employee_fields = ['gender', 'nationality', 'contact_number', 'dob', 'salary', 'address']
+        for field in required_employee_fields:
+            if not data.get(field):
+                raise serializers.ValidationError({field: f'{field.replace("_", " ").capitalize()} is required.'})
+
+        # Duplicate email check
+        email = user_data.get('email')
+        if email:
+            qs = User.objects.filter(email=email)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.user.pk)
+            if qs.exists():
+                raise serializers.ValidationError({'email': 'A user with this email already exists.'})
+
         # If this is a branch manager
         if role == 'BranchManager' and branch:
             # Check if there's already a branch manager for this branch
@@ -73,12 +92,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 branch=branch,
                 user__role='BranchManager'
             ).exclude(id=instance_id).first()
-            
             if existing_manager:
                 raise serializers.ValidationError({
                     'branch': f'Branch {branch.name} already has a manager: {existing_manager.user.get_full_name()}'
                 })
-        
         return data
     
     class Meta:
