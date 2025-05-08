@@ -6,7 +6,7 @@ from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q, Count
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 # from guardian.shortcuts import assign_perm, get_objects_for_user  # Temporarily commented out
 from rest_framework.views import APIView
@@ -96,9 +96,9 @@ def admin_stats(request):
             # Count students registered in this month
             start_date = datetime(year, month, 1)
             if month == 12:
-                end_date = datetime(year + 1, 1, 1) - datetime.timedelta(days=1)
+                end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
             else:
-                end_date = datetime(year, month + 1, 1) - datetime.timedelta(days=1)
+                end_date = datetime(year, month + 1, 1) - timedelta(days=1)
                 
             month_count = Student.objects.filter(enrollment_date__range=[start_date, end_date]).count()
             monthly_student_registrations[month_name] = month_count
