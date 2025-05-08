@@ -69,6 +69,12 @@ const AttendancePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [tabIndex, setTabIndex] = useState(0);
   const [updateSuccess, setUpdateSuccess] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+  const [showError, setShowError] = useState<boolean>(false);
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [initialDataLoaded, setInitialDataLoaded] = useState<boolean>(false);
+  const [isFiltered, setIsFiltered] = useState<boolean>(false);
 
   // Get auth token from localStorage
   const getAuthToken = (): string | null => {
@@ -98,34 +104,51 @@ const AttendancePage = () => {
     }
   }, [user, isAuthenticated, authLoading, navigate]);
 
-  // Fetch all employees and students first
+  // Helper to check if attendance data is loaded
+  const isAttendanceDataLoaded = (emp, stud) => Array.isArray(emp) && emp.length > 0 || Array.isArray(stud) && stud.length > 0;
+
+  // On mount, fetch all attendance data (no filter) with auto-retry
   useEffect(() => {
-    // Only fetch data if authenticated and SuperAdmin
     if (authLoading || !isAuthenticated || user?.role !== 'SuperAdmin') return;
-    
-    const fetchUsersData = async () => {
+    let retryTimeout: NodeJS.Timeout;
+    let cancelled = false;
+    const fetchAllData = async () => {
       const token = getAuthToken();
       if (!token) {
         navigate('/login');
         return;
       }
-      
-      setEmployeeLoading(true);
-      setStudentLoading(true);
-      setError(null);
-      
-      // Fetch employees
-      fetchEmployees(token);
-      
-      // Fetch students
-      fetchStudents(token);
+      setIsLoading(true);
+      setShowError(false);
+      try {
+        await Promise.all([
+          fetchEmployees(token, false),
+          fetchStudents(token, false),
+          fetchAttendanceData(token, '', '', false),
+          fetchStudentAttendanceData(token, '', '', false)
+        ]);
+        if (!cancelled) {
+          setIsLoading(false);
+          setInitialDataLoaded(true);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setShowError(true);
+          setIsLoading(true);
+          // Retry after 2 seconds
+          retryTimeout = setTimeout(fetchAllData, 2000);
+        }
+      }
     };
-    
-    fetchUsersData();
+    fetchAllData();
+    return () => {
+      cancelled = true;
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
   }, [isAuthenticated, authLoading, navigate, user?.role]);
 
   // Fetch employee data
-  const fetchEmployees = async (token: string) => {
+  const fetchEmployees = async (token: string, showErr = true) => {
     try {
       console.log('Fetching employees from API...');
       const employeesResponse = await axios.get(
@@ -172,8 +195,9 @@ const AttendancePage = () => {
       setEmployees(formattedEmployees);
       
       // Fetch employee attendance
-      await fetchAttendanceData(token, '', '');
+      await fetchAttendanceData(token, '', '', showErr);
     } catch (err: any) {
+      if (showErr) setShowError(true);
       console.error('Error fetching employee data:', err);
       const errorDetail = err.response?.data?.detail || 'Unknown error';
       const errorStatus = err.response?.status || 'No status code';
@@ -262,7 +286,7 @@ const AttendancePage = () => {
   };
 
   // Fetch student data
-  const fetchStudents = async (token: string) => {
+  const fetchStudents = async (token: string, showErr = true) => {
     try {
       console.log('Fetching students from API...');
       const studentsResponse = await axios.get(
@@ -310,8 +334,9 @@ const AttendancePage = () => {
       setStudents(formattedStudents);
       
       // Now check if there's attendance data for students
-      await fetchStudentAttendanceData(token, '', '');
+      await fetchStudentAttendanceData(token, '', '', showErr);
     } catch (err: any) {
+      if (showErr) setShowError(true);
       console.error('Error fetching student data:', err);
       const errorDetail = err.response?.data?.detail || 'Unknown error';
       const errorStatus = err.response?.status || 'No status code';
@@ -395,18 +420,12 @@ const AttendancePage = () => {
   };
 
   // Fetch attendance data for the selected date or prepare default attendance
-  const fetchAttendanceData = async (token: string, start: string, end: string) => {
+  const fetchAttendanceData = async (token: string, start: string, end: string, showErr = true) => {
     try {
       let url = `${API_BASE_URL}/employee-attendance/by_date/`;
-      // Only add date parameters if both start and end dates are provided
       if (start && end) {
         url += `?start_date=${start}&end_date=${end}`;
-      } else {
-        // If no dates provided, use today's date for both
-        const today = format(new Date(), 'yyyy-MM-dd');
-        url += `?start_date=${today}&end_date=${today}`;
       }
-
       const employeeAttendanceResponse = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -421,28 +440,23 @@ const AttendancePage = () => {
         allEmployeeAttendance = employeeAttendanceResponse.data.data;
       }
       setEmployeeAttendance(allEmployeeAttendance);
-      setError(null);
     } catch (err: any) {
+      if (showErr) setShowError(true);
       console.error('Error fetching employee attendance data:', err);
-      const errorMessage = err.response?.data?.detail || 'Failed to load employee attendance data';
-      setError(errorMessage);
+      if (!error) {
+        setError('Failed to load employee attendance data');
+      }
       setEmployeeAttendance([]);
     }
   };
 
   // Fetch student attendance data
-  const fetchStudentAttendanceData = async (token: string, start: string, end: string) => {
+  const fetchStudentAttendanceData = async (token: string, start: string, end: string, showErr = true) => {
     try {
       let url = `${API_BASE_URL}/student-attendance/by_date/`;
-      // Only add date parameters if both start and end dates are provided
       if (start && end) {
         url += `?start_date=${start}&end_date=${end}`;
-      } else {
-        // If no dates provided, use today's date for both
-        const today = format(new Date(), 'yyyy-MM-dd');
-        url += `?start_date=${today}&end_date=${today}`;
       }
-
       const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -457,11 +471,10 @@ const AttendancePage = () => {
         allStudentAttendance = response.data.data;
       }
       setStudentAttendance(allStudentAttendance);
-      setError(null);
-    } catch (error: any) {
-      console.error('Error fetching student attendance:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to fetch student attendance data';
-      setError(errorMessage);
+    } catch (err) {
+      if (showErr) setShowError(true);
+      console.error('Error fetching student attendance:', err);
+      setError('Failed to fetch student attendance data');
       setStudentAttendance([]);
     }
   };
@@ -470,22 +483,21 @@ const AttendancePage = () => {
   const handleApply = async () => {
     setStartDate(pendingStartDate);
     setEndDate(pendingEndDate);
-    setFilterApplied(true);
-    setError(null);
+    setIsFiltered(true);
+    setIsLoading(true);
+    setShowError(false);
+    setShowFilter(true);
     const token = getAuthToken();
     if (token) {
-      setEmployeeLoading(true);
-      setStudentLoading(true);
       try {
         await Promise.all([
-          fetchAttendanceData(token, pendingStartDate, pendingEndDate),
-          fetchStudentAttendanceData(token, pendingStartDate, pendingEndDate)
+          fetchAttendanceData(token, pendingStartDate, pendingEndDate, true),
+          fetchStudentAttendanceData(token, pendingStartDate, pendingEndDate, true)
         ]);
-      } catch (error) {
-        console.error('Error fetching attendance data:', error);
+      } catch (err) {
+        setShowError(true);
       } finally {
-        setEmployeeLoading(false);
-        setStudentLoading(false);
+        setIsLoading(false);
       }
     }
   };
@@ -496,108 +508,113 @@ const AttendancePage = () => {
     setPendingEndDate(todayStr);
     setStartDate('');
     setEndDate('');
+    setIsFiltered(false);
     setFilterApplied(false);
-    setError(null);
-    setEmployeeAttendance([]);
-    setStudentAttendance([]);
-    setEmployeeLoading(false);
-    setStudentLoading(false);
+    setIsLoading(true);
+    setShowError(false);
+    setShowFilter(false);
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await Promise.all([
+          fetchAttendanceData(token, '', '', true),
+          fetchStudentAttendanceData(token, '', '', true)
+        ]);
+      } catch (err) {
+        setShowError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
-
-  // Add loading indicator component
-  const LoadingSpinner = () => (
-    <div className="flex justify-center items-center py-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <span className="ml-2 text-gray-600">Loading attendance data...</span>
-    </div>
-  );
 
   return (
     <Layout>
       <div className="max-w-6xl">
         <div className="bg-white shadow-xl rounded-2xl p-8 mb-10">
           <h1 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight">Attendance Management</h1>
-          {/* Date Selector */}
-          <div className="mb-10 flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
-            <div>
-              <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date
-              </label>
-              <input
-                type="date"
-                value={pendingStartDate}
-                onChange={(e) => setPendingStartDate(e.target.value)}
-                className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                disabled={employeeLoading || studentLoading}
-              />
-            </div>
-            <div>
-              <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
-              <input
-                type="date"
-                id="end-date"
-                value={pendingEndDate}
-                min={pendingStartDate}
-                onChange={(e) => setPendingEndDate(e.target.value)}
-                className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                disabled={employeeLoading || studentLoading}
-              />
-            </div>
-            <div className="flex items-end gap-2 mt-6 md:mt-0">
+          {/* Filter by Date Button */}
+          {!showFilter && initialDataLoaded && (
+            <div className="mb-8 flex justify-end">
               <button
-                type="button"
-                onClick={handleApply}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={employeeLoading || studentLoading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300"
+                onClick={() => setShowFilter(true)}
               >
-                {employeeLoading || studentLoading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Loading...
-                  </span>
-                ) : 'Apply'}
+                Filter by Date
               </button>
-              {filterApplied && (
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={employeeLoading || studentLoading}
-                >
-                  Reset
-                </button>
-              )}
-            </div>
-          </div>
-          {/* Friendly message if no filter is applied */}
-          {!filterApplied && (
-            <div className="text-center text-gray-500 text-lg mt-8 mb-8">
-              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <p>Please select a date range and click <span className="font-semibold text-blue-700">Apply</span> to view attendance records.</p>
-              <p className="text-sm mt-2 text-gray-400">Use the date selectors above to filter attendance data.</p>
             </div>
           )}
-          {/* Loading state */}
-          {(employeeLoading || studentLoading) && <LoadingSpinner />}
-          {/* Only show the rest if filterApplied is true and not loading */}
-          {filterApplied && !employeeLoading && !studentLoading && (
+          {/* Date Filter UI */}
+          {showFilter && initialDataLoaded && (
+            <div className="mb-10 flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
+              <div>
+                <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={pendingStartDate}
+                  onChange={(e) => setPendingStartDate(e.target.value)}
+                  className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  disabled={employeeLoading || studentLoading}
+                />
+              </div>
+              <div>
+                <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  id="end-date"
+                  value={pendingEndDate}
+                  min={pendingStartDate}
+                  onChange={(e) => setPendingEndDate(e.target.value)}
+                  className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                  disabled={employeeLoading || studentLoading}
+                />
+              </div>
+              <div className="flex items-end gap-2 mt-6 md:mt-0">
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300"
+                  disabled={employeeLoading || studentLoading}
+                >
+                  Apply
+                </button>
+                {filterApplied && (
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300"
+                    disabled={employeeLoading || studentLoading}
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-lg text-gray-600">Loading attendance data...</span>
+            </div>
+          )}
+          {/* Error Message (only for user actions) */}
+          {showError && !isLoading && initialDataLoaded && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 font-medium">
+              Failed to load attendance data. Please try again.
+            </div>
+          )}
+          {/* Attendance Tables (always show after initial data load) */}
+          {!isLoading && initialDataLoaded && (
             <>
-              {/* Success/Error Messages */}
+              {/* Success Message */}
               {updateSuccess && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 font-medium">
                   Attendance updated successfully
-                </div>
-              )}
-              {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 font-medium">
-                  {error}
                 </div>
               )}
               {/* Attendance Summary Cards */}
@@ -771,4 +788,4 @@ const AttendancePage = () => {
   );
 };
 
-export default AttendancePage;
+export default AttendancePage; 

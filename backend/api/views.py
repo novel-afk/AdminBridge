@@ -1179,6 +1179,7 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
         """
         Get attendance records for a specific date or date range.
         Accepts either 'date' or both 'start_date' and 'end_date' as query params.
+        If no date or range is provided, return all records.
         """
         from datetime import datetime
         start_date_str = request.query_params.get('start_date')
@@ -1198,10 +1199,10 @@ class EmployeeAttendanceViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(queryset, many=True)
                 return Response(serializer.data)
             else:
-                return Response(
-                    {"detail": "Provide either 'date' or both 'start_date' and 'end_date'."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                # Return all records if no date or range is provided
+                queryset = self.get_queryset().all()
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
@@ -1344,6 +1345,7 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
         Get attendance records for a specific date or date range.
         For a date range, return a record for every student for every date in the range.
         If a real attendance record exists, use it; otherwise, return a placeholder (e.g., status: 'Not Marked').
+        If no date or range is provided, return all records.
         """
         from datetime import datetime, timedelta
         start_date_str = request.query_params.get('start_date')
@@ -1417,10 +1419,10 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
                         })
                 return Response(all_records)
             else:
-                return Response(
-                    {"detail": "Provide either 'date' or both 'start_date' and 'end_date'."},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                # Return all records if no date or range is provided
+                queryset = self.get_queryset().all()
+                serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
