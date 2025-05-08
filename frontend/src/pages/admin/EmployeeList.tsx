@@ -228,6 +228,7 @@ const EmployeeList = () => {
       title: 'Export Employees Data',
       message: 'Are you sure you want to export the employees data?',
       type: 'warning',
+      confirmText: 'Export',
       onConfirm: () => {
         // Create CSV content
         const headers = [

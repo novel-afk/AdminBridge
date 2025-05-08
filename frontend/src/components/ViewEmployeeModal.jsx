@@ -1,6 +1,13 @@
 import React from 'react';
 import { XMarkIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
+const BACKEND_URL = 'http://localhost:8000';
+const getFullUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${BACKEND_URL}${url}`;
+};
+
 const DetailsItem = ({ label, value, isLink }) => (
   <div className="py-3 flex border-b border-gray-100">
     <dt className="text-sm font-medium text-gray-500 w-1/3">{label}</dt>
@@ -45,6 +52,9 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
     }).format(salary);
   };
 
+  // Fallback for broken images
+  const [imgError, setImgError] = React.useState(false);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-xl w-[800px] max-h-[90vh] overflow-y-auto m-4">
@@ -61,11 +71,12 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
         <div className="p-6">
           <div className="mb-8 flex items-center">
             <div className="mr-4">
-              {employee.profile_image ? (
-                <img 
-                  src={employee.profile_image} 
+              {employee.profile_image && !imgError ? (
+                <img
+                  src={getFullUrl(employee.profile_image)}
                   alt={`${employee.user.first_name} ${employee.user.last_name}`}
                   className="w-24 h-24 rounded-full object-cover"
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <div className="w-24 h-24 rounded-full bg-[#1e1b4b]/10 flex items-center justify-center text-[#1e1b4b] text-2xl font-semibold">
@@ -109,7 +120,7 @@ const ViewEmployeeModal = ({ isOpen, onClose, employee }) => {
                 <DetailsItem label="Joining Date" value={formatDate(employee.joining_date)} />
                 <DetailsItem label="Salary" value={formatSalary(employee.salary)} />
                 <DetailsItem label="Address" value={employee.address} />
-                <DetailsItem label="Citizenship Document" value={employee.citizenship_document} isLink={true} />
+                <DetailsItem label="Citizenship Document" value={employee.citizenship_document ? getFullUrl(employee.citizenship_document) : null} isLink={!!employee.citizenship_document} />
               </dl>
             </div>
           </div>

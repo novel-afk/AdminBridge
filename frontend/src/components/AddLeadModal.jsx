@@ -96,6 +96,15 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     }
   }, [isOpen, user, isAdmin]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(initialFormData);
+      setErrors(initialErrors);
+      setCurrentStep(1);
+      setIsSubmitting(false);
+    }
+  }, [isOpen]);
+
   const validateStep1 = () => {
     const newErrors = {};
     
@@ -194,6 +203,10 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
       if (onSuccess) {
         onSuccess();
       }
+      setFormData(initialFormData);
+      setErrors(initialErrors);
+      setCurrentStep(1);
+      setIsSubmitting(false);
       onClose();
     } catch (error) {
       console.error('Error creating lead:', error);
