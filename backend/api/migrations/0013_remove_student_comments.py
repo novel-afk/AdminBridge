@@ -2,7 +2,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('api', '0012_add_student_resume'),
+        ('api', '0011_activitylog'),
     ]
     operations = [
         migrations.RemoveField(
