@@ -1,18 +1,10 @@
-#!/usr/bin/env python
-import os
-import django
-from datetime import date
+#!/bin/bash
+
+# Create a temporary Python script
+cat > temp_script.py << EOL
 from django.contrib.auth import get_user_model
-
-# Setup Django environment
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'admin_bridge.settings')
-django.setup()
-
-from api.models import User, Branch, Employee
-
 User = get_user_model()
 
-# Create superadmin if it doesn't exist
 if not User.objects.filter(email='superadmin@adminbridge.com').exists():
     User.objects.create_user(
         email='superadmin@adminbridge.com',
@@ -25,11 +17,14 @@ if not User.objects.filter(email='superadmin@adminbridge.com').exists():
     )
     print('Superadmin user created successfully!')
 else:
-    # Update password for existing superadmin
     user = User.objects.get(email='superadmin@adminbridge.com')
     user.set_password('Nepal@123')
     user.save()
     print('Superadmin password updated successfully!')
+EOL
 
-if __name__ == "__main__":
-    create_superadmin() 
+# Run the script using Django shell
+python manage.py shell < temp_script.py
+
+# Clean up
+rm temp_script.py 

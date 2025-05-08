@@ -10,6 +10,9 @@ from datetime import datetime, timedelta
 import random
 # from guardian.shortcuts import assign_perm, get_objects_for_user  # Temporarily commented out
 from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import get_user_model
 
 from .models import (
     User, Branch, Employee, Student, Lead,
@@ -26,6 +29,8 @@ from .permissions import (
     BelongsToBranch, BranchManagerPermission, CounsellorPermission,
     ReceptionistPermission, IsStudent
 )
+
+User = get_user_model()
 
 # Create your views here.
 
@@ -1532,3 +1537,9 @@ class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = User.EMAIL_FIELD
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

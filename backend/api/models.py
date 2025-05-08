@@ -1,10 +1,12 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 
 class UserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
+    use_in_migrations = True
 
     def _create_user(self, email, password=None, **extra_fields):
         """Create and save a User with the given email and password."""
@@ -12,16 +14,12 @@ class UserManager(BaseUserManager):
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
-        
-        # Set default password for non-SuperAdmin roles
-        if not password and extra_fields.get('role') and extra_fields.get('role') != 'SuperAdmin':
-            password = 'Nepal@123'
-            
         user.set_password(password)
         user.save(using=self._db)
         return user
 
     def create_user(self, email, password=None, **extra_fields):
+        """Create and save a regular User with the given email and password."""
         extra_fields.setdefault('is_staff', False)
         extra_fields.setdefault('is_superuser', False)
         return self._create_user(email, password, **extra_fields)
@@ -41,7 +39,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
-    """Custom User model with roles"""
+    """Custom User model."""
     ROLE_CHOICES = (
         ('SuperAdmin', 'SuperAdmin'),
         ('BranchManager', 'BranchManager'),
@@ -50,8 +48,8 @@ class User(AbstractUser):
         ('BankManager', 'BankManager'),
         ('Student', 'Student'),
     )
-    
-    username = None
+
+    username = None  # Remove username field
     email = models.EmailField(_('email address'), unique=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     
@@ -81,6 +79,9 @@ class User(AbstractUser):
     
     objects = UserManager()
     
+    class Meta:
+        swappable = 'AUTH_USER_MODEL'
+
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.role})"
         
@@ -117,7 +118,7 @@ class Employee(models.Model):
     )
     
     # Basic Information
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee_profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='employee_profile')
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='employees')
     employee_id = models.CharField(max_length=50, unique=True)
     joining_date = models.DateField(null=True, blank=True)
@@ -179,7 +180,7 @@ class Student(models.Model):
     )
     
     # Basic Information
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='students')
     student_id = models.CharField(max_length=50, unique=True)
     enrollment_date = models.DateField(auto_now_add=True)
@@ -274,8 +275,8 @@ class Lead(models.Model):
     notes = models.TextField(blank=True, null=True)
     
     # System Fields
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_leads')
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_leads')
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -300,7 +301,7 @@ class Job(models.Model):
     job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='Full-Time')
     salary_range = models.CharField(max_length=100, blank=True, null=True)
     is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_jobs')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_jobs')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     location = models.CharField(max_length=255, default='Not specified')
@@ -331,7 +332,7 @@ class Blog(models.Model):
     title = models.CharField(max_length=200)
     content = models.TextField()
     branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name='blogs')
-    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blogs')
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='blogs')
     featured_image = models.ImageField(upload_to='blog_images/', blank=True, null=True)
     is_published = models.BooleanField(default=False)
     published_date = models.DateTimeField(blank=True, null=True)
@@ -360,8 +361,8 @@ class EmployeeAttendance(models.Model):
     remarks = models.TextField(blank=True, null=True)
     
     # For tracking who made changes
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='employee_attendance_created')
-    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='employee_attendance_updated')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='employee_attendance_created')
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='employee_attendance_updated')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -391,8 +392,8 @@ class StudentAttendance(models.Model):
     remarks = models.TextField(blank=True, null=True)
     
     # For tracking who made changes
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='student_attendance_created')
-    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='student_attendance_updated')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='student_attendance_created')
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='student_attendance_updated')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -416,7 +417,7 @@ class ActivityLog(models.Model):
         ('OTHER', 'Other'),
     )
     
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_logs')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activity_logs')
     action_type = models.CharField(max_length=20, choices=ACTION_TYPES)
     action_model = models.CharField(max_length=50, help_text='The model/table being acted upon')
     action_details = models.TextField(help_text='Details of the action performed')
