@@ -42,6 +42,7 @@ interface Lead {
   assigned_to?: number;
   assigned_to_name?: string;
   created_by_name?: string;
+  assigned_by_email?: string;
 }
 
 const columns = [
@@ -56,6 +57,7 @@ const columns = [
   { key: "interestedCourse", label: "Course" },
   { key: "language", label: "Language Test" },
   { key: "source", label: "Lead Source" },
+  { key: "assignedBy", label: "Assigned By" },
   { key: "createdAt", label: "Created At" },
   { key: "actions", label: "Actions" },
 ];
@@ -563,7 +565,7 @@ const LeadList = () => {
                               column.key === "interestedCourse" ? "min-w-[120px]" :
                               column.key === "language" ? "min-w-[130px]" :
                               column.key === "source" ? "min-w-[120px]" :
-                              
+                              column.key === "assignedBy" ? "min-w-[150px]" :
                               column.key === "createdAt" ? "min-w-[150px]" :
                               column.key === "actions" ? "min-w-[100px] w-24" : ""
                             }`}
@@ -657,8 +659,9 @@ const LeadList = () => {
                               {lead.lead_source}
                             </Badge>
                           </td>
-                          
-                          
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {lead.assigned_by_email || '-'}
+                          </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {formatDate(lead.created_at)}
                           </td>

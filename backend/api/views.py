@@ -971,9 +971,8 @@ class LeadViewSet(viewsets.ModelViewSet):
         
     def get_queryset(self):
         user = self.request.user
-        
         # Select related fields to reduce database queries
-        queryset = Lead.objects.select_related('branch', 'created_by', 'assigned_to')
+        queryset = Lead.objects.select_related('branch', 'created_by', 'assigned_by')
         
         # SuperAdmin can see all leads
         if user.role == 'SuperAdmin':
@@ -991,11 +990,10 @@ class LeadViewSet(viewsets.ModelViewSet):
         # For non-SuperAdmin users, automatically set the branch to the user's branch
         if self.request.user.role != 'SuperAdmin':
             if hasattr(self.request.user, 'employee_profile') and self.request.user.employee_profile.branch:
-                serializer.save(created_by=self.request.user, branch=self.request.user.employee_profile.branch)
+                serializer.save(created_by=self.request.user, branch=self.request.user.employee_profile.branch, assigned_by=self.request.user)
                 return
-        
         # For SuperAdmin or fallback
-        serializer.save(created_by=self.request.user)
+        serializer.save(created_by=self.request.user, assigned_by=self.request.user)
     
     def perform_update(self, serializer):
         # For non-SuperAdmin users, ensure the branch remains the user's branch

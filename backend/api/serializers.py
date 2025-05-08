@@ -226,7 +226,7 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
 
 class LeadSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
-    assigned_to_name = serializers.CharField(source='assigned_to.get_full_name', read_only=True)
+    assigned_by_email = serializers.EmailField(source='assigned_by.email', read_only=True)
     branch_name = serializers.CharField(source='branch.name', read_only=True)
     
     class Meta:
@@ -236,7 +236,7 @@ class LeadSerializer(serializers.ModelSerializer):
                   'language_score', 'referred_by', 'courses_studied', 
                   'interested_course', 'gpa', 'branch', 'branch_name', 
                   'lead_source', 'notes', 'created_by', 'created_by_name', 
-                  'assigned_to', 'assigned_to_name', 
+                  'assigned_by', 'assigned_by_email', 
                   'created_at', 'updated_at']
         read_only_fields = ['created_by']
         
