@@ -253,7 +253,13 @@ export default function AddJobModal({ isOpen, onClose, onSuccess }) {
       
       setIsSubmitting(false);
       
-      // Call the success callback
+      // Close the modal first
+      if (onClose) {
+        onClose();
+      }
+      
+      // Then show success message and call success callback
+      toast.success('Job added successfully!');
       if (onSuccess) {
         onSuccess();
       }

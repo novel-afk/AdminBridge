@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Switch } from './ui/switch';
+import { useAuth } from '../lib/AuthContext';
 
 // Form Field component to handle label, input, and error messages
 const FormField = ({ label, children, error }) => {
@@ -22,6 +23,7 @@ const FormField = ({ label, children, error }) => {
 };
 
 export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -39,14 +41,15 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Determine if user has branch selection privileges (only SuperAdmin)
+  const canSelectBranch = user?.role === 'SuperAdmin';
 
   // Function to handle rendering when modal is opened
   useEffect(() => {
     if (isOpen && job) {
       setIsLoading(true);
       fetchBranches();
-      checkAdmin();
       
       // Populate form with job data
       setFormData({
@@ -64,6 +67,19 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
       setIsLoading(false);
     }
   }, [isOpen, job]);
+
+  // After branches are loaded, ensure formData.branch is set to job.branch if not already set
+  useEffect(() => {
+    if (branches.length > 0 && isOpen && job) {
+      // If formData.branch is not set or not in branches, set it to job.branch
+      if (!formData.branch || !branches.some(b => b.id.toString() === formData.branch)) {
+        setFormData(prev => ({
+          ...prev,
+          branch: job.branch?.toString() || branches[0].id.toString()
+        }));
+      }
+    }
+  }, [branches, isOpen, job]);
 
   const checkAdmin = () => {
     const accessToken = localStorage.getItem('access_token');
@@ -388,29 +404,31 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
                   <Label htmlFor="branch" className="block text-sm font-medium text-gray-700">
                     Branch <span className="text-red-500">*</span>
                   </Label>
-                  {isAdmin ? (
+                  {canSelectBranch ? (
                     // SuperAdmin can select any branch
-                    <select
-                      id="branch"
+                    <Select
                       name="branch"
                       value={formData.branch}
-                      onChange={(e) => handleChange(e)}
-                      className={`w-full mt-1 px-3 py-2 bg-white border ${errors.branch ? "border-red-300" : "border-gray-300"} rounded-md shadow-sm focus:outline-none focus:ring-[#1e1b4b] focus:border-[#1e1b4b]`}
+                      onValueChange={(value) => handleSelectChange('branch', value)}
                     >
-                      <option value="" disabled>Select branch</option>
-                      {branches.map((branch) => (
-                        <option key={branch.id} value={branch.id.toString()}>
-                          {branch.name} - {branch.city}, {branch.country}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="branch" className={`mt-1 ${errors.branch ? "border-red-300" : ""}`}>
+                        <SelectValue placeholder="Select branch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branches.map((branch) => (
+                          <SelectItem key={branch.id} value={branch.id.toString()}>
+                            {branch.name} {branch.city && branch.country ? `- ${branch.city}, ${branch.country}` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   ) : (
-                    // Non-admin users can only see their branch as disabled input
+                    // Non-SuperAdmin users can only see their branch as disabled input
                     <div>
-                      <input
+                      <Input
                         type="text"
-                        value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
-                        className="w-full mt-1 px-3 py-2 bg-gray-100 border border-gray-300 rounded-md"
+                        value={branches.find(b => b.id.toString() === formData.branch)?.name || 'Loading...'}
+                        className="mt-1 bg-gray-100"
                         disabled
                       />
                       <input 
