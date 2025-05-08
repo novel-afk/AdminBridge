@@ -294,7 +294,17 @@ export default function EditJobModal({ isOpen, onClose, onSuccess, job }) {
       
       setIsSubmitting(false);
       
-      // Call the success callback
+      // Close the modal first
+      if (onClose) {
+        onClose();
+      }
+      // Then show success message and call success callback
+      if (typeof window !== 'undefined' && window.toast) {
+        window.toast.success('Job updated successfully!');
+      } else {
+        // fallback if toast is not global
+        try { require('react-toastify').toast.success('Job updated successfully!'); } catch {}
+      }
       if (onSuccess) {
         onSuccess();
       }

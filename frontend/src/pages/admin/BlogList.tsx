@@ -352,7 +352,7 @@ const BlogList = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-800">Blogs</h1>
         <div className="flex space-x-2">
-          <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={() => setIsAddModalOpen(true)} className="bg-[#153147] hover:bg-[#0c1f2e]">
             <PlusIcon className="h-5 w-5 mr-2" />
             Add Blog
           </Button>
@@ -516,7 +516,7 @@ const BlogList = () => {
                 <div>
                   <div className="text-4xl mb-4">📝</div>
                   <p className="text-gray-500 mb-4">No blogs found. Create your first blog!</p>
-                  <Button onClick={() => setIsAddModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                  <Button onClick={() => setIsAddModalOpen(true)} className="bg-[#153147] hover:bg-[#0c1f2e]">
                     <PlusIcon className="h-5 w-5 mr-2" />
                     Add Blog
                   </Button>
