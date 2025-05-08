@@ -233,21 +233,6 @@ const ReceptionistDashboard = () => {
     ],
   };
 
-  // Chart data for visitor traffic
-  const visitorTrafficChartData = {
-    labels: Object.keys(stats.visitorTraffic || {}),
-    datasets: [
-      {
-        label: 'Daily Visitor Traffic',
-        data: Object.values(stats.visitorTraffic || {}),
-        fill: false,
-        backgroundColor: 'rgba(75, 192, 192, 0.6)',
-        borderColor: 'rgba(75, 192, 192, 1)',
-        tension: 0.1
-      },
-    ],
-  };
-
   return (
     <div className="min-h-screen bg-gray-100">
    
@@ -356,15 +341,7 @@ const ReceptionistDashboard = () => {
               </div>
             </div>
 
-            {/* Visitor Traffic Line Chart */}
-            <div className="bg-white overflow-hidden shadow rounded-lg md:col-span-2">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Daily Visitor Traffic</h3>
-                <div className="h-80">
-                  <Line data={visitorTrafficChartData} options={{ maintainAspectRatio: false }} />
-                </div>
-              </div>
-            </div>
+       
           </div>
 
           {/* Quick Actions Section */}

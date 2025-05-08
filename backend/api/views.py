@@ -297,54 +297,42 @@ def receptionist_stats(request):
             branch = request.user.employee_profile.branch
             branch_name = branch.name
         
-        # Only count students, employees, and leads in the same branch
         from .models import Student, Employee, Lead
+        from django.db.models import Count
+        # Only count students, employees, and leads in the same branch
         total_student_count = Student.objects.filter(branch=branch).count() if branch else 0
         total_employee_count = Employee.objects.filter(branch=branch).count() if branch else 0
         total_lead_count = Lead.objects.filter(branch=branch).count() if branch else 0
         
-        # Mock data for today's counts (keep for now)
-        today_lead_count = random.randint(1, 8)
-        today_visitor_count = random.randint(5, 25)
-        upcoming_appointment_count = random.randint(3, 12)
+        # Real lead source distribution for this branch
+        lead_source_distribution = {}
+        if branch:
+            lead_sources = Lead.objects.filter(branch=branch).values('lead_source').annotate(count=Count('lead_source'))
+            for item in lead_sources:
+                lead_source_distribution[item['lead_source']] = item['count']
         
-        # Generate mock data for charts
-        lead_source_distribution = {
-            "Walk-in": random.randint(5, 15),
-            "Website": random.randint(5, 20),
-            "Referral": random.randint(3, 10),
-            "Social Media": random.randint(5, 15),
-            "Ad Campaign": random.randint(2, 10)
-        }
-        
-        student_course_distribution = {
-            "Web Development": random.randint(10, 30),
-            "Digital Marketing": random.randint(8, 20),
-            "Graphic Design": random.randint(5, 15),
-            "App Development": random.randint(10, 25),
-            "Data Science": random.randint(5, 15)
-        }
+        # Real student course distribution for this branch (by institution_name)
+        student_course_distribution = {}
+        if branch:
+            courses = Student.objects.filter(branch=branch).values('institution_name').annotate(count=Count('institution_name'))
+            for item in courses:
+                student_course_distribution[item['institution_name']] = item['count']
         
         # Mock data for visitor traffic (last 7 days)
         days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         visitor_traffic = {}
-        
         for day in days:
             visitor_traffic[day] = random.randint(5, 30)
         
         stats = {
             "receptionistName": receptionist_name,
             "branchName": branch_name,
-            "todayLeadCount": today_lead_count,
-            "todayVisitorCount": today_visitor_count,
-            "upcomingAppointmentCount": upcoming_appointment_count,
-            "leadSourceDistribution": lead_source_distribution,
-            "studentCourseDistribution": student_course_distribution,
-            "visitorTraffic": visitor_traffic,
-            # New total stats
             "totalStudentCount": total_student_count,
             "totalEmployeeCount": total_employee_count,
             "totalLeadCount": total_lead_count,
+            "leadSourceDistribution": lead_source_distribution,
+            "studentCourseDistribution": student_course_distribution,
+            "visitorTraffic": visitor_traffic,
         }
         
         return Response(stats)
