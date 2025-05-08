@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Button } from "./ui/button"
 import { Input } from "./ui/input"
@@ -21,6 +21,19 @@ export default function AddBranchModal({ isOpen, onClose, onSuccess }) {
   
   // Check if user is admin
   const isAdmin = user?.role === 'SuperAdmin';
+
+  // Reset form fields when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        id: "",
+        name: "",
+        city: "",
+        country: "",
+        address: ""
+      });
+    }
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {}

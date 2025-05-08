@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 
 from .models import (
     User, Branch, Employee, Student, Lead,
@@ -796,7 +797,7 @@ class StudentViewSet(viewsets.ModelViewSet):
             permission_classes = [IsSuperAdmin | BranchManagerPermission | CounsellorPermission | ReceptionistPermission]
         elif self.action in ['update', 'partial_update']:
             permission_classes = [IsSuperAdmin | BranchManagerPermission | CounsellorPermission]
-        elif self.action == 'destroy':
+        elif self.action in ['destroy', 'bulk_delete']:
             permission_classes = [IsSuperAdmin | BranchManagerPermission]
         else:
             permission_classes = [permissions.IsAuthenticated]
@@ -826,12 +827,10 @@ class StudentViewSet(viewsets.ModelViewSet):
         if 'student_data' in request.data:
             import json
             student_data = json.loads(request.data['student_data'])
-            
             # For non-SuperAdmin users, automatically assign the branch ID of the current user
             if request.user.role != 'SuperAdmin':
                 if hasattr(request.user, 'employee_profile') and request.user.employee_profile.branch:
                     student_data['branch'] = request.user.employee_profile.branch.id
-            
             # Prepare user data
             user_data = {
                 'first_name': request.data.get('user.first_name'),
@@ -840,7 +839,6 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'role': 'Student',
                 'password': 'Nepal@123'  # Default password for all roles
             }
-            
             # Create a serializer context with all the data needed
             serializer_data = {
                 'user': user_data,
@@ -857,7 +855,6 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'father_name': student_data.get('father_name', ''),
                 'parent_number': student_data.get('parent_number', ''),
             }
-            
             # Handle file uploads if they exist
             if 'profile_image' in request.FILES:
                 serializer_data['profile_image'] = request.FILES['profile_image']
@@ -865,19 +862,19 @@ class StudentViewSet(viewsets.ModelViewSet):
                 serializer_data['resume'] = request.FILES['resume']
             if 'citizenship_document' in request.FILES:
                 serializer_data['citizenship_document'] = request.FILES['citizenship_document']
-            
             serializer = self.get_serializer(data=serializer_data)
             is_valid = serializer.is_valid()
-            
             if not is_valid:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            
-            self.perform_create(serializer)
-            
+            try:
+                self.perform_create(serializer)
+            except IntegrityError as e:
+                if 'email' in str(e).lower():
+                    return Response({'email': ['A user with this email already exists.']}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': 'A database error occurred.'}, status=status.HTTP_400_BAD_REQUEST)
             # Send email notification to the new student
             from utils.email_sender import send_employee_credentials_email
             send_employee_credentials_email(user_data, student_data)
-            
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
         # If not using JSON, fall back to standard processing
@@ -922,6 +919,36 @@ class StudentViewSet(viewsets.ModelViewSet):
             self.perform_update(serializer)
             return Response(serializer.data)
         return super().update(request, *args, **kwargs)
+
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    def bulk_delete(self, request):
+        """
+        Bulk delete students by IDs.
+        Expects: { "ids": [1, 2, 3] }
+        """
+        ids = request.data.get('ids', [])
+        if not isinstance(ids, list) or not ids:
+            return Response({'detail': 'No IDs provided.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Get the queryset based on user permissions
+        queryset = self.get_queryset()
+        students = queryset.filter(id__in=ids)
+        
+        # Check if all requested students exist and are accessible
+        if students.count() != len(ids):
+            return Response(
+                {'detail': 'Some students could not be found or you do not have permission to delete them.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Delete the students
+        deleted_count = students.count()
+        students.delete()
+        
+        return Response(
+            {'detail': f'{deleted_count} students deleted successfully.'},
+            status=status.HTTP_200_OK
+        )
 
 class LeadViewSet(viewsets.ModelViewSet):
     queryset = Lead.objects.all()

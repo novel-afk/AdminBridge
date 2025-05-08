@@ -241,6 +241,7 @@ const BranchList = () => {
       title: "Export Branches Data",
       message: "Are you sure you want to export the branches data?",
       type: "warning",
+      confirmText: "Export",
       onConfirm: () => {
         console.log("Exporting data...");
         // Export logic to be implemented

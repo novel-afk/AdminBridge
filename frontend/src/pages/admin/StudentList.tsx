@@ -65,6 +65,7 @@ const columns = [
   { key: "select", label: "" },
   { key: "sNo", label: "S.No" },
   { key: "name", label: "Name" },
+  { key: "branch", label: "Branch" },
   { key: "age", label: "Age" },
   { key: "gender", label: "Gender" },
   { key: "nationality", label: "Nationality" },
@@ -261,6 +262,7 @@ const StudentList = () => {
       title: 'Export Students Data',
       message: 'Are you sure you want to export the students data?',
       type: 'warning',
+      confirmText: 'Export',
       onConfirm: () => {
         // Create CSV content
         const headers = [
@@ -333,20 +335,34 @@ const StudentList = () => {
       onConfirm: async () => {
         const accessToken = localStorage.getItem('access_token');
         try {
-          // Delete each selected student
-          for (const id of selectedStudents) {
-            await axios.delete(`${API_BASE_URL}/students/${id}/`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-          }
+          // Use the new bulk delete endpoint
+          await axios.post(`${API_BASE_URL}/students/bulk-delete/`, 
+            { ids: selectedStudents },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
           
           // Clear selection and refresh data
           setSelectedStudents([]);
           fetchStudents();
           
-        } catch (err) {
+          // Show success message
+          showConfirmation({
+            title: 'Success',
+            message: `${selectedStudents.length} student(s) deleted successfully.`,
+            type: 'success',
+            confirmText: 'OK',
+            onConfirm: () => {},
+          });
+          
+        } catch (err: any) {
           console.error('Error deleting students:', err);
-          setError('Failed to delete students. Please try again.');
+          showConfirmation({
+            title: 'Error',
+            message: err.response?.data?.detail || 'Failed to delete students. Please try again.',
+            type: 'danger',
+            confirmText: 'OK',
+            onConfirm: () => {},
+          });
         }
       },
     });
@@ -570,9 +586,11 @@ const StudentList = () => {
                             style={{ position: 'sticky', top: 0 }}
                           >
                             {column.key === "select" ? (
-                              <Checkbox
+                              <input
+                                type="checkbox"
                                 checked={paginatedStudents.length > 0 && selectedStudents.length === paginatedStudents.length}
-                                onCheckedChange={handleSelectAll}
+                                onChange={e => handleSelectAll(e.target.checked)}
+                                className="form-checkbox h-4 w-4 text-[#153147] border-gray-300 rounded-sm align-middle cursor-pointer"
                                 aria-label="Select all"
                               />
                             ) : (
@@ -589,9 +607,11 @@ const StudentList = () => {
                           className="hover:bg-gray-50 transition-all duration-200 ease-in-out group relative even:bg-gray-50/30"
                         >
                           <td className="px-6 py-4 whitespace-nowrap first:pl-4 group-hover:bg-gray-50 transition-colors duration-200">
-                            <Checkbox
+                            <input
+                              type="checkbox"
                               checked={selectedStudents.includes(student.id)}
-                              onCheckedChange={() => handleSelectStudent(student.id)}
+                              onChange={() => handleSelectStudent(student.id)}
+                              className="form-checkbox h-4 w-4 text-[#153147] border-gray-300 rounded-sm align-middle cursor-pointer"
                               aria-label={`Select ${student.user.first_name}`}
                             />
                           </td>
@@ -600,6 +620,9 @@ const StudentList = () => {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-900 font-medium group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[200px]" title={`${student.user.first_name} ${student.user.last_name}`}>
                             {student.user.first_name} {student.user.last_name}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200 truncate max-w-[160px]" title={student.branch_name || "-"}>
+                            {student.branch_name || "-"}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 group-hover:bg-gray-50 transition-colors duration-200">
                             {student.age}

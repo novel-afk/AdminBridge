@@ -198,28 +198,35 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
     } catch (error) {
       console.error('Error creating lead:', error);
       const newErrors = {};
-      
+      let toastShown = false;
       if (error.response) {
         if (error.response.data.detail) {
           newErrors.submit = error.response.data.detail;
           toast.error(error.response.data.detail);
+          toastShown = true;
         } else if (typeof error.response.data === 'object') {
           Object.entries(error.response.data).forEach(([key, value]) => {
+            let errorMsg = Array.isArray(value) ? value[0] : value;
             if (key === 'user.email' || key === 'email') {
-              newErrors.email = 'Email already exists';
-              newErrors.submit = 'Email already exists. Please use a different email.';
-              toast.error('Email already exists. Please use a different email.');
+              newErrors.email = errorMsg;
+              if (!toastShown) { toast.error(errorMsg); toastShown = true; }
+            } else if (key === 'phone' || key === 'user.phone') {
+              newErrors.phone = errorMsg;
+              if (!toastShown) { toast.error(errorMsg); toastShown = true; }
             } else {
-              newErrors[key] = Array.isArray(value) ? value[0] : value;
-              toast.error(Array.isArray(value) ? value[0] : value);
+              newErrors[key] = errorMsg;
+              if (!toastShown) { toast.error(errorMsg); toastShown = true; }
             }
           });
+          if (Object.keys(newErrors).length > 0 && !newErrors.submit && !toastShown) {
+            newErrors.submit = 'Failed to create lead. Please try again.';
+            toast.error('Failed to create lead. Please try again.');
+          }
         }
       } else {
         newErrors.submit = 'Failed to create lead. Please try again.';
         toast.error('Failed to create lead. Please try again.');
       }
-      
       setErrors(newErrors);
     } finally {
       setIsSubmitting(false);

@@ -542,67 +542,66 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
         }
       } catch (error) {
         console.error('Error creating student:', error);
-        
-        // Handle different types of API errors
         let errorMessage = 'Failed to save student. Please try again.';
-        
+        let toastShown = false;
         if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Error response data:', error.response.data);
-          
-          const newErrors = {};
-          
-          if (error.response.data.detail) {
-            newErrors.submit = error.response.data.detail;
-            toast.error(error.response.data.detail);
-          } else if (typeof error.response.data === 'object') {
-            // Map backend field errors to form fields
-            const processErrors = (obj, prefix = '') => {
-              Object.entries(obj).forEach(([key, value]) => {
-                // If value is an object and not an array, recurse
-                if (value && typeof value === 'object' && !Array.isArray(value)) {
-                  processErrors(value, `${prefix}${key}.`);
-                  return;
-                }
-                
-                const errorMessage = Array.isArray(value) ? value.join(', ') : value;
-                const fullKey = `${prefix}${key}`;
-                
-                // Map user.email errors to email field
-                if (fullKey === 'user.email' || key === 'email') {
-                  newErrors.email = errorMessage;
-                  toast.error('Email already exists');
-                }
-                // Map phone_number errors to phoneNumber field
-                else if (key === 'phone_number') {
-                  newErrors.phoneNumber = errorMessage;
-                  toast.error('Phone number already exists');
-                }
-                // Keep other field errors as is
-                else {
-                  newErrors[key] = errorMessage;
-                }
-              });
-            };
-            
-            processErrors(error.response.data);
-            
-            // If we have field-specific errors but no submit error, add a general error
-            if (Object.keys(newErrors).length > 0 && !newErrors.submit) {
-              newErrors.submit = 'Please correct the errors below.';
+          // Collect all string errors recursively
+          function collectStringErrors(obj) {
+            let errors = [];
+            if (!obj) return errors;
+            if (typeof obj === 'string') {
+              if (obj.length < 200 && !obj.includes('django.db.models')) errors.push(obj);
+              return errors;
+            }
+            if (Array.isArray(obj)) {
+              obj.forEach(item => { errors = errors.concat(collectStringErrors(item)); });
+              return errors;
+            }
+            if (typeof obj === 'object') {
+              Object.values(obj).forEach(val => { errors = errors.concat(collectStringErrors(val)); });
+              return errors;
+            }
+            return errors;
+          }
+          const allErrors = collectStringErrors(error.response.data);
+          // Prefer known field errors for toast
+          const fieldOrder = ['email', 'user.email', 'first_name', 'user.first_name', 'last_name', 'user.last_name', 'phone', 'contact_number'];
+          let toastError = null;
+          for (const field of fieldOrder) {
+            if (error.response.data[field]) {
+              toastError = Array.isArray(error.response.data[field]) ? error.response.data[field][0] : error.response.data[field];
+              break;
             }
           }
-          
-          // If no specific errors were mapped, use the generic error message
-          if (Object.keys(newErrors).length === 0) {
-            newErrors.submit = errorMessage;
+          if (!toastError && allErrors.length > 0) toastError = allErrors[0];
+          if (toastError) {
+            toast.error(`Error: ${toastError}`);
+            toastShown = true;
+          }
+          // Map errors to fields for inline validation
+          const newErrors = {};
+          const processErrors = (obj, prefix = '') => {
+            Object.entries(obj).forEach(([key, value]) => {
+              if (value && typeof value === 'object' && !Array.isArray(value)) {
+                processErrors(value, `${prefix}${key}.`);
+                return;
+              }
+              const errorMsg = Array.isArray(value) ? value.join(', ') : value;
+              if (key === 'user.email' || key === 'email') newErrors.email = errorMsg;
+              else if (key === 'user.first_name' || key === 'first_name' || key === 'firstName') newErrors.firstName = errorMsg;
+              else if (key === 'user.last_name' || key === 'last_name' || key === 'lastName') newErrors.lastName = errorMsg;
+              else if (key === 'phone' || key === 'contact_number') newErrors.phone = errorMsg;
+              else newErrors[`${prefix}${key}`] = errorMsg;
+            });
+          };
+          if (typeof error.response.data === 'object') {
+            processErrors(error.response.data);
+          }
+          if (Object.keys(newErrors).length === 0 && !toastShown) {
             toast.error(errorMessage);
           }
-          
           setErrors(newErrors);
         } else if (error.request) {
-          // The request was made but no response was received
           setErrors({ submit: 'No response received from server. Please check your connection.' });
           toast.error('No response received from server. Please check your connection.');
         }
