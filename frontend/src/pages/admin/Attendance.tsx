@@ -7,6 +7,7 @@ import { Tabs, TabList, Tab, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';
 import { API_BASE_URL } from '../../lib/apiConfig';
+import type { Timeout } from 'node:timers';
 
 // Types for attendance data
 interface Employee {
@@ -105,7 +106,7 @@ const AttendancePage = () => {
   }, [user, isAuthenticated, authLoading, navigate]);
 
   // Helper to check if attendance data is loaded
-  const isAttendanceDataLoaded = (emp, stud) => Array.isArray(emp) && emp.length > 0 || Array.isArray(stud) && stud.length > 0;
+  const isAttendanceDataLoaded = (emp: any[], stud: any[]): boolean => Array.isArray(emp) && emp.length > 0 || Array.isArray(stud) && stud.length > 0;
 
   // On mount, fetch all attendance data (no filter) with auto-retry
   useEffect(() => {
@@ -512,7 +513,7 @@ const AttendancePage = () => {
     setFilterApplied(false);
     setIsLoading(true);
     setShowError(false);
-    setShowFilter(false);
+    setShowFilter(true);
     const token = getAuthToken();
     if (token) {
       try {
@@ -527,6 +528,10 @@ const AttendancePage = () => {
       }
     }
   };
+
+  // Add no-op handlers if not implemented
+  const handleEmployeeStatusChange = () => {};
+  const handleStudentStatusChange = () => {};
 
   return (
     <Layout>
@@ -546,7 +551,7 @@ const AttendancePage = () => {
           )}
           {/* Date Filter UI */}
           {showFilter && initialDataLoaded && (
-            <div className="mb-10 flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
+            <div className="mb-10 flex flex-col md:flex-row md:items-end md:gap-8 gap-4">
               <div>
                 <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
                   Start Date
@@ -573,7 +578,7 @@ const AttendancePage = () => {
                   disabled={employeeLoading || studentLoading}
                 />
               </div>
-              <div className="flex items-end gap-2 mt-6 md:mt-0">
+              <div className="flex items-end gap-2 md:mb-0 mb-2">
                 <button
                   type="button"
                   onClick={handleApply}
@@ -582,16 +587,14 @@ const AttendancePage = () => {
                 >
                   Apply
                 </button>
-                {filterApplied && (
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300"
-                    disabled={employeeLoading || studentLoading}
-                  >
-                    Reset
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300"
+                  disabled={employeeLoading || studentLoading}
+                >
+                  Reset
+                </button>
               </div>
             </div>
           )}
