@@ -54,8 +54,12 @@ interface StudentAttendance {
 const AttendancePage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [startDate, setStartDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [pendingStartDate, setPendingStartDate] = useState<string>(todayStr);
+  const [pendingEndDate, setPendingEndDate] = useState<string>(todayStr);
+  const [filterApplied, setFilterApplied] = useState(false);
   const [employeeAttendance, setEmployeeAttendance] = useState<EmployeeAttendance[]>([]);
   const [studentAttendance, setStudentAttendance] = useState<StudentAttendance[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -168,7 +172,7 @@ const AttendancePage = () => {
       setEmployees(formattedEmployees);
       
       // Fetch employee attendance
-      await fetchAttendanceData(token);
+      await fetchAttendanceData(token, '', '');
     } catch (err: any) {
       console.error('Error fetching employee data:', err);
       const errorDetail = err.response?.data?.detail || 'Unknown error';
@@ -247,7 +251,7 @@ const AttendancePage = () => {
       employee_id: employee.employee_id,
       employee_role: employee.employee_role,
       branch_name: employee.branch_name,
-      date: startDate,
+      date: todayStr,
       time_in: null,
       time_out: null,
       status: 'Present',
@@ -306,7 +310,7 @@ const AttendancePage = () => {
       setStudents(formattedStudents);
       
       // Now check if there's attendance data for students
-      await fetchStudentAttendanceData(token);
+      await fetchStudentAttendanceData(token, '', '');
     } catch (err: any) {
       console.error('Error fetching student data:', err);
       const errorDetail = err.response?.data?.detail || 'Unknown error';
@@ -380,7 +384,7 @@ const AttendancePage = () => {
       student_name: student.student_name,
       student_id: student.student_id,
       branch_name: student.branch_name,
-      date: startDate,
+      date: todayStr,
       time_in: null,
       time_out: null,
       status: 'Present',
@@ -391,15 +395,21 @@ const AttendancePage = () => {
   };
 
   // Fetch attendance data for the selected date or prepare default attendance
-  const fetchAttendanceData = async (token: string) => {
+  const fetchAttendanceData = async (token: string, start: string, end: string) => {
     try {
-      // Fetch employee attendance for selected date range
-      const employeeAttendanceResponse = await axios.get(
-        `${API_BASE_URL}/employee-attendance/by_date/?start_date=${startDate}&end_date=${endDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      let url = `${API_BASE_URL}/employee-attendance/by_date/`;
+      // Only add date parameters if both start and end dates are provided
+      if (start && end) {
+        url += `?start_date=${start}&end_date=${end}`;
+      } else {
+        // If no dates provided, use today's date for both
+        const today = format(new Date(), 'yyyy-MM-dd');
+        url += `?start_date=${today}&end_date=${today}`;
+      }
+
+      const employeeAttendanceResponse = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       console.log('Employee attendance API response:', employeeAttendanceResponse.data);
       let allEmployeeAttendance: any[] = [];
@@ -411,24 +421,31 @@ const AttendancePage = () => {
         allEmployeeAttendance = employeeAttendanceResponse.data.data;
       }
       setEmployeeAttendance(allEmployeeAttendance);
+      setError(null);
     } catch (err: any) {
       console.error('Error fetching employee attendance data:', err);
-      if (!error) {
-        setError('Failed to load employee attendance data');
-      }
+      const errorMessage = err.response?.data?.detail || 'Failed to load employee attendance data';
+      setError(errorMessage);
       setEmployeeAttendance([]);
     }
   };
 
   // Fetch student attendance data
-  const fetchStudentAttendanceData = async (token: string) => {
+  const fetchStudentAttendanceData = async (token: string, start: string, end: string) => {
     try {
-      const response = await axios.get(
-        `${API_BASE_URL}/student-attendance/by_date/?start_date=${startDate}&end_date=${endDate}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      let url = `${API_BASE_URL}/student-attendance/by_date/`;
+      // Only add date parameters if both start and end dates are provided
+      if (start && end) {
+        url += `?start_date=${start}&end_date=${end}`;
+      } else {
+        // If no dates provided, use today's date for both
+        const today = format(new Date(), 'yyyy-MM-dd');
+        url += `?start_date=${today}&end_date=${today}`;
+      }
+
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       console.log('Student attendance API response:', response.data);
       let allStudentAttendance: any[] = [];
@@ -440,372 +457,318 @@ const AttendancePage = () => {
         allStudentAttendance = response.data.data;
       }
       setStudentAttendance(allStudentAttendance);
-    } catch (error) {
+      setError(null);
+    } catch (error: any) {
       console.error('Error fetching student attendance:', error);
-      setError('Failed to fetch student attendance data');
+      const errorMessage = error.response?.data?.detail || 'Failed to fetch student attendance data';
+      setError(errorMessage);
       setStudentAttendance([]);
     }
   };
 
-  // Handle date range change
-  const handleDateRangeChange = async (newStart: string, newEnd: string) => {
-    setStartDate(newStart);
-    setEndDate(newEnd);
+  // Handle Apply button
+  const handleApply = async () => {
+    setStartDate(pendingStartDate);
+    setEndDate(pendingEndDate);
+    setFilterApplied(true);
+    setError(null);
     const token = getAuthToken();
     if (token) {
       setEmployeeLoading(true);
       setStudentLoading(true);
-      await fetchAttendanceData(token);
-      await fetchStudentAttendanceData(token);
-      setEmployeeLoading(false);
-      setStudentLoading(false);
-    }
-  };
-
-  // Handle employee attendance status change
-  const handleEmployeeStatusChange = async (employeeId: number, newStatus: string) => {
-    const token = getAuthToken();
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    
-    // Find the existing attendance record
-    const attendanceRecord = employeeAttendance.find(record => 
-      record.employee === employeeId && 
-      new Date(record.date).toISOString().split('T')[0] === startDate
-    );
-    
-    try {
-      if (attendanceRecord && attendanceRecord.id) {
-        // Update existing record
-        await axios.patch(
-          `${API_BASE_URL}/employee-attendance/${attendanceRecord.id}/`,
-          { status: newStatus },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        // Update local state
-        setEmployeeAttendance(prevAttendance => 
-          prevAttendance.map(record => 
-            record.employee === employeeId && new Date(record.date).toISOString().split('T')[0] === startDate
-              ? { ...record, status: newStatus }
-              : record
-          )
-        );
-      } else {
-        // Create new record using the bulk update endpoint
-        await axios.post(
-          `${API_BASE_URL}/employee-attendance/bulk_update/`,
-          [{
-            employee: employeeId,
-            date: startDate,
-            status: newStatus
-          }],
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        // Fetch attendance data again to get the updated record
-        fetchAttendanceData(token);
-      }
-      
-      setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 3000);
-    } catch (err: any) {
-      console.error('Error updating employee attendance:', err);
-      const errorDetail = err.response?.data?.detail || 'Unknown error';
-      setError(`Failed to update attendance: ${errorDetail}`);
-      
-      // If unauthorized (401), redirect to login
-      if (err.response?.status === 401) {
-        navigate('/login');
+      try {
+        await Promise.all([
+          fetchAttendanceData(token, pendingStartDate, pendingEndDate),
+          fetchStudentAttendanceData(token, pendingStartDate, pendingEndDate)
+        ]);
+      } catch (error) {
+        console.error('Error fetching attendance data:', error);
+      } finally {
+        setEmployeeLoading(false);
+        setStudentLoading(false);
       }
     }
   };
 
-  // Handle student attendance status change
-  const handleStudentStatusChange = async (studentId: number, newStatus: string) => {
-    const token = getAuthToken();
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    
-    // Find the existing attendance record
-    const attendanceRecord = studentAttendance.find(record => 
-      record.student === studentId && 
-      new Date(record.date).toISOString().split('T')[0] === startDate
-    );
-    
-    try {
-      if (attendanceRecord && attendanceRecord.id) {
-        // Update existing record
-        await axios.patch(
-          `${API_BASE_URL}/student-attendance/${attendanceRecord.id}/`,
-          { status: newStatus },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        // Update local state
-        setStudentAttendance(prevAttendance => 
-          prevAttendance.map(record => 
-            record.student === studentId && new Date(record.date).toISOString().split('T')[0] === startDate
-              ? { ...record, status: newStatus }
-              : record
-          )
-        );
-      } else {
-        // Create new record using the bulk update endpoint
-        await axios.post(
-          `${API_BASE_URL}/student-attendance/bulk_update/`,
-          [{
-            student: studentId,
-            date: startDate,
-            status: newStatus
-          }],
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        
-        // Fetch attendance data again to get the updated record
-        fetchStudentAttendanceData(token);
-      }
-      
-      setUpdateSuccess(true);
-      setTimeout(() => setUpdateSuccess(false), 3000);
-    } catch (err: any) {
-      console.error('Error updating student attendance:', err);
-      const errorDetail = err.response?.data?.detail || 'Unknown error';
-      setError(`Failed to update attendance: ${errorDetail}`);
-      
-      // If unauthorized (401), redirect to login
-      if (err.response?.status === 401) {
-        navigate('/login');
-      }
-    }
+  // Handle Reset button
+  const handleReset = async () => {
+    setPendingStartDate(todayStr);
+    setPendingEndDate(todayStr);
+    setStartDate('');
+    setEndDate('');
+    setFilterApplied(false);
+    setError(null);
+    setEmployeeAttendance([]);
+    setStudentAttendance([]);
+    setEmployeeLoading(false);
+    setStudentLoading(false);
   };
+
+  // Add loading indicator component
+  const LoadingSpinner = () => (
+    <div className="flex justify-center items-center py-8">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <span className="ml-2 text-gray-600">Loading attendance data...</span>
+    </div>
+  );
 
   return (
     <Layout>
-      {(employeeLoading || studentLoading) ? (
-        <div className="flex flex-1 min-h-[60vh]">
-          <div className="m-auto flex flex-col items-center">
-            <div className="animate-spin rounded-full h-20 w-20 border-b-4 border-blue-700 mb-6"></div>
-            <div className="text-2xl font-bold text-blue-700 mb-2">Loading attendance data...</div>
-            <div className="text-gray-500 text-base">Please wait while we fetch the latest attendance records.</div>
+      <div className="max-w-6xl">
+        <div className="bg-white shadow-xl rounded-2xl p-8 mb-10">
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight">Attendance Management</h1>
+          {/* Date Selector */}
+          <div className="mb-10 flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
+            <div>
+              <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
+                Start Date
+              </label>
+              <input
+                type="date"
+                value={pendingStartDate}
+                onChange={(e) => setPendingStartDate(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                disabled={employeeLoading || studentLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
+                End Date
+              </label>
+              <input
+                type="date"
+                id="end-date"
+                value={pendingEndDate}
+                min={pendingStartDate}
+                onChange={(e) => setPendingEndDate(e.target.value)}
+                className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                disabled={employeeLoading || studentLoading}
+              />
+            </div>
+            <div className="flex items-end gap-2 mt-6 md:mt-0">
+              <button
+                type="button"
+                onClick={handleApply}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={employeeLoading || studentLoading}
+              >
+                {employeeLoading || studentLoading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading...
+                  </span>
+                ) : 'Apply'}
+              </button>
+              {filterApplied && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={employeeLoading || studentLoading}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="max-w-6xl">
-          <div className="bg-white shadow-xl rounded-2xl p-8 mb-10">
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight">Attendance Management</h1>
-            {/* Date Selector */}
-            <div className="mb-10 flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
-              <div>
-                <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  type="date"
-                  id="start-date"
-                  value={startDate}
-                  onChange={(e) => handleDateRangeChange(e.target.value, endDate)}
-                  className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                  disabled={employeeLoading || studentLoading}
-                />
-              </div>
-              <div>
-                <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
-                  type="date"
-                  id="end-date"
-                  value={endDate}
-                  min={startDate}
-                  onChange={(e) => handleDateRangeChange(startDate, e.target.value)}
-                  className="border border-gray-300 rounded-md p-2 w-full md:w-64 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                  disabled={employeeLoading || studentLoading}
-                />
-              </div>
+          {/* Friendly message if no filter is applied */}
+          {!filterApplied && (
+            <div className="text-center text-gray-500 text-lg mt-8 mb-8">
+              <svg className="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <p>Please select a date range and click <span className="font-semibold text-blue-700">Apply</span> to view attendance records.</p>
+              <p className="text-sm mt-2 text-gray-400">Use the date selectors above to filter attendance data.</p>
             </div>
-            {/* Success/Error Messages */}
-            {updateSuccess && (
-              <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 font-medium">
-                Attendance updated successfully
-              </div>
-            )}
-            {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 font-medium">
-                {error}
-              </div>
-            )}
-            {/* Attendance Summary Cards */}
-            <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-xl shadow flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  <h3 className="text-lg font-bold text-green-800">Employee Present</h3>
+          )}
+          {/* Loading state */}
+          {(employeeLoading || studentLoading) && <LoadingSpinner />}
+          {/* Only show the rest if filterApplied is true and not loading */}
+          {filterApplied && !employeeLoading && !studentLoading && (
+            <>
+              {/* Success/Error Messages */}
+              {updateSuccess && (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 font-medium">
+                  Attendance updated successfully
                 </div>
-                <div className="text-4xl font-extrabold text-green-700">{employeeAttendance.filter(e => e.status === 'Present').length}</div>
-              </div>
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-2 rounded-xl shadow flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  <h3 className="text-lg font-bold text-red-800">Employee Absent</h3>
+              )}
+              {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 font-medium">
+                  {error}
                 </div>
-                <div className="text-4xl font-extrabold text-red-700">{employeeAttendance.filter(e => e.status === 'Absent').length}</div>
-              </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-xl shadow flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  <h3 className="text-lg font-bold text-green-800">Student Present</h3>
+              )}
+              {/* Attendance Summary Cards */}
+              <div className="mb-10 grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-xl shadow flex flex-col items-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <h3 className="text-lg font-bold text-green-800">Employee Present</h3>
+                  </div>
+                  <div className="text-4xl font-extrabold text-green-700">{employeeAttendance.filter(e => e.status === 'Present').length}</div>
                 </div>
-                <div className="text-4xl font-extrabold text-green-700">{studentAttendance.filter(s => s.status === 'Present').length}</div>
-              </div>
-              <div className="bg-gradient-to-br from-red-50 to-red-100 p-2 rounded-xl shadow flex flex-col items-center">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  <h3 className="text-lg font-bold text-red-800">Student Absent</h3>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 p-2 rounded-xl shadow flex flex-col items-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <h3 className="text-lg font-bold text-red-800">Employee Absent</h3>
+                  </div>
+                  <div className="text-4xl font-extrabold text-red-700">{employeeAttendance.filter(e => e.status === 'Absent').length}</div>
                 </div>
-                <div className="text-4xl font-extrabold text-red-700">{studentAttendance.filter(s => s.status === 'Absent').length}</div>
+                <div className="bg-gradient-to-br from-green-50 to-green-100 p-2 rounded-xl shadow flex flex-col items-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <h3 className="text-lg font-bold text-green-800">Student Present</h3>
+                  </div>
+                  <div className="text-4xl font-extrabold text-green-700">{studentAttendance.filter(s => s.status === 'Present').length}</div>
+                </div>
+                <div className="bg-gradient-to-br from-red-50 to-red-100 p-2 rounded-xl shadow flex flex-col items-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg className="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    <h3 className="text-lg font-bold text-red-800">Student Absent</h3>
+                  </div>
+                  <div className="text-4xl font-extrabold text-red-700">{studentAttendance.filter(s => s.status === 'Absent').length}</div>
+                </div>
               </div>
-            </div>
-            {/* Tabs for different attendance types */}
-            <Tabs selectedIndex={tabIndex} onSelect={(index: number) => setTabIndex(index)} className="mt-8">
-              <TabList className="flex border-b mb-6">
-                <Tab className="px-6 py-3 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-semibold text-lg">
-                  Employee Attendance
-                </Tab>
-                <Tab className="px-6 py-3 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-semibold text-lg">
-                  Student Attendance
-                </Tab>
-              </TabList>
-              {/* Employee Attendance Tab */}
-              <TabPanel>
-                <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Name</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">ID</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Role</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Branch</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Date</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Status</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {!employeeAttendance || employeeAttendance.length === 0 ? (
-                        <tr>
-                          <td colSpan={6} className="py-8 px-4 text-center text-gray-400 text-lg">
-                            No employees found
-                          </td>
+              {/* Tabs for different attendance types */}
+              <Tabs selectedIndex={tabIndex} onSelect={(index: number) => setTabIndex(index)} className="mt-8">
+                <TabList className="flex border-b mb-6">
+                  <Tab className="px-6 py-3 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-semibold text-lg">
+                    Employee Attendance
+                  </Tab>
+                  <Tab className="px-6 py-3 cursor-pointer focus:outline-none border-b-2 border-transparent transition-colors hover:text-blue-600 hover:border-blue-600 aria-selected:border-blue-600 aria-selected:text-blue-600 font-semibold text-lg">
+                    Student Attendance
+                  </Tab>
+                </TabList>
+                {/* Employee Attendance Tab */}
+                <TabPanel>
+                  <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Name</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">ID</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Role</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Branch</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Date</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Status</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Actions</th>
                         </tr>
-                      ) : (
-                        Array.isArray(employeeAttendance) && employeeAttendance.map((record) => (
-                          <tr key={`emp-${record.employee}`} className="border-b hover:bg-blue-50/40 transition">
-                            <td className="py-4 px-6 text-base text-gray-900 font-semibold">{record.employee_name}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{record.employee_id}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{record.employee_role}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{record.branch_name}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{format(parseISO(record.date), 'yyyy-MM-dd')}</td>
-                            <td className="py-4 px-6 text-base">
-                              <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm transition-colors duration-200
-                                ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
-                                record.status === 'Absent' ? 'bg-red-100 text-red-800' :
-                                record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
-                                record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
-                                'bg-blue-100 text-blue-800'}`}
-                              >
-                                {record.status}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-base">
-                              <select
-                                value={record.status}
-                                onChange={(e) => handleEmployeeStatusChange(record.employee, e.target.value)}
-                                className="border border-gray-300 rounded p-2 text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                              >
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                                <option value="Late">Late</option>
-                                <option value="Half Day">Half Day</option>
-                                <option value="On Leave">On Leave</option>
-                              </select>
+                      </thead>
+                      <tbody>
+                        {!employeeAttendance || employeeAttendance.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-8 px-4 text-center text-gray-400 text-lg">
+                              No employees found
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </TabPanel>
-              {/* Student Attendance Tab */}
-              <TabPanel>
-                <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Name</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">ID</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Branch</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Date</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Status</th>
-                        <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {!studentAttendance || studentAttendance.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="py-8 px-4 text-center text-gray-400 text-lg">
-                            No students found
-                          </td>
+                        ) : (
+                          Array.isArray(employeeAttendance) && employeeAttendance.map((record) => (
+                            <tr key={`emp-${record.employee}-${record.date}`} className="border-b hover:bg-blue-50/40 transition">
+                              <td className="py-4 px-6 text-base text-gray-900 font-semibold">{record.employee_name}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{record.employee_id}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{record.employee_role}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{record.branch_name}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{format(parseISO(record.date), 'yyyy-MM-dd')}</td>
+                              <td className="py-4 px-6 text-base">
+                                <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm transition-colors duration-200
+                                  ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                  record.status === 'Absent' ? 'bg-red-100 text-red-800' :
+                                  record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
+                                  record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
+                                  'bg-blue-100 text-blue-800'}`}
+                                >
+                                  {record.status}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 text-base">
+                                <select
+                                  value={record.status}
+                                  onChange={(e) => handleEmployeeStatusChange(record.employee, e.target.value)}
+                                  className="border border-gray-300 rounded p-2 text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                                >
+                                  <option value="Present">Present</option>
+                                  <option value="Absent">Absent</option>
+                                  <option value="Late">Late</option>
+                                  <option value="Half Day">Half Day</option>
+                                  <option value="On Leave">On Leave</option>
+                                </select>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </TabPanel>
+                {/* Student Attendance Tab */}
+                <TabPanel>
+                  <div className="overflow-x-auto rounded-lg shadow border border-gray-200 bg-white">
+                    <table className="min-w-full">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Name</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">ID</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Branch</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Date</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Status</th>
+                          <th className="py-4 px-6 text-left text-base font-bold text-gray-700 border-b">Actions</th>
                         </tr>
-                      ) : (
-                        Array.isArray(studentAttendance) && studentAttendance.map((record) => (
-                          <tr key={`stud-${record.student}`} className="border-b hover:bg-blue-50/40 transition">
-                            <td className="py-4 px-6 text-base text-gray-900 font-semibold">{record.student_name}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{record.student_id}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{record.branch_name}</td>
-                            <td className="py-4 px-6 text-base text-gray-700">{format(parseISO(record.date), 'yyyy-MM-dd')}</td>
-                            <td className="py-4 px-6 text-base">
-                              <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm transition-colors duration-200
-                                ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
-                                record.status === 'Absent' ? 'bg-red-100 text-red-800' :
-                                record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
-                                record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
-                                'bg-blue-100 text-blue-800'}`}
-                              >
-                                {record.status}
-                              </span>
-                            </td>
-                            <td className="py-4 px-6 text-base">
-                              <select
-                                value={record.status}
-                                onChange={(e) => handleStudentStatusChange(record.student, e.target.value)}
-                                className="border border-gray-300 rounded p-2 text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-                              >
-                                <option value="Present">Present</option>
-                                <option value="Absent">Absent</option>
-                                <option value="Late">Late</option>
-                                <option value="Half Day">Half Day</option>
-                                <option value="On Leave">On Leave</option>
-                              </select>
+                      </thead>
+                      <tbody>
+                        {!studentAttendance || studentAttendance.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-8 px-4 text-center text-gray-400 text-lg">
+                              No students found
                             </td>
                           </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </TabPanel>
-            </Tabs>
-          </div>
+                        ) : (
+                          Array.isArray(studentAttendance) && studentAttendance.map((record) => (
+                            <tr key={`stud-${record.student}-${record.date}`} className="border-b hover:bg-blue-50/40 transition">
+                              <td className="py-4 px-6 text-base text-gray-900 font-semibold">{record.student_name}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{record.student_id}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{record.branch_name}</td>
+                              <td className="py-4 px-6 text-base text-gray-700">{format(parseISO(record.date), 'yyyy-MM-dd')}</td>
+                              <td className="py-4 px-6 text-base">
+                                <span className={`px-3 py-1 rounded-full text-sm font-bold shadow-sm transition-colors duration-200
+                                  ${record.status === 'Present' ? 'bg-green-100 text-green-800' :
+                                  record.status === 'Absent' ? 'bg-red-100 text-red-800' :
+                                  record.status === 'Late' ? 'bg-yellow-100 text-yellow-800' :
+                                  record.status === 'Half Day' ? 'bg-orange-100 text-orange-800' :
+                                  record.status === 'Not Marked' ? 'bg-gray-200 text-gray-600' :
+                                  'bg-blue-100 text-blue-800'}`}
+                                >
+                                  {record.status}
+                                </span>
+                              </td>
+                              <td className="py-4 px-6 text-base">
+                                <select
+                                  value={record.status}
+                                  onChange={(e) => handleStudentStatusChange(record.student, e.target.value)}
+                                  className="border border-gray-300 rounded p-2 text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                                >
+                                  <option value="Present">Present</option>
+                                  <option value="Absent">Absent</option>
+                                  <option value="Late">Late</option>
+                                  <option value="Half Day">Half Day</option>
+                                  <option value="On Leave">On Leave</option>
+                                </select>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </TabPanel>
+              </Tabs>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </Layout>
   );
 };
 
-export default AttendancePage; 
+export default AttendancePage;

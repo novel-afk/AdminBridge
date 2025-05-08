@@ -1342,25 +1342,80 @@ class StudentAttendanceViewSet(viewsets.ModelViewSet):
     def by_date(self, request):
         """
         Get attendance records for a specific date or date range.
-        Accepts either 'date' or both 'start_date' and 'end_date' as query params.
+        For a date range, return a record for every student for every date in the range.
+        If a real attendance record exists, use it; otherwise, return a placeholder (e.g., status: 'Not Marked').
         """
-        from datetime import datetime
+        from datetime import datetime, timedelta
         start_date_str = request.query_params.get('start_date')
         end_date_str = request.query_params.get('end_date')
         date_str = request.query_params.get('date')
 
         try:
+            user = self.request.user
+            # Get students in scope
+            if user.role == 'SuperAdmin':
+                students = Student.objects.select_related('user', 'branch').all()
+            elif user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
+                user_branch = user.employee_profile.branch
+                students = Student.objects.select_related('user', 'branch').filter(branch=user_branch)
+            elif user.role == 'Student' and hasattr(user, 'student_profile'):
+                students = [user.student_profile]
+            else:
+                students = []
+
             if start_date_str and end_date_str:
                 start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
                 end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
-                queryset = self.get_queryset().filter(date__range=(start_date, end_date))
-                serializer = self.get_serializer(queryset, many=True)
-                return Response(serializer.data)
+                delta = (end_date - start_date).days
+                all_records = []
+                for i in range(delta + 1):
+                    current_date = start_date + timedelta(days=i)
+                    # Get all attendance records for this date
+                    records = {rec.student_id: rec for rec in self.get_queryset().filter(date=current_date)}
+                    for student in students:
+                        if student.id in records:
+                            # Use real record
+                            rec = records[student.id]
+                            serializer = self.get_serializer(rec)
+                            all_records.append(serializer.data)
+                        else:
+                            # Placeholder
+                            all_records.append({
+                                'id': None,
+                                'student': student.id,
+                                'student_name': f"{student.user.first_name} {student.user.last_name}",
+                                'student_id': student.student_id,
+                                'branch_name': student.branch.name,
+                                'date': current_date,
+                                'time_in': None,
+                                'time_out': None,
+                                'status': 'Not Marked',
+                                'remarks': None
+                            })
+                return Response(all_records)
             elif date_str:
                 date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                queryset = self.get_queryset().filter(date=date)
-                serializer = self.get_serializer(queryset, many=True)
-                return Response(serializer.data)
+                records = {rec.student_id: rec for rec in self.get_queryset().filter(date=date)}
+                all_records = []
+                for student in students:
+                    if student.id in records:
+                        rec = records[student.id]
+                        serializer = self.get_serializer(rec)
+                        all_records.append(serializer.data)
+                    else:
+                        all_records.append({
+                            'id': None,
+                            'student': student.id,
+                            'student_name': f"{student.user.first_name} {student.user.last_name}",
+                            'student_id': student.student_id,
+                            'branch_name': student.branch.name,
+                            'date': date,
+                            'time_in': None,
+                            'time_out': None,
+                            'status': 'Not Marked',
+                            'remarks': None
+                        })
+                return Response(all_records)
             else:
                 return Response(
                     {"detail": "Provide either 'date' or both 'start_date' and 'end_date'."},
