@@ -18,14 +18,20 @@ interface StudentProfile {
     first_name: string;
     last_name: string;
     email: string;
+    role: string;
+    branch: number | null;
+    branch_name: string | null;
   };
-  student_id: string;
   branch: {
     id: number;
     name: string;
-    city: string;
     country: string;
+    city: string;
+    address: string;
+    created_at: string;
+    updated_at: string;
   };
+  student_id: string;
   age: number;
   gender: string;
   nationality: string;
@@ -33,12 +39,11 @@ interface StudentProfile {
   address: string;
   institution_name: string;
   language_test: string;
-  emergency_contact: string | null;
-  mother_name: string | null;
-  father_name: string | null;
-  parent_number: string | null;
-  profile_image: string | null;
-  comments: string | null;
+  emergency_contact: string;
+  mother_name: string;
+  father_name: string;
+  parent_number: string;
+  profile_image: string;
   enrollment_date: string;
 }
 
@@ -290,13 +295,16 @@ const Profile: React.FC = () => {
               
               <div className="text-center md:text-left">
                 <h2 className="text-2xl font-bold">
-                  {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 
-                   profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
+                  {profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
                 </h2>
                 <p className="text-gray-600 mb-2">Student ID: {profile?.student_id || 'Not assigned'}</p>
                 <p className="text-gray-600 flex items-center justify-center md:justify-start gap-2">
                   <MapPin size={16} />
-                  {profile?.branch?.city || 'Unknown'}, {profile?.branch?.country || 'Unknown'}
+                  {profile?.branch?.name || 'Unknown Branch'}
+                </p>
+                <p className="text-gray-600 flex items-center justify-center md:justify-start gap-2">
+                  <Mail size={16} />
+                  {profile?.user?.email || 'No email available'}
                 </p>
               </div>
             </div>
@@ -313,8 +321,7 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Full Name</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <User size={16} className="text-gray-400" />
-                      {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 
-                       profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
+                      {profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
                     </div>
                   </div>
                   
@@ -322,7 +329,7 @@ const Profile: React.FC = () => {
                     <Label className="text-gray-500 mb-1 block">Email</Label>
                     <div className="flex items-center gap-2 text-gray-800">
                       <Mail size={16} className="text-gray-400" />
-                      {user?.email || profile?.user?.email || 'No email available'}
+                      {profile?.user?.email || 'No email available'}
                     </div>
                   </div>
                   
@@ -427,7 +434,7 @@ const Profile: React.FC = () => {
                   </div>
                   
                   <div>
-                    <Label className="text-gray-500 mb-1 block">Family Information</Label>
+                    <Label className="text-gray-500 mb-1 block">Parents Information</Label>
                     {editing ? (
                       <div className="space-y-4">
                         <Input 

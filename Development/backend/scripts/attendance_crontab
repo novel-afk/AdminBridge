@@ -1,7 +1,0 @@
-# Crontab configuration for AdminBridge attendance system
-# Run attendance reset script at 9:00 PM Nepal time (UTC+5:45)
-# m h dom mon dow command
-15 15 * * * cd /path/to/your/project/backend && python scripts/reset_attendance.py >> /path/to/your/project/backend/attendance_cron.log 2>&1
-
-# Note: 15:15 UTC = 21:00 Nepal time (UTC+5:45)
-# Adjust the path to your actual project path 
