@@ -18,6 +18,7 @@ import EditBlogModal from '../../components/EditBlogModal';
 import ViewBlogModal from '../../components/ViewBlogModal';
 import { blogAPI } from '../../lib/api';
 import { useAuth } from '../../lib/AuthContext';
+import { toast } from 'react-toastify';
 
 interface Blog {
   id: number;
@@ -227,15 +228,7 @@ const BranchManagerBlogList = () => {
           // Refresh blog list
           fetchBlogs(true);
           setSelectedBlogs([]);
-          
-          // Show success message
-          showConfirmation({
-            title: 'Success',
-            message: `${selectedBlogs.length} blog${selectedBlogs.length > 1 ? 's were' : ' was'} deleted successfully.`,
-            type: 'success',
-            confirmText: 'OK',
-            onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false }))
-          });
+          toast.success('Blog(s) deleted successfully');
         } catch (err: any) {
           console.error('Error deleting blogs:', err);
           // Show error message
@@ -263,15 +256,7 @@ const BranchManagerBlogList = () => {
           
           // Refresh blog list
           fetchBlogs(true);
-          
-          // Show success message
-          showConfirmation({
-            title: 'Success',
-            message: 'Blog was deleted successfully.',
-            type: 'success',
-            confirmText: 'OK',
-            onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false }))
-          });
+          toast.success('Blog deleted successfully');
         } catch (err: any) {
           console.error('Error deleting blog:', err);
           // Show error message

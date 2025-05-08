@@ -19,6 +19,7 @@ import ConfirmationModal from "../../components/ConfirmationModal"
 import ViewJobModal from "../../components/ViewJobModal"
 import EditJobModal from "../../components/EditJobModal"
 import AddJobModal from "../../components/AddJobModal"
+import { toast } from 'react-toastify';
 
 interface Job {
   id: number;
@@ -90,8 +91,8 @@ export default function JobPage() {
     try {
       if (showRefreshing) {
         setRefreshing(true);
-      } else {
-        setLoading(true);
+      } else if (jobs.length === 0) {
+        setLoading(true); // Only show full-page spinner if no jobs loaded yet
       }
       setError('');
       
@@ -178,11 +179,10 @@ export default function JobPage() {
               headers: { Authorization: `Bearer ${accessToken}` }
             });
           }
-          
           // Clear selection and refresh data
           setSelectedJobs([]);
           fetchJobs();
-          
+          toast.success('Job(s) deleted successfully');
         } catch (err) {
           console.error('Error deleting jobs:', err);
           setError('Failed to delete jobs. Please try again.');
@@ -203,10 +203,8 @@ export default function JobPage() {
           await axios.delete(`${API_BASE_URL}/jobs/${job.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
-          // Refresh data after deletion
           fetchJobs();
-          
+          toast.success('Job deleted successfully');
         } catch (err) {
           console.error('Error deleting job:', err);
           setError('Failed to delete job. Please try again.');
@@ -321,6 +319,33 @@ export default function JobPage() {
   // Get status badge info from is_active field
   const getJobStatus = (isActive: boolean) => {
     return isActive ? 'Open' : 'Closed';
+  };
+
+  const handleEditJob = async (jobData) => {
+    try {
+      await axios.put(`${API_BASE_URL}/jobs/${jobData.id}/`, jobData, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` }
+      });
+      toast.success('Job updated');
+      setIsEditModalOpen(false);
+      setSelectedJob(null);
+      fetchJobs(true);
+    } catch (err) {
+      toast.error('Failed to update job');
+    }
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      await axios.delete(`${API_BASE_URL}/jobs/${jobId}/`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      fetchJobs(true);
+      toast.success('Job deleted successfully');
+    } catch (err) {
+      toast.error('Failed to delete job');
+    }
   };
 
   return (

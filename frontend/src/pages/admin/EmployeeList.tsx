@@ -17,6 +17,7 @@ import AddEmployeeModal from '../../components/AddEmployeeModal';
 import EditEmployeeModal from '../../components/EditEmployeeModal';
 import ViewEmployeeModal from '../../components/ViewEmployeeModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { toast } from 'react-toastify';
 
 interface Employee {
   id: number;
@@ -122,8 +123,8 @@ const EmployeeList = () => {
     try {
       if (showRefreshing) {
         setRefreshing(true);
-      } else {
-        setLoading(true);
+      } else if (employees.length === 0) {
+        setLoading(true); // Only show full-page spinner if no employees loaded yet
       }
       setError('');
       
@@ -315,21 +316,17 @@ const EmployeeList = () => {
       onConfirm: async () => {
         try {
           setRefreshing(true);
-          
           const accessToken = localStorage.getItem('access_token');
           if (!accessToken) return;
-          
           const deletePromises = nonSuperAdminSelectedIds.map(id => 
             axios.delete(`${API_BASE_URL}/employees/${id}/`, {
               headers: { Authorization: `Bearer ${accessToken}` }
             })
           );
-          
           await Promise.all(deletePromises);
-          
           setSelectedEmployees([]);
-          fetchEmployees();
-          
+          fetchEmployees(true);
+          toast.success('Employee(s) deleted successfully');
           showConfirmation({
             title: 'Employees Deleted Successfully',
             message: `${nonSuperAdminSelectedIds.length} employee(s) have been deleted.`,
@@ -337,7 +334,6 @@ const EmployeeList = () => {
             confirmText: 'OK',
             onConfirm: () => {},
           });
-          
         } catch (err) {
           console.error('Error deleting employees:', err);
           setError('Failed to delete employees. Please try again.');
@@ -368,21 +364,15 @@ const EmployeeList = () => {
       onConfirm: async () => {
         try {
           setRefreshing(true);
-          
           const accessToken = localStorage.getItem('access_token');
-          
           await axios.delete(`${API_BASE_URL}/employees/${employee.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
-          // Remove from selected if in selected
           if (selectedEmployees.includes(employee.id)) {
             setSelectedEmployees(prev => prev.filter(id => id !== employee.id));
           }
-          
-          // Refresh employee data
-          fetchEmployees();
-          
+          fetchEmployees(true);
+          toast.success('Employee deleted successfully');
         } catch (err) {
           console.error('Error deleting employee:', err);
           setError('Failed to delete employee. Please try again.');
@@ -434,6 +424,18 @@ const EmployeeList = () => {
         // No need to fetch again
       },
     });
+  };
+
+  const handleEditEmployee = async (employeeData) => {
+    try {
+      await employeeAPI.update(employeeData.id, employeeData);
+      toast.success('Employee updated');
+      setIsEditModalOpen(false);
+      setSelectedEmployee(null);
+      fetchEmployees(true); // Use refreshing, not loading
+    } catch (err) {
+      toast.error('Failed to update employee');
+    }
   };
 
   if (loading) {
