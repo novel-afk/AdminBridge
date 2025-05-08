@@ -1004,29 +1004,29 @@ class JobResponseViewSet(viewsets.ModelViewSet):
     serializer_class = JobResponseSerializer
     
     def get_permissions(self):
-        if self.action == 'create':
-            # Anyone can apply for a job
+        if self.action in ['list', 'retrieve']:
+            # Allow students to list/retrieve their own applications
+            permission_classes = [permissions.IsAuthenticated]
+        elif self.action == 'create':
             permission_classes = [permissions.AllowAny]
         elif self.action in ['update', 'partial_update', 'destroy']:
-            # Only SuperAdmin and BranchManager (of the job) can modify job responses
             permission_classes = [IsSuperAdmin | BranchManagerPermission]
         else:
-            # SuperAdmin and BranchManager can view responses
             permission_classes = [IsSuperAdmin | BranchManagerPermission]
         return [permission() for permission in permission_classes]
         
     def get_queryset(self):
         user = self.request.user
-        
+        if user.role == 'Student':
+            # Only return job responses for the logged-in student
+            return JobResponse.objects.filter(email=user.email)
         # SuperAdmin can see all job responses
         if user.role == 'SuperAdmin':
             return JobResponse.objects.all()
-            
         # Branch Manager can see job responses for jobs in their branch that they created
         if user.role == 'BranchManager' and hasattr(user, 'employee_profile'):
             user_branch = user.employee_profile.branch
             return JobResponse.objects.filter(job__branch=user_branch, job__created_by=user)
-            
         # Other roles can't see job responses
         return JobResponse.objects.none()
 

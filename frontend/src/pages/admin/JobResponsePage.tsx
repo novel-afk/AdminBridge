@@ -92,6 +92,19 @@ export default function JobResponsePage() {
     }
   };
 
+  const handleDeleteApplication = async () => {
+    if (!selectedApplication) return;
+    if (!window.confirm('Are you sure you want to delete this application?')) return;
+    try {
+      await jobAPI.deleteResponse(selectedApplication.id);
+      setApplications(applications.filter(app => app.id !== selectedApplication.id));
+      setSelectedApplication(null);
+      alert('Application deleted successfully.');
+    } catch (err) {
+      alert('Failed to delete application. Please try again.');
+    }
+  };
+
   // Filter applications based on search query, status and job
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
@@ -379,6 +392,15 @@ export default function JobResponsePage() {
                           Mark as New
                         </Button>
                       </div>
+
+                      <Button
+                        variant="destructive"
+                        className="mt-2"
+                        onClick={handleDeleteApplication}
+                        disabled={!selectedApplication}
+                      >
+                        Delete Application
+                      </Button>
                     </div>
                   </div>
                 </div>
