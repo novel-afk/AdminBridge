@@ -296,12 +296,18 @@ def receptionist_stats(request):
         if hasattr(request.user, 'employee_profile'):
             branch = request.user.employee_profile.branch
             branch_name = branch.name
-            
-        # Mock data for today's counts
+        
+        # Only count students, employees, and leads in the same branch
+        from .models import Student, Employee, Lead
+        total_student_count = Student.objects.filter(branch=branch).count() if branch else 0
+        total_employee_count = Employee.objects.filter(branch=branch).count() if branch else 0
+        total_lead_count = Lead.objects.filter(branch=branch).count() if branch else 0
+        
+        # Mock data for today's counts (keep for now)
         today_lead_count = random.randint(1, 8)
         today_visitor_count = random.randint(5, 25)
         upcoming_appointment_count = random.randint(3, 12)
-            
+        
         # Generate mock data for charts
         lead_source_distribution = {
             "Walk-in": random.randint(5, 15),
@@ -334,7 +340,11 @@ def receptionist_stats(request):
             "upcomingAppointmentCount": upcoming_appointment_count,
             "leadSourceDistribution": lead_source_distribution,
             "studentCourseDistribution": student_course_distribution,
-            "visitorTraffic": visitor_traffic
+            "visitorTraffic": visitor_traffic,
+            # New total stats
+            "totalStudentCount": total_student_count,
+            "totalEmployeeCount": total_employee_count,
+            "totalLeadCount": total_lead_count,
         }
         
         return Response(stats)

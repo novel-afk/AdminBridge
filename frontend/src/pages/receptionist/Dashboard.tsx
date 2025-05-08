@@ -34,8 +34,9 @@ interface DashboardStats {
   receptionistName: string;
   branchName: string;
   todayLeadCount: number;
-  todayVisitorCount: number;
-  upcomingAppointmentCount: number;
+  totalStudentCount?: number;
+  totalEmployeeCount?: number;
+  totalLeadCount?: number;
   leadSourceDistribution?: Record<string, number>;
   studentCourseDistribution?: Record<string, number>;
   visitorTraffic?: Record<string, number>;
@@ -55,8 +56,9 @@ const ReceptionistDashboard = () => {
     receptionistName: '',
     branchName: '',
     todayLeadCount: 0,
-    todayVisitorCount: 0,
-    upcomingAppointmentCount: 0,
+    totalStudentCount: 0,
+    totalEmployeeCount: 0,
+    totalLeadCount: 0,
     leadSourceDistribution: {},
     studentCourseDistribution: {},
     visitorTraffic: {}
@@ -258,7 +260,31 @@ const ReceptionistDashboard = () => {
           
           {/* Stats Cards */}
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-            {/* Today's Leads Card */}
+            {/* Total Students Card */}
+            <div className="bg-white overflow-hidden shadow rounded-lg">
+              <div className="px-4 py-5 sm:p-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                  </div>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Students</dt>
+                      <dd className="text-3xl font-semibold text-gray-900">{stats.totalStudentCount ?? '-'}</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-4 sm:px-6">
+                <div className="text-sm">
+                  <a href="/receptionist/students" className="font-medium text-blue-600 hover:text-blue-500">View all students</a>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Leads Card */}
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center">
@@ -270,8 +296,8 @@ const ReceptionistDashboard = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Today's Leads</dt>
-                      <dd className="text-3xl font-semibold text-gray-900">{stats.todayLeadCount}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Leads</dt>
+                      <dd className="text-3xl font-semibold text-gray-900">{stats.totalLeadCount ?? '-'}</dd>
                     </dl>
                   </div>
                 </div>
@@ -283,31 +309,7 @@ const ReceptionistDashboard = () => {
               </div>
             </div>
 
-            {/* Today's Visitors Card */}
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                    <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Today's Visitors</dt>
-                      <dd className="text-3xl font-semibold text-gray-900">{stats.todayVisitorCount}</dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-4 sm:px-6">
-                <div className="text-sm">
-                  <a href="/receptionist/visitors" className="font-medium text-blue-600 hover:text-blue-500">View visitor log</a>
-                </div>
-              </div>
-            </div>
-
-            {/* Upcoming Appointments Card */}
+            {/* Total Employees Card */}
             <div className="bg-white overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
                 <div className="flex items-center">
@@ -318,15 +320,15 @@ const ReceptionistDashboard = () => {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Upcoming Appointments</dt>
-                      <dd className="text-3xl font-semibold text-gray-900">{stats.upcomingAppointmentCount}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
+                      <dd className="text-3xl font-semibold text-gray-900">{stats.totalEmployeeCount ?? '-'}</dd>
                     </dl>
                   </div>
                 </div>
               </div>
               <div className="bg-gray-50 px-4 py-4 sm:px-6">
                 <div className="text-sm">
-                  <a href="/receptionist/appointments" className="font-medium text-green-600 hover:text-green-500">View calendar</a>
+                  <a href="/receptionist/employees" className="font-medium text-green-600 hover:text-green-500">View all employees</a>
                 </div>
               </div>
             </div>
