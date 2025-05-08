@@ -187,6 +187,27 @@ class ActivityLogMiddleware:
                 'DELETE': 'DELETE',
                 'GET': 'VIEW'
             }),
+            # Jobs
+            (r'^/api/jobs/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+            # Leads
+            (r'^/api/leads/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
+            # Blogs
+            (r'^/api/blogs/', {
+                'POST': 'CREATE',
+                'PUT': 'UPDATE',
+                'DELETE': 'DELETE',
+                'GET': 'VIEW'
+            }),
         ]
     
     def __call__(self, request):
@@ -209,90 +230,55 @@ class ActivityLogMiddleware:
                 # Create activity log
                 from .models import User, ActivityLog, Branch
                 
-                # Only log POST, PUT, and DELETE actions
-                if request.method not in ['POST', 'PUT', 'DELETE']:
+                # Only log POST, PUT, PATCH, and DELETE actions
+                if request.method not in ['POST', 'PUT', 'PATCH', 'DELETE']:
                     return self.get_response(request)
                 
                 # Extract entity type from path
                 path_parts = request.path.split('/')
-                if len(path_parts) > 2:
-                    entity_type = path_parts[2]  # e.g., 'students', 'employees', etc.
-                    
-                    if request.method == 'POST':
-                        # Handle creation
-                        try:
-                            import json
-                            if hasattr(request, '_body'):
-                                data = json.loads(request._body.decode('utf-8'))
-                            elif hasattr(request, 'POST'):
-                                data = request.POST.dict()
-                            else:
-                                data = {}
-                                
-                            if 'student_data' in data:
-                                student_data = json.loads(data['student_data'])
-                                if entity_type == 'students':
-                                    from .models import Branch
-                                    branch_id = student_data.get('branch')
-                                    try:
-                                        branch = Branch.objects.get(id=branch_id)
-                                        branch_name = branch.name
-                                    except Branch.DoesNotExist:
-                                        branch_name = str(branch_id)
-                                    # Get name from user data
-                                    first_name = request.POST.get('user.first_name', '')
-                                    last_name = request.POST.get('user.last_name', '')
-                                    name = f"{first_name} {last_name}".strip()
-                                    action_details = f"{request.user.get_full_name()} added student {name} in {branch_name}"
-                            elif isinstance(data, dict):
-                                if entity_type == 'employees':
-                                    # Extract role and branch from employee_data if it exists
-                                    employee_data = data.get('employee_data')
-                                    if employee_data:
-                                        try:
-                                            employee_data = json.loads(employee_data)
-                                            branch_id = employee_data.get('branch')
-                                        except json.JSONDecodeError:
-                                            branch_id = None
-                                    else:
-                                        branch_id = None
-                                    
-                                    role = data.get('user.role', '')
-                                    first_name = data.get('user.first_name', '')
-                                    last_name = data.get('user.last_name', '')
-                                    
-                                    try:
-                                        branch = Branch.objects.get(id=branch_id) if branch_id else None
-                                        branch_name = branch.name if branch else 'Unknown Branch'
-                                    except Branch.DoesNotExist:
-                                        branch_name = str(branch_id)
-                                    name = f"{first_name} {last_name}".strip()
-                                    action_details = f"{request.user.get_full_name()} added {role} {name} in {branch_name}"
-                                elif entity_type == 'branches':
-                                    branch_name = data.get('name', '')
-                                    action_details = f"{request.user.get_full_name()} added branch {branch_name}"
-                        except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
-                            return self.get_response(request)
-                            
-                    elif request.method == 'PUT':
-                        # Handle updates
-                        entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
-                        if entity_type == 'students':
-                            action_details = f"{request.user.get_full_name()} updated student details"
-                        elif entity_type == 'employees':
-                            action_details = f"{request.user.get_full_name()} updated employee details"
-                        elif entity_type == 'branches':
-                            action_details = f"{request.user.get_full_name()} updated branch details"
-                            
-                    elif request.method == 'DELETE':
-                        # Handle deletions
-                        entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
-                        if entity_type == 'students':
-                            action_details = f"{request.user.get_full_name()} removed a student"
-                        elif entity_type == 'employees':
-                            action_details = f"{request.user.get_full_name()} removed an employee"
-                        elif entity_type == 'branches':
-                            action_details = f"{request.user.get_full_name()} removed a branch"
+                entity_type = path_parts[2] if len(path_parts) > 2 else ''
+                action_details = ''
+                if request.method == 'POST':
+                    if entity_type == 'students':
+                        action_details = f"{request.user.get_full_name()} added a new student"
+                    elif entity_type == 'employees':
+                        action_details = f"{request.user.get_full_name()} added a new employee"
+                    elif entity_type == 'branches':
+                        action_details = f"{request.user.get_full_name()} added a new branch"
+                    elif entity_type == 'jobs':
+                        action_details = f"{request.user.get_full_name()} created a job"
+                    elif entity_type == 'leads':
+                        action_details = f"{request.user.get_full_name()} created a lead"
+                    elif entity_type == 'blogs':
+                        action_details = f"{request.user.get_full_name()} created a blog"
+                elif request.method in ['PUT', 'PATCH']:
+                    entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
+                    if entity_type == 'students':
+                        action_details = f"{request.user.get_full_name()} updated student details"
+                    elif entity_type == 'employees':
+                        action_details = f"{request.user.get_full_name()} updated employee details"
+                    elif entity_type == 'branches':
+                        action_details = f"{request.user.get_full_name()} updated branch details"
+                    elif entity_type == 'jobs':
+                        action_details = f"{request.user.get_full_name()} updated a job"
+                    elif entity_type == 'leads':
+                        action_details = f"{request.user.get_full_name()} updated a lead"
+                    elif entity_type == 'blogs':
+                        action_details = f"{request.user.get_full_name()} updated a blog"
+                elif request.method == 'DELETE':
+                    entity_id = path_parts[-2] if len(path_parts) > 3 else 'unknown'
+                    if entity_type == 'students':
+                        action_details = f"{request.user.get_full_name()} removed a student"
+                    elif entity_type == 'employees':
+                        action_details = f"{request.user.get_full_name()} removed an employee"
+                    elif entity_type == 'branches':
+                        action_details = f"{request.user.get_full_name()} removed a branch"
+                    elif entity_type == 'jobs':
+                        action_details = f"{request.user.get_full_name()} deleted a job"
+                    elif entity_type == 'leads':
+                        action_details = f"{request.user.get_full_name()} deleted a lead"
+                    elif entity_type == 'blogs':
+                        action_details = f"{request.user.get_full_name()} deleted a blog"
                 
                 ActivityLog.objects.create(
                     user=request.user,
