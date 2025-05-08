@@ -377,7 +377,7 @@ const StudentList = () => {
   };
 
   const handleView = (student: Student) => {
-    setSelectedStudent(student);
+    setSelectedStudent(formatStudentData(student));
     setIsViewModalOpen(true);
   };
 

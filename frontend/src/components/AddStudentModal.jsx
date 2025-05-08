@@ -202,6 +202,24 @@ const PersonalInfoForm = ({ formData, setFormData, onNext, errors, branches, use
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
           />
         </FormField>
+
+        <FormField label="Father Name" error={errors.fatherName}>
+          <input
+            type="text"
+            value={formData.fatherName}
+            onChange={(e) => setFormData({ ...formData, fatherName: e.target.value })}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
+          />
+        </FormField>
+
+        <FormField label="Mother Name" error={errors.motherName}>
+          <input
+            type="text"
+            value={formData.motherName}
+            onChange={(e) => setFormData({ ...formData, motherName: e.target.value })}
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
+          />
+        </FormField>
       </div>
 
       <div className="flex justify-end mt-8">
@@ -486,16 +504,20 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
         formDataToSend.append('resume', formData.cv);
       }
 
-      // Debug logs
-      console.log('Student Data:', studentData);
-      console.log('Form Data being sent:', {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        hasProfilePicture: !!formData.profilePicture,
-        hasCV: !!formData.cv,
-        motherName: formData.motherName,
-        fatherName: formData.fatherName
+      // Log the form data to debug
+      console.log('Submitting data:', {
+        student_data: studentData,
+        user_data: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          password: 'Nepal@123',
+          role: 'Student'
+        },
+        has_profile_image: !!formData.profilePicture,
+        has_resume: !!formData.cv,
+        father_name: formData.fatherName,
+        mother_name: formData.motherName
       });
       
       try {
