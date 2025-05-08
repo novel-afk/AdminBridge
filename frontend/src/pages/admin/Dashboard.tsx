@@ -146,7 +146,7 @@ const AdminDashboard = () => {
     
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
-  }, [navigate, currentPage]);
+  }, [navigate]);
 
   const fetchAllActivityLogs = async () => {
     try {
@@ -180,10 +180,14 @@ const AdminDashboard = () => {
   };
 
   const handlePageChange = (newPage: number) => {
+    setIsLoadingLogs(true);
     setCurrentPage(newPage);
-    const startIndex = (newPage - 1) * logsPerPage;
-    const endIndex = startIndex + logsPerPage;
-    setActivityLogs(allLogs.slice(startIndex, endIndex));
+    setTimeout(() => {
+      const startIndex = (newPage - 1) * logsPerPage;
+      const endIndex = startIndex + logsPerPage;
+      setActivityLogs(allLogs.slice(startIndex, endIndex));
+      setIsLoadingLogs(false);
+    }, 400);
   };
 
   if (loading) {
