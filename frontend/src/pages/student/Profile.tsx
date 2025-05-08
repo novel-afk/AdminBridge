@@ -9,6 +9,7 @@ import { Textarea } from '../../components/ui/textarea';
 import { StudentLayout } from '../../components/Layout';
 import { studentProfileAPI } from '../../lib/api';
 import { useAuth } from '../../lib/AuthContext';
+import { toast } from 'react-toastify';
 
 interface StudentProfile {
   id: number;
@@ -43,7 +44,7 @@ interface StudentProfile {
 
 const Profile: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get authenticated user info
+  const { user } = useAuth();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [editing, setEditing] = useState<boolean>(false);
@@ -97,6 +98,7 @@ const Profile: React.FC = () => {
       } catch (error) {
         console.error('Error fetching profile:', error);
         setError('Unable to load your profile. Please try again later.');
+        toast.error('Unable to load your profile. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -147,6 +149,7 @@ const Profile: React.FC = () => {
       await studentProfileAPI.updateProfile(formPayload);
       
       setSuccess('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
       setEditing(false);
       
       // Refresh profile data
@@ -161,6 +164,7 @@ const Profile: React.FC = () => {
     } catch (error) {
       console.error('Error updating profile:', error);
       setError('An error occurred while updating your profile. Please try again.');
+      toast.error('An error occurred while updating your profile. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -190,7 +194,10 @@ const Profile: React.FC = () => {
     return (
       <StudentLayout>
         <div className="container mx-auto px-6 py-12 text-center">
-          Loading your profile...
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#153147] mb-4"></div>
+            <p className="text-gray-600">Loading your profile...</p>
+          </div>
         </div>
       </StudentLayout>
     );
@@ -209,8 +216,16 @@ const Profile: React.FC = () => {
 
   return (
     <StudentLayout>
-      <div className="container mx-auto px-6">
-        <h1 className="text-3xl font-bold text-[#153147] mb-6">My Profile</h1>
+      <div className="container mx-auto px-6 py-12">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-[#153147]">My Profile</h1>
+          <Button
+            onClick={() => setEditing(!editing)}
+            className="bg-[#153147] hover:bg-[#153147]/90"
+          >
+            {editing ? 'Cancel' : 'Edit Profile'}
+          </Button>
+        </div>
         
         {error && (
           <div className="bg-red-50 text-red-800 p-4 rounded-lg mb-6">
@@ -259,12 +274,12 @@ const Profile: React.FC = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : user?.first_name ? (
-                      <div className="w-full h-full bg-[#285172] flex items-center justify-center text-3xl font-bold">
+                      <div className="w-full h-full bg-[#285172] flex items-center justify-center text-3xl font-bold text-white">
                         {user.first_name.charAt(0) || ''}
                         {user.last_name?.charAt(0) || ''}
                       </div>
                     ) : (
-                      <div className="w-full h-full bg-[#285172] flex items-center justify-center text-3xl font-bold">
+                      <div className="w-full h-full bg-[#285172] flex items-center justify-center text-3xl font-bold text-white">
                         {profile?.user?.first_name?.charAt(0) || ''}
                         {profile?.user?.last_name?.charAt(0) || ''}
                       </div>
@@ -278,45 +293,15 @@ const Profile: React.FC = () => {
                   {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 
                    profile?.user?.first_name ? `${profile.user.first_name} ${profile.user.last_name || ''}` : 'User'}
                 </h2>
-                <p className="text-gray-300 mb-2">Student ID: {profile?.student_id || 'Not assigned'}</p>
-                <p className="text-gray-300 flex items-center justify-center md:justify-start gap-2">
+                <p className="text-gray-600 mb-2">Student ID: {profile?.student_id || 'Not assigned'}</p>
+                <p className="text-gray-600 flex items-center justify-center md:justify-start gap-2">
                   <MapPin size={16} />
                   {profile?.branch?.city || 'Unknown'}, {profile?.branch?.country || 'Unknown'}
                 </p>
               </div>
-              
-              <div className="ml-auto">
-                {editing ? (
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      className="border-[#153147] text-[#153147] hover:bg-[#153147] hover:text-white"
-                      onClick={() => setEditing(false)}
-                      disabled={saving}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      className="bg-[#153147] text-white hover:bg-[#0e2336]"
-                      onClick={handleSave}
-                      disabled={saving}
-                    >
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
-                ) : (
-                  <Button 
-                    className="bg-[#153147] text-white hover:bg-[#0e2336]"
-                    onClick={() => setEditing(true)}
-                  >
-                    Edit Profile
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
           
-          {/* Profile Content */}
           <div className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Personal Information */}
@@ -407,24 +392,6 @@ const Profile: React.FC = () => {
                   </div>
                   
                   <div>
-                    <Label className="text-gray-500 mb-1 block">Address</Label>
-                    {editing ? (
-                      <Textarea 
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="w-full"
-                        rows={3}
-                      />
-                    ) : (
-                      <div className="flex items-start gap-2 text-gray-800">
-                        <MapPin size={16} className="text-gray-400 mt-1" />
-                        <span>{profile?.address || 'Not specified'}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
                     <Label className="text-gray-500 mb-1 block">Emergency Contact</Label>
                     {editing ? (
                       <Input 
@@ -442,7 +409,25 @@ const Profile: React.FC = () => {
                   </div>
                   
                   <div>
-                    <Label className="text-gray-500 mb-1 block">Parents Information</Label>
+                    <Label className="text-gray-500 mb-1 block">Address</Label>
+                    {editing ? (
+                      <Textarea 
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="w-full"
+                        rows={3}
+                      />
+                    ) : (
+                      <div className="flex items-start gap-2 text-gray-800">
+                        <MapPin size={16} className="text-gray-400 mt-1" />
+                        <p>{profile?.address || 'Not specified'}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <Label className="text-gray-500 mb-1 block">Family Information</Label>
                     {editing ? (
                       <div className="space-y-4">
                         <Input 
@@ -524,6 +509,25 @@ const Profile: React.FC = () => {
                 </div>
               </div>
             </div>
+            
+            {editing && (
+              <div className="mt-8 flex justify-end gap-4">
+                <Button
+                  onClick={() => setEditing(false)}
+                  variant="outline"
+                  className="border-gray-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-[#153147] hover:bg-[#153147]/90"
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
