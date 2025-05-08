@@ -1,1 +1,0 @@
-web: gunicorn admin_bridge.wsgi --log-file - 
