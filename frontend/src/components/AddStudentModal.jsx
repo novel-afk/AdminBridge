@@ -41,6 +41,13 @@ const FileUpload = ({ id, label, accept, value, onChange, error }) => (
         <div className="flex items-center space-x-2 text-sm text-gray-600">
           <CheckCircleIcon className="h-5 w-5 text-green-500" />
           <span>{value.name}</span>
+          {id === 'profilePicture' && value.type.startsWith('image/') && (
+            <img 
+              src={URL.createObjectURL(value)} 
+              alt="Preview" 
+              className="h-10 w-10 object-cover rounded"
+            />
+          )}
         </div>
       )}
     </div>
@@ -467,7 +474,8 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
       formDataToSend.append('user.first_name', formData.firstName);
       formDataToSend.append('user.last_name', formData.lastName);
       formDataToSend.append('user.email', formData.email);
-      formDataToSend.append('user.password', 'Student@123'); // Default password
+      formDataToSend.append('user.password', 'Nepal@123'); // Default password for all roles
+      formDataToSend.append('user.role', 'Student');
       
       // Add files if they exist
       if (formData.profilePicture) {
@@ -477,11 +485,20 @@ const AddStudentModal = ({ onClose, onSuccess, initialData }) => {
       if (formData.cv) {
         formDataToSend.append('resume', formData.cv);
       }
+
+      // Debug logs
+      console.log('Student Data:', studentData);
+      console.log('Form Data being sent:', {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        hasProfilePicture: !!formData.profilePicture,
+        hasCV: !!formData.cv,
+        motherName: formData.motherName,
+        fatherName: formData.fatherName
+      });
       
       try {
-        // Log form data for debugging
-        console.log("Sending student data:", studentData);
-        
         // Make API call to create student
         const response = await axios.post(
           'http://localhost:8000/api/students/',

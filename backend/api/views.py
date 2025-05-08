@@ -838,7 +838,7 @@ class StudentViewSet(viewsets.ModelViewSet):
                 'last_name': request.data.get('user.last_name'),
                 'email': request.data.get('user.email'),
                 'role': 'Student',
-                'password': 'Nepal@123'  # Default password for all students
+                'password': 'Nepal@123'  # Default password for all roles
             }
             
             # Create a serializer context with all the data needed
