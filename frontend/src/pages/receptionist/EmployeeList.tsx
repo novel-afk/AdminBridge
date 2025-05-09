@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import ViewEmployeeModal from '../../components/ViewEmployeeModal';
 
 interface Employee {
   id: number;
@@ -25,6 +26,8 @@ const ReceptionistEmployeeList = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -104,6 +107,11 @@ const ReceptionistEmployeeList = () => {
     }
   };
 
+  const handleViewEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setIsViewModalOpen(true);
+  };
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden">
       <div className="p-6 border-b">
@@ -170,19 +178,27 @@ const ReceptionistEmployeeList = () => {
                     {formatDate(employee.joining_date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                    <Link
-                      to={`/receptionist/employees/view/${employee.id}`}
-                      className="text-blue-600 hover:text-blue-900"
+                    <button
+                      onClick={() => handleViewEmployee(employee)}
+                      className="text-blue-600 hover:text-blue-900 focus:outline-none"
                       title="View Details"
                     >
                       <EyeIcon className="w-5 h-5" />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {isViewModalOpen && selectedEmployee && (
+        <ViewEmployeeModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          employee={selectedEmployee}
+        />
       )}
     </div>
   );
