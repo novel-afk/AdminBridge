@@ -19,6 +19,7 @@ import ConfirmationModal from "../../components/ConfirmationModal"
 import ViewJobModal from "../../components/ViewJobModal"
 import EditJobModal from "../../components/EditJobModal"
 import AddJobModal from "../../components/AddJobModal"
+import { toast } from 'react-toastify';
 
 interface Job {
   id: number;
@@ -178,11 +179,12 @@ export default function JobPage() {
               headers: { Authorization: `Bearer ${accessToken}` }
             });
           }
-          
-          // Clear selection and refresh data
+          // Remove the deleted jobs from the UI immediately
+          setJobs(prev => prev.filter(j => !selectedJobs.includes(j.id)));
           setSelectedJobs([]);
-          fetchJobs();
-          
+          toast.success('Job(s) deleted successfully');
+          // Refresh in the background (subtle)
+          fetchJobs(true);
         } catch (err) {
           console.error('Error deleting jobs:', err);
           setError('Failed to delete jobs. Please try again.');
@@ -203,9 +205,11 @@ export default function JobPage() {
           await axios.delete(`${API_BASE_URL}/jobs/${job.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
-          fetchJobs();
-          
+          // Remove the deleted job from the UI immediately
+          setJobs(prev => prev.filter(j => j.id !== job.id));
+          toast.success('Job deleted successfully');
+          // Refresh in the background (subtle)
+          fetchJobs(true);
         } catch (err) {
           console.error('Error deleting job:', err);
           setError('Failed to delete job. Please try again.');
