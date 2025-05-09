@@ -14,7 +14,8 @@ class UserSerializer(serializers.ModelSerializer):
     branch_name = serializers.SerializerMethodField()
     
     def get_branch(self, obj):
-        if obj.role == 'BranchManager' and hasattr(obj, 'employee_profile') and obj.employee_profile.branch:
+        # Return branch id for any user with an employee_profile and branch
+        if hasattr(obj, 'employee_profile') and obj.employee_profile and obj.employee_profile.branch:
             return obj.employee_profile.branch.id
         return None
 

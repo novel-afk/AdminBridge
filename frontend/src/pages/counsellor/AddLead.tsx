@@ -37,9 +37,130 @@ const CounsellorAddLead = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Calculate the selected branch name based on user branch ID
-  const selectedBranchName = user?.branch ? 
-    branches.find(b => b.id.toString() === user.branch.toString())?.name || '' : '';
+  useEffect(() => {
+    // Fetch branches for the dropdown
+    const fetchBranches = async () => {
+      try {
+        const accessToken = localStorage.getItem('access_token');
+        if (!accessToken) {
+          navigate('/login');
+          return;
+        }
+        
+        const response = await axios.get('http://localhost:8000/api/branches/', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        setBranches(response.data);
+        // Set the branch to the counsellor's branch if it exists
+        if (user?.branch) {
+          setFormData(prev => ({
+            ...prev,
+            branch: user.branch.toString()
+          }));
+          console.log('Counsellor branch:', user.branch);
+        } else if (response.data.length > 0) {
+          setFormData(prev => ({
+            ...prev,
+            branch: response.data[0].id.toString()
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching branches:', err);
+        setError('Failed to load branches. Please try again later.');
+      }
+    };
+    fetchBranches();
+  }, [navigate, user]);
+
+  useEffect(() => {
+    setShowLanguageScore(formData.language_test !== 'None');
+  }, [formData.language_test]);
+
+  // Log the counsellor's branch ID immediately on mount
+  useEffect(() => {
+    console.log('Counsellor branch (on mount):', user?.branch);
+  }, [user]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    // Basic validation
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.branch) {
+      setError('Please fill in all required fields');
+      setLoading(false);
+      return;
+    }
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        navigate('/login');
+        return;
+      }
+      // Prepare data for API
+      const leadData = {
+        name: formData.name,
+        email: formData.email || null,
+        phone: formData.phone,
+        nationality: formData.nationality || null,
+        branch: parseInt(formData.branch),
+        lead_source: formData.lead_source,
+        notes: formData.notes || null,
+        interested_country: formData.interested_country || null,
+        interested_degree: formData.interested_degree || null,
+        language_test: formData.language_test,
+        language_score: formData.language_score ? parseFloat(formData.language_score) : null,
+        referred_by: formData.referred_by || null,
+        courses_studied: formData.courses_studied || null,
+        interested_course: formData.interested_course || null,
+        gpa: formData.gpa ? parseFloat(formData.gpa) : null,
+      };
+      await axios.post(`${API_BASE_URL}/leads/`, leadData, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      navigate('/counsellor/leads');
+    } catch (err: any) {
+      console.error('Error adding lead:', err);
+      if (err.response?.data) {
+        if (typeof err.response.data === 'object') {
+          const errorMessages: string[] = [];
+          Object.entries(err.response.data).forEach(([key, value]) => {
+            errorMessages.push(`${key}: ${value}`);
+          });
+          if (errorMessages.length > 0) {
+            setError(`Validation errors: ${errorMessages.join(', ')}`);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      setError(
+        err.response?.data?.detail || 
+        err.response?.data?.message || 
+        'Failed to add lead. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Find the branch name based on the branch ID
+  const selectedBranchName = branches.find(b => b.id.toString() === formData.branch)?.name || '';
 
   // Country options
   const countryOptions = [
@@ -86,136 +207,6 @@ const CounsellorAddLead = () => {
     { value: 'Event', label: 'Event' },
     { value: 'Other', label: 'Other' },
   ];
-
-  useEffect(() => {
-    // Fetch branches for the dropdown
-    const fetchBranches = async () => {
-      try {
-        const accessToken = localStorage.getItem('access_token');
-        if (!accessToken) {
-          navigate('/login');
-          return;
-        }
-        
-        const response = await axios.get('http://localhost:8000/api/branches/', {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        
-        // Store all branches but only show the counsellor's branch
-        setBranches(response.data);
-        
-        // Set the branch to the counsellor's branch if it exists
-        if (user?.branch) {
-          setFormData(prev => ({
-            ...prev,
-            branch: user.branch.toString()
-          }));
-        }
-        // Otherwise use the first branch as fallback
-        else if (response.data.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            branch: response.data[0].id.toString()
-          }));
-        }
-      } catch (err) {
-        console.error('Error fetching branches:', err);
-        setError('Failed to load branches. Please try again later.');
-      }
-    };
-
-    fetchBranches();
-  }, [navigate, user]);
-
-  // Watch for language test changes to show/hide score input
-  useEffect(() => {
-    setShowLanguageScore(formData.language_test !== 'None');
-  }, [formData.language_test]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    // Basic validation
-    if (!formData.name || !formData.email || !formData.phone || !formData.nationality || !formData.branch) {
-      setError('Please fill in all required fields');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        navigate('/login');
-        return;
-      }
-      
-      // Prepare data for API
-      const leadData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        nationality: formData.nationality,
-        branch: parseInt(formData.branch),
-        lead_source: formData.lead_source,
-        notes: formData.notes || null,
-        // Optional fields
-        interested_country: formData.interested_country || null,
-        interested_degree: formData.interested_degree || null,
-        language_test: formData.language_test,
-        language_score: formData.language_score ? parseFloat(formData.language_score) : null,
-        referred_by: formData.referred_by || null,
-        courses_studied: formData.courses_studied || null,
-        interested_course: formData.interested_course || null,
-        gpa: formData.gpa ? parseFloat(formData.gpa) : null,
-      };
-      
-      // Send to the API
-      await axios.post(`${API_BASE_URL}/leads/`, leadData, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      
-      // Redirect to leads list
-      navigate('/counsellor/leads');
-    } catch (err: any) {
-      console.error('Error adding lead:', err);
-      if (err.response?.data) {
-        console.log('Error details:', err.response.data);
-        
-        // Handle structured error responses
-        if (typeof err.response.data === 'object') {
-          const errorMessages: string[] = [];
-          
-          Object.entries(err.response.data).forEach(([key, value]) => {
-            errorMessages.push(`${key}: ${value}`);
-          });
-          
-          if (errorMessages.length > 0) {
-            setError(`Validation errors: ${errorMessages.join(', ')}`);
-            setLoading(false);
-            return;
-          }
-        }
-      }
-      
-      setError(
-        err.response?.data?.detail || 
-        err.response?.data?.message || 
-        'Failed to add lead. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -300,37 +291,17 @@ const CounsellorAddLead = () => {
                 <label htmlFor="branch" className="block text-gray-700 text-sm font-medium mb-2">
                   Branch *
                 </label>
-                {user?.branch ? (
-                  // If counsellor has a branch, display it as read-only
-                  <div>
-                    <input
-                      type="text"
-                      id="branch_display"
-                      value={selectedBranchName}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
-                      disabled
-                    />
-                    <input type="hidden" name="branch" value={formData.branch} />
-                    <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
-                  </div>
-                ) : (
-                  // Otherwise show dropdown with all branches
-                  <select
-                    id="branch"
-                    name="branch"
-                    value={formData.branch}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select Branch</option>
-                    {branches.map(branch => (
-                      <option key={branch.id} value={branch.id}>
-                        {branch.name} ({branch.city}, {branch.country})
-                      </option>
-                    ))}
-                  </select>
-                )}
+                <div>
+                  <input
+                    type="text"
+                    id="branch_display"
+                    value={selectedBranchName}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                    disabled
+                  />
+                  <input type="hidden" name="branch" value={formData.branch} />
+                  <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+                </div>
               </div>
 
               <div>

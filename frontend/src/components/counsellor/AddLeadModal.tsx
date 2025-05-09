@@ -51,6 +51,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
     email: '',
     phone: '',
     nationality: '',
+    branch: '',
     interested_country: '',
     interested_degree: '',
     language_test: 'None',
@@ -114,28 +115,17 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
   // Reset everything when modal is opened/closed
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        nationality: '',
-        interested_country: '',
-        interested_degree: '',
-        language_test: 'None',
-        language_score: '',
-        referred_by: '',
-        courses_studied: '',
-        interested_course: '',
-        gpa: '',
-        lead_source: 'Website',
-        notes: '',
-      });
+      setFormData(prev => ({
+        ...prev,
+        branch: user?.branch ? user.branch.toString() : ''
+      }));
+      console.log('Counsellor branch (modal open):', user?.branch);
       setErrors({});
       
       // Fetch branches
       fetchBranches();
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   // Fetch branches from the API
   const fetchBranches = async () => {
@@ -170,20 +160,13 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    
     if (!formData.phone) newErrors.phone = 'Phone number is required';
     if (!formData.nationality) newErrors.nationality = 'Nationality is required';
-    
-    // Check if user has a branch
-    if (!user?.branch) {
-      newErrors.branch = 'Branch is required but not assigned to your account';
-    }
-    
+    if (!formData.branch) newErrors.branch = 'Branch is required';
     // Validate language score if a test is selected
     if (formData.language_test !== 'None' && !formData.language_score) {
       newErrors.language_score = 'Language score is required when a test is selected';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -210,7 +193,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
         email: formData.email,
         phone: formData.phone,
         nationality: formData.nationality,
-        branch: Number(user?.branch), // Make sure branch is sent as a number
+        branch: parseInt(formData.branch),
         lead_source: formData.lead_source,
         notes: formData.notes || null,
         // Optional fields
@@ -267,8 +250,9 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
   };
 
   // Find the branch name based on branch ID
-  const selectedBranchName = user?.branch ? 
-    branches.find(b => b.id === user.branch)?.name || '' : '';
+  const selectedBranchName = formData.branch
+    ? branches.find(b => b.id.toString() === formData.branch)?.name || ''
+    : '';
 
   return (
     <Dialog open={isOpen} onClose={() => !isSubmitting && onClose()} className="relative z-50">
@@ -356,9 +340,12 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
                     <input
                       type="hidden"
                       name="branch"
-                      value={user?.branch || ''}
+                      value={formData.branch}
                     />
                     <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+                    {!user?.branch && (
+                      <p className="mt-1 text-xs text-red-500">No branch assigned to your account. Please contact admin.</p>
+                    )}
                   </div>
                 </FormField>
 
@@ -494,7 +481,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !user?.branch}
                   className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:ring-offset-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? 'Adding Lead...' : 'Add Lead'}
