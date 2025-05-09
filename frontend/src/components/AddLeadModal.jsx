@@ -20,7 +20,7 @@ const FormField = ({ label, error, children, required }) => (
 );
 
 /**
- * @param {{ isOpen: boolean, onClose: () => void, onSuccess: () => void }} props
+ * @param {{ isOpen: boolean, onClose: () => void, onSuccess: (leadData: any) => void }} props
  */
 const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
@@ -70,11 +70,9 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   };
   const initialErrors = {};
 
-  const userHasBranch = !!user?.branch;
-
-  // Add strict branch check
-  const hasValidBranch = !!user?.branch && user.branch !== '' && user.branch !== null && user.branch !== undefined && user.branch !== 0;
-  console.log('user.branch:', user?.branch, typeof user?.branch);
+  // Improved branch validation
+  const userHasBranch = Boolean(user?.branch);
+  const hasValidBranch = Boolean(user?.branch && user.branch !== '' && user.branch !== null && user.branch !== undefined);
 
   useEffect(() => {
     const fetchBranches = async () => {
@@ -84,7 +82,8 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         setBranches(response.data);
-        // If user has a branch, auto-select their branch
+        
+        // Set initial branch value based on user's branch
         if (user?.branch) {
           setFormData(prev => ({ ...prev, branch: user.branch.toString() }));
         } else if (response.data.length > 0) {
@@ -183,38 +182,41 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
       return;
     }
     setIsSubmitting(true);
-    
     const accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
       setErrors({ submit: 'You must be logged in to perform this action' });
       setIsSubmitting(false);
       return;
     }
-    
     try {
-      const response = await axios.post(
-        'http://localhost:8000/api/leads/',
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      console.log('Lead created successfully:', response.data);
-      
-      if (onSuccess) {
-        onSuccess();
-      }
+      // Prepare data for API (match branch manager logic)
+      const leadData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        nationality: formData.nationality,
+        branch: Number(formData.branch),
+        lead_source: formData.lead_source,
+        notes: formData.notes || null,
+        interested_country: formData.interested_country || null,
+        interested_degree: formData.interested_degree || null,
+        language_test: formData.language_test,
+        language_score: formData.language_score ? parseFloat(formData.language_score) : null,
+        referred_by: formData.referred_by || null,
+        courses_studied: formData.courses_studied || null,
+        interested_course: formData.interested_course || null,
+        gpa: formData.gpa ? parseFloat(formData.gpa) : null,
+      };
+      const response = await axios.post('http://localhost:8000/api/leads/', leadData, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (onSuccess) onSuccess(response.data);
       setFormData(initialFormData);
       setErrors(initialErrors);
       setCurrentStep(1);
       setIsSubmitting(false);
       onClose();
     } catch (error) {
-      console.error('Error creating lead:', error);
       setIsSubmitting(false);
       setErrors({ submit: 'Failed to add lead. Please check your input and try again.' });
       toast.error('Failed to add lead. Please check your input and try again.');
@@ -245,7 +247,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   
   const renderPersonalInfoForm = () => {
     // Find the branch name based on branch ID
-    const selectedBranchName = user?.branch ? 
+    const selectedBranchName = hasValidBranch ? 
       branches.find(b => b.id.toString() === user.branch.toString())?.name || '' : '';
       
     return (
@@ -498,7 +500,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           </button>
           <button
             type="submit"
-            disabled={!userHasBranch || isSubmitting}
+            disabled={(!hasValidBranch && !formData.branch) || isSubmitting}
             className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:ring-offset-2 shadow-sm disabled:opacity-50 flex items-center"
           >
             {isSubmitting ? (

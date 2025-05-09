@@ -66,9 +66,11 @@ const ReceptionistLeadList = () => {
     fetchLeads();
   }, [user, dataLoaded]);
 
-  const handleAddSuccess = () => {
+  const handleAddSuccess = (newLead?: Lead) => {
     setIsAddModalOpen(false);
-    setDataLoaded(false); // Refresh the list
+    if (newLead) {
+      setLeads((prev) => [newLead, ...prev]);
+    }
     toast.success('Lead added successfully');
   };
 
@@ -91,8 +93,20 @@ const ReceptionistLeadList = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className="w-full h-full flex flex-col">
+        <div className="flex-none flex justify-between items-center p-4">
+          <h1 className="text-2xl font-bold text-gray-800">Leads</h1>
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="bg-[#153147] hover:bg-[#1e1b4b]/90 text-white px-4 py-2 rounded-md flex items-center gap-2"
+          >
+            <UserPlusIcon className="h-5 w-5" />
+            Add Lead
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
       </div>
     );
   }
