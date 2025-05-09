@@ -17,6 +17,8 @@ import AddEmployeeModal from '../../components/AddEmployeeModal';
 import EditEmployeeModal from '../../components/EditEmployeeModal';
 import ViewEmployeeModal from '../../components/ViewEmployeeModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { toast } from 'react-toastify';
+import { useAuth } from '../../lib/AuthContext';
 
 interface Employee {
   id: number;
@@ -91,6 +93,8 @@ const EmployeeList = () => {
     confirmText: 'Confirm'
   });
 
+  const { user } = useAuth();
+
   const showConfirmation = (config: Partial<typeof confirmationModal>) => {
     setConfirmationModal({
       ...confirmationModal,
@@ -146,7 +150,8 @@ const EmployeeList = () => {
       // Format the employee data
       const formattedEmployees = employeeData
         .filter(employee => employee.user.role !== 'SuperAdmin')
-        .map(formatEmployeeData);
+        .map(formatEmployeeData)
+        .filter(employee => user && employee.user.id !== user.id);
           
       setEmployees(formattedEmployees);
       setLoading(false);
@@ -279,11 +284,12 @@ const EmployeeList = () => {
               headers: { Authorization: `Bearer ${accessToken}` }
             });
           }
-          
-          // Clear selection and refresh
+          // Remove the deleted employees from the UI immediately
+          setEmployees(prev => prev.filter(e => !selectedEmployees.includes(e.id)));
           setSelectedEmployees([]);
-          fetchEmployees();
-          
+          toast.success('Employee(s) deleted successfully');
+          // Refresh in the background (subtle)
+          fetchEmployees(true);
         } catch (err) {
           console.error('Error deleting employees:', err);
           setError('Failed to delete employees. Please try again.');
@@ -304,9 +310,11 @@ const EmployeeList = () => {
           await axios.delete(`${API_BASE_URL}/employees/${employee.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
-          fetchEmployees();
-          
+          // Remove the deleted employee from the UI immediately
+          setEmployees(prev => prev.filter(e => e.id !== employee.id));
+          toast.success('Employee deleted successfully');
+          // Refresh in the background (subtle)
+          fetchEmployees(true);
         } catch (err) {
           console.error('Error deleting employee:', err);
           setError('Failed to delete employee. Please try again.');
