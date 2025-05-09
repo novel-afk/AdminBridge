@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import ViewEmployeeModal from '../../components/ViewEmployeeModal';
 
 interface Employee {
   id: number;
@@ -25,6 +26,8 @@ const CounsellorEmployeeList = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -170,19 +173,28 @@ const CounsellorEmployeeList = () => {
                     {formatDate(employee.joining_date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3 flex">
-                    <Link
-                      to={`/counsellor/employees/view/${employee.id}`}
+                    <button
+                      onClick={() => { setSelectedEmployee(employee); setIsViewModalOpen(true); }}
                       className="text-blue-600 hover:text-blue-900"
                       title="View Details"
                     >
                       <EyeIcon className="w-5 h-5" />
-                    </Link>
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* View Employee Modal */}
+      {isViewModalOpen && selectedEmployee && (
+        <ViewEmployeeModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          employee={selectedEmployee}
+        />
       )}
     </div>
   );

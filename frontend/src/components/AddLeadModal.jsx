@@ -70,6 +70,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   };
   const initialErrors = {};
 
+  const userHasBranch = !!user?.branch;
+
+  // Add strict branch check
+  const hasValidBranch = !!user?.branch && user.branch !== '' && user.branch !== null && user.branch !== undefined && user.branch !== 0;
+  console.log('user.branch:', user?.branch, typeof user?.branch);
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {
@@ -78,23 +84,22 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         setBranches(response.data);
-        
-        // If user has a branch and is not admin, auto-select their branch
-        if (user?.branch && !isAdmin) {
+        // If user has a branch, auto-select their branch
+        if (user?.branch) {
           setFormData(prev => ({ ...prev, branch: user.branch.toString() }));
         } else if (response.data.length > 0) {
-          // For admin users, select the first branch as default
-          setFormData(prev => ({ ...prev, branch: response.data[0].id.toString() }));
+          // If no branch is set, default to the first branch in the list
+          setFormData(prev => ({ ...prev, branch: prev.branch || response.data[0].id.toString() }));
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
+        toast.error('Failed to load branches');
       }
     };
-
     if (isOpen) {
       fetchBranches();
     }
-  }, [isOpen, user, isAdmin]);
+  }, [isOpen, user]);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,17 +142,19 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
   const validateStep2 = () => {
     const newErrors = {};
     
+    // Interested Degree validation (required)
+    if (!formData.interested_degree || formData.interested_degree === '') {
+      newErrors.interested_degree = 'Interested Degree is required';
+    }
     // GPA validation (required)
     if (!formData.gpa.trim()) newErrors.gpa = 'GPA is required';
     else if (isNaN(formData.gpa) || parseFloat(formData.gpa) < 0 || parseFloat(formData.gpa) > 4.0) {
       newErrors.gpa = 'GPA should be between 0 and 4.0';
     }
-    
     // Language score validation
     if (formData.language_score && (isNaN(formData.language_score) || parseFloat(formData.language_score) < 0)) {
       newErrors.language_score = 'Language score must be a positive number';
     }
-    
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
       toast.error(Object.values(newErrors)[0]);
@@ -167,16 +174,17 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    if (!userHasBranch) {
+      toast.error('You do not have a branch assigned. Please contact admin.');
+      return;
+    }
     if (currentStep === 1) {
       handleNextStep();
       return;
     }
-    
     if (!validateStep2()) {
       return;
     }
-    
     setIsSubmitting(true);
     
     const accessToken = localStorage.getItem('access_token');
@@ -210,39 +218,9 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
       onClose();
     } catch (error) {
       console.error('Error creating lead:', error);
-      const newErrors = {};
-      let toastShown = false;
-      if (error.response) {
-        if (error.response.data.detail) {
-          newErrors.submit = error.response.data.detail;
-          toast.error(error.response.data.detail);
-          toastShown = true;
-        } else if (typeof error.response.data === 'object') {
-          Object.entries(error.response.data).forEach(([key, value]) => {
-            let errorMsg = Array.isArray(value) ? value[0] : value;
-            if (key === 'user.email' || key === 'email') {
-              newErrors.email = errorMsg;
-              if (!toastShown) { toast.error(errorMsg); toastShown = true; }
-            } else if (key === 'phone' || key === 'user.phone') {
-              newErrors.phone = errorMsg;
-              if (!toastShown) { toast.error(errorMsg); toastShown = true; }
-            } else {
-              newErrors[key] = errorMsg;
-              if (!toastShown) { toast.error(errorMsg); toastShown = true; }
-            }
-          });
-          if (Object.keys(newErrors).length > 0 && !newErrors.submit && !toastShown) {
-            newErrors.submit = 'Failed to create lead. Please try again.';
-            toast.error('Failed to create lead. Please try again.');
-          }
-        }
-      } else {
-        newErrors.submit = 'Failed to create lead. Please try again.';
-        toast.error('Failed to create lead. Please try again.');
-      }
-      setErrors(newErrors);
-    } finally {
       setIsSubmitting(false);
+      setErrors({ submit: 'Failed to add lead. Please check your input and try again.' });
+      toast.error('Failed to add lead. Please check your input and try again.');
     }
   };
   
@@ -321,35 +299,30 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           </FormField>
           
           <FormField label="Branch" error={errors.branch} required>
-            {isAdmin ? (
-              // SuperAdmin can select any branch
+            {hasValidBranch ? (
+              <div>
+                <input
+                  type="text"
+                  value={selectedBranchName}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
+                  disabled
+                />
+                <input type="hidden" name="branch" value={formData.branch} />
+                <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
+              </div>
+            ) : (
               <select
+                name="branch"
                 value={formData.branch}
                 onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b]"
                 required
               >
                 <option value="">Select Branch</option>
-                {branches.map((branch) => (
-                  <option key={branch.id} value={branch.id}>{branch.name}</option>
+                {branches.map(branch => (
+                  <option key={branch.id} value={branch.id}>{branch.name} ({branch.city}, {branch.country})</option>
                 ))}
               </select>
-            ) : (
-              // Non-admin users can only see their branch as disabled input
-              <div>
-                <input
-                  type="text"
-                  value={branches.find(b => b.id.toString() === formData.branch)?.name || ''}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-gray-100"
-                  disabled
-                />
-                <input 
-                  type="hidden" 
-                  value={formData.branch} 
-                  name="branch" 
-                />
-                <p className="mt-1 text-xs text-gray-500">Your branch is automatically assigned</p>
-              </div>
             )}
           </FormField>
           
@@ -429,11 +402,12 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
             </select>
           </FormField>
           
-          <FormField label="Interested Degree" error={errors.interested_degree}>
+          <FormField label="Interested Degree" error={errors.interested_degree} required>
             <select
               value={formData.interested_degree}
               onChange={(e) => setFormData({ ...formData, interested_degree: e.target.value })}
               className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
+              required
             >
               <option value="">Select Degree</option>
               <option value="Diploma">Diploma</option>
@@ -527,7 +501,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           </button>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={!userHasBranch || isSubmitting}
             className="px-6 py-2.5 bg-[#1e1b4b] text-white rounded-lg hover:bg-[#1e1b4b]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] focus:ring-offset-2 shadow-sm disabled:opacity-50 flex items-center"
           >
             {isSubmitting ? (

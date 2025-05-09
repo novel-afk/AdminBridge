@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/AuthContext';
 import AddStudentModal from '../../components/counsellor/AddStudentModal';
 import ViewStudentModal from '../../components/ViewStudentModal';
 import EditStudentModal from '../../components/EditStudentModal';
+import { toast } from 'react-toastify';
 
 interface Student {
   id: number;
@@ -28,8 +29,8 @@ interface Student {
   mother_name: string;
   parent_number: string;
   language_test: string;
-  profile_picture: string;
-  cv: string;
+  profile_image: string | null;
+  resume: string | null;
 }
 
 const CounsellorStudentList = () => {
@@ -77,6 +78,7 @@ const CounsellorStudentList = () => {
   const handleAddSuccess = () => {
     // Refresh the student list after adding a new student
     fetchStudents();
+    toast.success('Student added successfully');
   };
 
   if (loading) {
@@ -186,8 +188,8 @@ const CounsellorStudentList = () => {
                           parentNumber: student.parent_number || '',
                           institute: student.institution_name || '',
                           language: student.language_test || '',
-                          profilePicture: student.profile_picture || '',
-                          cv: student.cv || '',
+                          profilePicture: student.profile_image || '',
+                          cv: student.resume || '',
                         };
                         setSelectedStudent(mappedStudent);
                         setIsViewModalOpen(true);
@@ -238,6 +240,7 @@ const CounsellorStudentList = () => {
           onClose={() => setIsEditModalOpen(false)}
           onSuccess={() => {
             setIsEditModalOpen(false);
+            toast.success('Student updated successfully');
             fetchStudents();
           }}
           student={editStudent}
