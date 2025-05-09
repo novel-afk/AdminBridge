@@ -539,7 +539,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
                 Submitting...
               </>
             ) : (
-              'Save Lead'
+              'Add Lead'
             )}
           </button>
         </div>

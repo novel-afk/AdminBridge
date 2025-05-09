@@ -18,6 +18,7 @@ import AddLeadModal from '../../components/AddLeadModal';
 import EditLeadModal from '../../components/EditLeadModal';
 import ViewLeadModal from '../../components/ViewLeadModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { toast } from 'react-toastify';
 
 interface Lead {
   id: number;
@@ -305,15 +306,7 @@ const LeadList = () => {
     setIsEditModalOpen(false);
     // Fetch leads immediately to refresh the list
     fetchLeads(true);
-    showConfirmation({
-      title: 'Lead Updated',
-      message: 'The lead has been updated successfully.',
-      type: 'success',
-      confirmText: 'OK',
-      onConfirm: () => {
-        // No need to fetch again
-      }
-    });
+    toast.success('Lead updated successfully');
   };
 
   const formatDate = (dateString: string) => {
@@ -339,7 +332,7 @@ const LeadList = () => {
           
           // Refresh data after deletion
           fetchLeads();
-          
+          toast.success('Lead deleted successfully');
         } catch (err) {
           console.error('Error deleting lead:', err);
           setError('Failed to delete lead. Please try again.');
@@ -367,7 +360,7 @@ const LeadList = () => {
           // Clear selection and refresh data
           setSelectedLeads([]);
           fetchLeads();
-          
+          toast.success('Lead(s) deleted successfully');
         } catch (err) {
           console.error('Error deleting leads:', err);
           setError('Failed to delete leads. Please try again.');

@@ -959,8 +959,8 @@ class LeadViewSet(viewsets.ModelViewSet):
             # Any authenticated user can create a lead
             permission_classes = [permissions.IsAuthenticated]
         elif self.action == 'destroy':
-            # Only SuperAdmin can delete leads
-            permission_classes = [IsSuperAdmin]
+            # SuperAdmin and BranchManager can delete leads
+            permission_classes = [IsSuperAdmin | BranchManagerPermission]
         elif self.action in ['update', 'partial_update']:
             # SuperAdmin, BranchManager, and Counsellor can update leads
             permission_classes = [IsSuperAdmin | BranchManagerPermission | CounsellorPermission]

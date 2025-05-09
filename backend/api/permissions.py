@@ -94,50 +94,36 @@ class BranchManagerPermission(permissions.BasePermission):
     """
     Complex permission for BranchManager:
     - Can manage employees and students in their branch
-    - Can CRU leads in their branch
+    - Can CRUD leads in their branch
     - Can CRUD blogs and jobs in their branch
     - Can view and manage job responses related to jobs they created
     """
     def has_permission(self, request, view):
         if not request.user.is_authenticated or request.user.role != 'BranchManager':
             return False
-            
-        # For Lead, don't allow DELETE operation
-        if hasattr(view, 'queryset') and view.queryset.model.__name__ == 'Lead' and request.method == 'DELETE':
-            return False
-            
         # For list views, we'll filter in the queryset
         # Allow permission here and filter in get_queryset
         return True
-        
+    
     def has_object_permission(self, request, view, obj):
         if not request.user.is_authenticated or request.user.role != 'BranchManager':
             return False
-            
         # Get manager's branch
         manager_branch = request.user.employee_profile.branch
-        
         # Check object type and permissions
         model_name = obj.__class__.__name__
-        
         # For Employee and Student, check branch
         if model_name in ['Employee', 'Student']:
             return obj.branch == manager_branch
-            
-        # For Lead, check branch (CRU permissions)
+        # For Lead, allow CRUD if in branch
         elif model_name == 'Lead':
-            if request.method == 'DELETE':
-                return False
             return obj.branch == manager_branch
-            
         # For Blog and Job, check branch
         elif model_name in ['Blog', 'Job']:
             return obj.branch == manager_branch
-            
         # For JobResponse, check if related to a job created by the manager
         elif model_name == 'JobResponse':
             return obj.job.created_by == request.user and obj.job.branch == manager_branch
-            
         return False
 
 
