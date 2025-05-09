@@ -163,6 +163,7 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
     if (!formData.phone) newErrors.phone = 'Phone number is required';
     if (!formData.nationality) newErrors.nationality = 'Nationality is required';
     if (!formData.branch) newErrors.branch = 'Branch is required';
+    if (!formData.interested_degree) newErrors.interested_degree = 'Interested degree is required';
     // Validate language score if a test is selected
     if (formData.language_test !== 'None' && !formData.language_score) {
       newErrors.language_score = 'Language score is required when a test is selected';
@@ -410,16 +411,19 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
                   </select>
                 </FormField>
 
-                <FormField label="Interested Degree" error={errors.interested_degree}>
+                <FormField label="Interested Degree" error={errors.interested_degree} required>
                   <select
                     name="interested_degree"
                     value={formData.interested_degree}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e1b4b] transition-colors"
+                    required
+                    className={`w-full px-4 py-2.5 border ${errors.interested_degree ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-[#1e1b4b]'} rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                   >
-                    {degreeOptions.map(option => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
+                    <option value="">Select Degree</option>
+                    <option value="Diploma">Diploma</option>
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Master">Master</option>
+                    <option value="PhD">PhD</option>
                   </select>
                 </FormField>
 

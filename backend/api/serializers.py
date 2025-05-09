@@ -229,6 +229,7 @@ class LeadSerializer(serializers.ModelSerializer):
     created_by_name = serializers.CharField(source='created_by.get_full_name', read_only=True)
     assigned_by_email = serializers.EmailField(source='assigned_by.email', read_only=True)
     branch_name = serializers.CharField(source='branch.name', read_only=True)
+    interested_degree = serializers.CharField(required=True)
     
     class Meta:
         model = Lead
