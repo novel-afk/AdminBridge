@@ -7,6 +7,7 @@ import { leadAPI } from '../../lib/api';
 import AddLeadModal from '../../components/counsellor/AddLeadModal';
 import { format } from 'date-fns';
 import { API_BASE_URL } from '../../lib/apiConfig';
+import { toast } from 'react-hot-toast';
 
 interface Lead {
   id: number;
@@ -197,9 +198,6 @@ const CounsellorLeadList = () => {
   const [dataLoaded, setDataLoaded] = useState(false);
 
   const fetchLeads = async () => {
-    // If data already loaded, don't fetch again
-    if (dataLoaded) return;
-    
     try {
       setLoading(true);
       const accessToken = localStorage.getItem('access_token');
@@ -213,30 +211,29 @@ const CounsellorLeadList = () => {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
-      // Filter leads by branch
-      const filteredLeads = user?.branch 
-        ? response.data.filter((lead: Lead) => lead.branch === user.branch)
-        : response.data;
-
-      setLeads(filteredLeads);
-      setLoading(false);
+      // Use backend-filtered results directly
+      console.log('Counsellor branch (LeadList):', user?.branch);
+      setLeads(response.data);
       setDataLoaded(true);
     } catch (err: any) {
       console.error('Error fetching leads:', err);
       setError(err.response?.data?.detail || 'Failed to fetch leads');
+      toast.error('Failed to fetch leads');
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchLeads();
-  }, [user]);
+  }, [user, dataLoaded]);
 
-  const handleAddSuccess = () => {
-    // Reset data loaded flag to force refresh
-    setDataLoaded(false);
-    // Refresh the lead list after adding a new lead
-    fetchLeads();
+  const handleAddSuccess = (newLead?: Lead) => {
+    setIsAddModalOpen(false);
+    
+    if (newLead) {
+      setLeads(prev => [newLead, ...prev]);
+    }
   };
 
   const handleViewLead = async (id: number) => {
@@ -259,7 +256,8 @@ const CounsellorLeadList = () => {
     }
   };
 
-  if (loading) {
+  // Only show loading state on initial load
+  if (loading && !dataLoaded) {
     return (
       <div className="flex justify-center items-center h-full">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

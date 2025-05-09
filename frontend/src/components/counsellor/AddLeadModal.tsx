@@ -16,7 +16,7 @@ interface Branch {
 interface AddLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (leadData: any) => void;
 }
 
 // Form field component for reusability
@@ -210,12 +210,33 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
       console.log("Submitting lead data:", leadData);
       
       // Send to the API
-      await axios.post(`${API_BASE_URL}/leads/`, leadData, {
+      const response = await axios.post(`${API_BASE_URL}/leads/`, leadData, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      
-      toast.success('Lead added successfully');
-      onSuccess();
+      toast.success('Lead added successfully!', {
+        duration: 3000,
+        position: 'top-right',
+      });
+      if (onSuccess) onSuccess(response.data);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        nationality: '',
+        branch: user?.branch ? user.branch.toString() : '',
+        interested_country: '',
+        interested_degree: '',
+        language_test: 'None',
+        language_score: '',
+        referred_by: '',
+        courses_studied: '',
+        interested_course: '',
+        gpa: '',
+        lead_source: 'Website',
+        notes: '',
+      });
+      setErrors({});
+      setIsSubmitting(false);
       onClose();
     } catch (error: any) {
       console.error('Error adding lead:', error);
@@ -244,8 +265,6 @@ const AddLeadModal: React.FC<AddLeadModalProps> = ({ isOpen, onClose, onSuccess 
       } else {
         toast.error('Failed to add lead. Please try again.');
       }
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
