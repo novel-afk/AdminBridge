@@ -329,10 +329,11 @@ const LeadList = () => {
           await axios.delete(`${API_BASE_URL}/leads/${lead.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
-          // Refresh data after deletion
-          fetchLeads();
+          // Remove the deleted lead from the UI immediately
+          setLeads(prev => prev.filter(l => l.id !== lead.id));
           toast.success('Lead deleted successfully');
+          // Refresh in the background (subtle)
+          fetchLeads(true);
         } catch (err) {
           console.error('Error deleting lead:', err);
           setError('Failed to delete lead. Please try again.');
@@ -356,11 +357,12 @@ const LeadList = () => {
               headers: { Authorization: `Bearer ${accessToken}` }
             });
           }
-          
-          // Clear selection and refresh data
+          // Remove the deleted leads from the UI immediately
+          setLeads(prev => prev.filter(l => !selectedLeads.includes(l.id)));
           setSelectedLeads([]);
-          fetchLeads();
           toast.success('Lead(s) deleted successfully');
+          // Refresh in the background (subtle)
+          fetchLeads(true);
         } catch (err) {
           console.error('Error deleting leads:', err);
           setError('Failed to delete leads. Please try again.');
