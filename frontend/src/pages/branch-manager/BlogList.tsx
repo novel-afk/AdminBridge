@@ -288,8 +288,9 @@ const BranchManagerBlogList = () => {
   };
 
   const handleEditSuccess = () => {
-    fetchBlogs(true);
     setIsEditModalOpen(false);
+    toast.success('Blog updated successfully');
+    fetchBlogs(true);
   };
 
   // Helper function to get image URL
