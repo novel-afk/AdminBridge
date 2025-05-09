@@ -4,6 +4,7 @@ import axios from 'axios';
 import { EyeIcon, PlusIcon } from '@heroicons/react/24/outline';
 import AddStudentModal from '../../components/AddStudentModal';
 import ViewStudentModal from '../../components/ViewStudentModal';
+import { toast } from 'react-toastify';
 
 interface Student {
   id: number;
@@ -63,6 +64,7 @@ const ReceptionistStudentList = () => {
   const handleAddSuccess = () => {
     setIsAddModalOpen(false);
     fetchStudents();
+    toast.success('Student added successfully');
   };
 
   const handleViewStudent = async (id: number) => {

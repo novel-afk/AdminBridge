@@ -5,6 +5,7 @@ import { UserPlusIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../lib/AuthContext';
 import AddLeadModal from '../../components/AddLeadModal';
 import ViewLeadModal from '../../components/ViewLeadModal';
+import { toast } from 'react-toastify';
 
 interface Lead {
   id: number;
@@ -68,6 +69,7 @@ const ReceptionistLeadList = () => {
   const handleAddSuccess = () => {
     setIsAddModalOpen(false);
     setDataLoaded(false); // Refresh the list
+    toast.success('Lead added successfully');
   };
 
   const handleViewLead = async (id: number) => {

@@ -495,6 +495,9 @@ const AddEmployeeModal = ({ isOpen, onClose, onSuccess }) => {
         
         if (onSuccess) {
           onSuccess();
+          setFormData(initialFormData);
+          setErrors(initialErrors);
+          setStep(1);
         } else {
           onClose();
         }

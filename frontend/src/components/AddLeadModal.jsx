@@ -89,7 +89,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
           setFormData(prev => ({ ...prev, branch: user.branch.toString() }));
         } else if (response.data.length > 0) {
           // If no branch is set, default to the first branch in the list
-          setFormData(prev => ({ ...prev, branch: prev.branch || response.data[0].id.toString() }));
+          setFormData(prev => ({ ...prev, branch: response.data[0].id.toString() }));
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
@@ -174,10 +174,7 @@ const AddLeadModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userHasBranch) {
-      toast.error('You do not have a branch assigned. Please contact admin.');
-      return;
-    }
+    console.log('Submitting lead formData:', formData);
     if (currentStep === 1) {
       handleNextStep();
       return;
