@@ -18,6 +18,7 @@ import ViewStudentModal from '../../components/ViewStudentModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import type { ReactElement } from 'react';
 import type { Student } from '../../components/types';
+import { toast } from 'react-toastify';
 
 // Column interface for DataTable
 interface Column {
@@ -186,21 +187,13 @@ const StudentList = (): ReactElement => {
     setSelectedStudent(null);
     // Refresh the student list immediately
     fetchStudents(true);
-    showConfirmation({
-      title: 'Student Updated Successfully',
-      message: 'The student information has been updated.',
-      type: 'success',
-      confirmText: 'OK',
-      onConfirm: () => {
-        // No need to fetch again
-      }
-    });
+    toast.success('Student updated successfully');
   };
 
   const handleDeleteSingle = (student: Student) => {
     showConfirmation({
       title: 'Delete Student',
-      message: `Are you sure you want to delete this student? This action cannot be undone.`,
+      message: `Are you sure you want to delete ${student.name || student.user.first_name + ' ' + student.user.last_name}? This action cannot be undone.`,
       type: 'danger',
       confirmText: 'Delete',
       onConfirm: async () => {
@@ -209,17 +202,9 @@ const StudentList = (): ReactElement => {
           await axios.delete(`${API_BASE_URL}/students/${student.id}/`, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-          
-          showConfirmation({
-            title: 'Student Deleted Successfully',
-            message: 'The student has been deleted.',
-            type: 'success',
-            confirmText: 'OK',
-            onConfirm: () => {
-              fetchStudents();
-            },
-          });
-          
+          // Refresh data after deletion
+          fetchStudents(true);
+          toast.success('Student deleted successfully');
         } catch (err) {
           console.error('Error deleting student:', err);
           setError('Failed to delete student. Please try again.');
@@ -319,30 +304,24 @@ const StudentList = (): ReactElement => {
       onConfirm: async () => {
         const accessToken = localStorage.getItem('access_token');
         try {
-          // Delete each selected student
-          for (const id of selectedStudents) {
-            await axios.delete(`${API_BASE_URL}/students/${id}/`, {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            });
-          }
-          
-          // Clear selection and refresh
+          // Use the new bulk delete endpoint
+          await axios.post(`${API_BASE_URL}/students/bulk-delete/`, 
+            { ids: selectedStudents },
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+          );
+          // Clear selection and refresh data
           setSelectedStudents([]);
-          fetchStudents();
-          
-          showConfirmation({
-            title: 'Students Deleted Successfully',
-            message: 'The selected students have been deleted.',
-            type: 'success',
-            confirmText: 'OK',
-            onConfirm: () => {
-              // No need to fetch again
-            }
-          });
-          
-        } catch (err) {
+          fetchStudents(true);
+          toast.success('Student(s) deleted successfully');
+        } catch (err: any) {
           console.error('Error deleting students:', err);
-          setError('Failed to delete students. Please try again.');
+          showConfirmation({
+            title: 'Error',
+            message: err.response?.data?.detail || 'Failed to delete students. Please try again.',
+            type: 'danger',
+            confirmText: 'OK',
+            onConfirm: () => {},
+          });
         }
       },
     });
